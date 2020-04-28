@@ -18,11 +18,19 @@ BloomONだと光ってしまうMToonシェーダーを無理やり別なシェ�
 
 ## MToonシェーダーとの違い
 
-影には対応していないため、正面と後ろから見た時の色合いが一緒です。   
-照明に対応していないため、RimやEmissionに対応していません(コレに対応するとメッチャ光るので対応予定なし)  
-Standardを変換した場合、かなり明るい色に変わります。  
-※Rimでモデルに影をつけてるタイプは現状影が出来ないため、のっぺりしてしまいます。  
+2.0以降はMToon改シェーダーに変更したため、表現方法はMToonとほぼ変わりません。 
+ただ、Transparent系はαチャンネルを使わないと表現できないため、以下の変換を行っております。 
+MToon-Opaque → MToon-Opaque 
+MToon-Cutout → MToon-Cutout 
+MToon-Transparent → MToon-Cutout  
+MToon-TransparentWithZWrite → MToon-Opaque  
+Standard → 専用シェーダー  
 
+## MODパラメータ
+VMCAvatarMaterialChangeの使用のON/OFF 
+Material Change：ON/OFF　　影色を強制的にWhiteにする。(VRM再出力したくない人や、影がピンクで嫌な人向け  
+Shade Color Change：Default/White  
+Graphic Mode：Default(MToon改) / Lith(Origina 
 
 ## バグ報告 
 
