@@ -1,7 +1,7 @@
 # VMCAvatarMaterialChange
 
-VMCAvatarMaterialChangeは[VMCAvatar](https://github.com/nagatsuki/VMCAvatar-BS)だけでは使用できなかったBloomをONにするためのModです。
-　　
+VMCAvatarMaterialChangeは[VMCAvatar](https://github.com/nagatsuki/VMCAvatar-BS)だけでは使用できなかったBloomをONにするためのModです。  
+
 [ダウンロード先](https://github.com/Reiya1013/VMCAvatarMaterialChange/releases)  
 
 ## インストール
