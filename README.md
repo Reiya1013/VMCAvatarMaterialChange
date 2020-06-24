@@ -29,9 +29,10 @@ Standard → 専用シェーダー
 
 ## MODパラメータ
 VMCAvatarMaterialChangeの使用のON/OFF   
-Material Change：ON/OFF　　影色を強制的にWhiteにする。(VRM再出力したくない人や、影がピンクで嫌な人向け   
+Material Change：ON/OFF  
+影色を強制的にWhiteにする。(VRM再出力したくない人や、影がピンクで嫌な人向け   
 Shade Color Change：Default/White   
-Graphic Mode：Default(MToon改) / Lith(Origina   
+Graphic Mode：Default(MToon改) / Lith(Origina)   
 
 ## バグ報告 
 
