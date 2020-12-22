@@ -1,6 +1,8 @@
 # VMCAvatarMaterialChange
 
-VMCAvatarMaterialChangeは[VMCAvatar](https://github.com/nagatsuki/VMCAvatar-BS)だけでは使用できなかったBloomをONにするためのModです。  
+VMCAvatarMaterialChangeは[VMCAvatar](https://github.com/nagatsuki/VMCAvatar-BS)だけでは使用できなかったBloomをONにするためのModです。    
+当MODを使用するとTransparent(半透明)のマテリアルは全てCutout(切抜)に変更されるため、半透明は使用できません。  
+半透明を再現したい場合は、等MODは使用しないorオプションでOFFにして、SystemのBloomをOFFにしてご使用ください。
 
 [ダウンロード先](https://github.com/Reiya1013/VMCAvatarMaterialChange/releases)  
 
