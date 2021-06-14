@@ -25,7 +25,8 @@ BloomONだと光ってしまうMToonシェーダーを無理やり別なシェ�
 MToon-Opaque → MToon-Opaque   
 MToon-Cutout → MToon-Cutout   
 MToon-Transparent → MToon-Cutout   
-MToon-TransparentWithZWrite → MToon-Opaque ~~<br>
+MToon-TransparentWithZWrite → MToon-Opaque~~
+<br>
 0.4.0 以降は透過対応改造MToonです。
 Standard → 専用シェーダー   
 
