@@ -2,7 +2,7 @@
 
 VMCAvatarMaterialChangeは[VMCAvatar](https://github.com/nagatsuki/VMCAvatar-BS)だけでは使用できなかったBloomをONにするためのModです。    
 ~~当MODを使用するとTransparent(半透明)のマテリアルは全てCutout(切抜)に変更されるため、半透明は使用できません。  
-半透明を再現したい場合は、等MODは使用しないorオプションでOFFにして、SystemのBloomをOFFにしてご使用ください。~~
+半透明を再現したい場合は、等MODは使用しないorオプションでOFFにして、SystemのBloomをOFFにしてご使用ください。~~<br>
 0.4.0以降で完全に透過に対応しました。
 
 [ダウンロード先](https://github.com/Reiya1013/VMCAvatarMaterialChange/releases)  
@@ -25,7 +25,7 @@ BloomONだと光ってしまうMToonシェーダーを無理やり別なシェ�
 MToon-Opaque → MToon-Opaque   
 MToon-Cutout → MToon-Cutout   
 MToon-Transparent → MToon-Cutout   
-MToon-TransparentWithZWrite → MToon-Opaque   ~~
+MToon-TransparentWithZWrite → MToon-Opaque ~~<br>
 0.4.0 以降は透過対応改造MToonです。
 Standard → 専用シェーダー   
 
