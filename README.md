@@ -27,7 +27,7 @@ MToon-Cutout → MToon-Cutout
 MToon-Transparent → MToon-Cutout   
 MToon-TransparentWithZWrite → MToon-Opaque~~
 <br>
-0.4.0 以降は透過対応改造MToonです。
+0.4.0 以降は透過対応改造MToonです。  
 Standard → 専用シェーダー   
 
 ## MODパラメータ
@@ -42,7 +42,7 @@ Graphic Mode：Default(MToon改) / Lith(Origina)
 破綻の確認塔のために、ポーズを撮ってボタンを押すだけで、そのポーズでアバターをコピーして表示します。  
 AvatarCopy To WordPos ： ワールド原点(足跡の上)にアバターをコピーします。  
 AvatarCopy To WordPos(Timer 5Sec) ： 5秒後にワールド原点(足跡の上)にアバターをコピーします。  
-AvatarCopy To AvatarPos ： 現在地点にアバターをコピーします。 
+AvatarCopy To AvatarPos ： 現在地点にアバターをコピーします。  
 AvatarCopy To AvatarPos(Timer 5Sec) ： 5秒後に現在地点にアバターをコピーします。 
 
 
