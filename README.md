@@ -45,6 +45,25 @@ AvatarCopy To WordPos(Timer 5Sec) ： 5秒後にワールド原点(足跡の上)
 AvatarCopy To AvatarPos ： 現在地点にアバターをコピーします。  
 AvatarCopy To AvatarPos(Timer 5Sec) ： 5秒後に現在地点にアバターをコピーします。 
 
+## MaterialChange機能 
+左メニューにMaterialChange機能を用意しました。  
+専用ファイル（.mc）を用意することで、ロード済みのアバターのシェーダーを変更することができます。  
+専用ファイル（.mc）の作成にはUnity上で作業をする必要があります。  
+以下の説明書を参照して作成してください。  
+[取り扱い説明書スプレットシート](https://docs.google.com/spreadsheets/d/1q-H6GGQlBpILypFg1mCgrPAgbT-rlfklXOje0kkD_-c/edit?usp=sharing)  
+Unityに必要なファイルは最新のReleaseに［MaterialChange.unitypackage］が付属しておりますので、そちらをお使いください。  
+
+対応シェーダー一覧  
+・ビートセイバー専用Sunaoシェーダー([本家](https://booth.pm/ja/items/1723985))  
+・ビートセイバー専用ユニティーちゃんトゥーンシェーダー([本家](https://unity-chan.com/download/releaseNote.php?id=UTS2_0))  
+・ビートセイバー専用MToon<br>
+・ビートセイバー専用arktoon<br>
+・ビートセイバー専用Crystal Shader([本家](https://booth.pm/ja/items/1148311))  
+・ビートセイバー専用glass Shader([本家](https://booth.pm/ja/items/1035152))  
+・ビートセイバー専用Seiso Shader([本家](https://booth.pm/ja/items/2296837))  
+・ビートセイバー専用GamingEffect Shader([本家](https://booth.pm/ja/items/2019300))  
+・ビートセイバー専用poiyomi Shader ※専用手順あり([本家](https://github.com/poiyomi/PoiyomiToonShader))  
+<br>
 
 ## バグ報告 
 
