@@ -50,7 +50,7 @@ AvatarCopy To AvatarPos(Timer 5Sec) ： 5秒後に現在地点にアバターを
 専用ファイル（.mc）を用意することで、ロード済みのアバターのシェーダーを変更することができます。  
 専用ファイル（.mc）の作成にはUnity上で作業をする必要があります。  
 以下の説明書を参照して作成してください。  
-[取り扱い説明書スプレットシート](https://docs.google.com/spreadsheets/d/1q-H6GGQlBpILypFg1mCgrPAgbT-rlfklXOje0kkD_-c/edit?usp=sharing)  
+[取り扱い説明書スプレッドシート](https://docs.google.com/spreadsheets/d/1q-H6GGQlBpILypFg1mCgrPAgbT-rlfklXOje0kkD_-c/edit?usp=sharing)  
 Unityに必要なファイルは最新のReleaseに［MaterialChange.unitypackage］が付属しておりますので、そちらをお使いください。  
 
 対応シェーダー一覧  
