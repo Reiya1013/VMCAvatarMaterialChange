@@ -35,13 +35,14 @@ VMCAvatarMaterialChangeの使用のON/OFF
 Material Change：ON/OFF  
 影色を強制的にWhiteにする。(VRM再出力したくない人や、影がピンクで嫌な人向け   
 Shade Color Change：Default/White   
-Graphic Mode：Default(MToon改) / Lith(Origina)   
+~~Graphic Mode：Default(MToon改) / Lith(Origina)~~   
+※変換用シェーダー紛失のため廃止  
 
-## AvataCopy機能 
+## AvatarCopy機能 
 左メニューにAvatarCopy機能を用意しました。  
-破綻の確認塔のために、ポーズを撮ってボタンを押すだけで、そのポーズでアバターをコピーして表示します。  
-AvatarCopy To WordPos ： ワールド原点(足跡の上)にアバターをコピーします。  
-AvatarCopy To WordPos(Timer 5Sec) ： 5秒後にワールド原点(足跡の上)にアバターをコピーします。  
+破綻の確認のために、ポーズを撮ってボタンを押すだけで、そのポーズでアバターをコピーして表示します。  
+AvatarCopy To WorldPos ： ワールド原点(足跡の上)にアバターをコピーします。  
+AvatarCopy To WorldPos(Timer 5Sec) ： 5秒後にワールド原点(足跡の上)にアバターをコピーします。  
 AvatarCopy To AvatarPos ： 現在地点にアバターをコピーします。  
 AvatarCopy To AvatarPos(Timer 5Sec) ： 5秒後に現在地点にアバターをコピーします。 
 
@@ -63,6 +64,8 @@ Unityに必要なファイルは最新のReleaseに［MaterialChange.unitypackag
 ・ビートセイバー専用Seiso Shader([本家](https://booth.pm/ja/items/2296837))  
 ・ビートセイバー専用GamingEffect Shader([本家](https://booth.pm/ja/items/2019300))  
 ・ビートセイバー専用poiyomi Shader ※専用手順あり([本家](https://github.com/poiyomi/PoiyomiToonShader))  
+・ビートセイバー専用ArxCharacterShaders([本家](https://booth.pm/ja/items/2493539))  
+・ビートセイバー専用３チャンネル式ArktoonShader([本家](https://booth.pm/ja/items/1582115))  
 <br>
 
 ## バグ報告 
