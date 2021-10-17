@@ -67,6 +67,8 @@ Unityに必要なファイルは最新のReleaseに［MaterialChange.unitypackag
 ・ビートセイバー専用ArxCharacterShaders([本家](https://booth.pm/ja/items/2493539))  
 ・ビートセイバー専用３チャンネル式ArktoonShader([本家](https://booth.pm/ja/items/1582115))  
 <br>
+<br>
+Animationに対応しましたので、こちらも取り扱い説明書スプレッドシートを参照してください。
 
 ## バグ報告 
 
