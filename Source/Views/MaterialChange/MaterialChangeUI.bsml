@@ -1,0 +1,35 @@
+﻿<bg xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
+  <vertical pad-top="1" child-control-height="false" child-expand-height="false">
+    <horizontal bg='panel-top' pad-left='10' pad-right='10' horizontal-fit='PreferredSize'>
+      <vertical pad-bottom='10' pad-top='2' spacing='1' vertical-fit="PreferredSize" >
+        <text text='1st(Shift+1)' align='Center' font-size='4'/>
+        <page-button event-click='MaterialChangeList#PageUp' direction='Up' />
+        <list id='MaterialChangeList' visible-cells='5' expand-cell='true' select-cell='materialSelect' />
+        <page-button event-click='MaterialChangeList#PageDown' direction='Down' />
+      </vertical>
+
+      <vertical pad-bottom='10' pad-top='2' spacing='1' vertical-fit="PreferredSize" >
+        <text text='2nd(Shift+2)' align='Center' font-size='4'/>
+        <page-button event-click='MaterialChangeList2#PageUp' direction='Up' />
+        <list id='MaterialChangeList2' visible-cells='5' expand-cell='true' select-cell='materialSelect2' />
+        <page-button event-click='MaterialChangeList2#PageDown' direction='Down' />
+      </vertical>
+
+      <vertical pad-bottom='10' pad-top='2' spacing='1' vertical-fit="PreferredSize" >
+        <text text='3rd(Shift+3)' align='Center' font-size='4'/>
+        <page-button event-click='MaterialChangeList3#PageUp' direction='Up' />
+        <list id='MaterialChangeList3' visible-cells='5' expand-cell='true' select-cell='materialSelect3' />
+        <page-button event-click='MaterialChangeList3#PageDown' direction='Down' />
+      </vertical>
+    </horizontal>
+  </vertical>
+
+  <vertical pad-top="70" preferred-width="60" child-control-height="false" child-expand-height="false">
+    <horizontal bg='panel-top' pad-left='10' pad-right='10' horizontal-fit='PreferredSize'>
+      <toggle-setting preferred-width="40" preferred-height="12" text="Auto Change" value="AutoChangeToggle"  on-change="OnAutoChangeStateChange"/>
+      <button preferred-width="40" preferred-height="12" text="Material Change Start" on-click="goMaterialChange"/>
+      <button preferred-width="40" preferred-height="12" text="Save" on-click="Save"/>
+    </horizontal>
+  </vertical>
+</bg>
+

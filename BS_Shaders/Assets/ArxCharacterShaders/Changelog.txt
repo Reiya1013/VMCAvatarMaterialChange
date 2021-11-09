@@ -1,0 +1,80 @@
+2020/12/20 build 12----------------------
+・Tipsを全面的にAXCS_Docsに移行しました
+ヘルプボタンを押すと「https://synqark.github.io/AXCS_Docs/」サイトの該当ページが開きます
+・「Shading / Shadow」カテゴリに、他のオブジェクトからの落ち影の強度を調整する「Shadow Receiving」を追加しました。
+また、それに合わせて「Advanced」を少し掃除しました。
+
+2020/12/?? build 11----------------------
+・「Outline」カテゴリからShadow Mixを削除しました。
+・「Base Color Mix」を→「Base&Shading Mix」に変更しました。
+
+2020/12/?? build 10----------------------
+機能追加・変更点：
+・「Shading / Shadow」カテゴリに「Shading Ramp」を追加しました。
+　Border & blur で 光～陰の推移を表現する際、推移方法をテクスチャで指定できる機能です。
+　ArxCharacterShaders/Texturesにサンプル用のテクスチャを配置しましたので、とりあえず試してみてください。
+　元に戻したい場合は「Revert」ボタンを押せばどうにかなると思います。多分。
+・上記に合わせて同カテゴリにあった「Step」関連の機能を削除しました
+・「Border & blur」→ 「Border & Range」に名前を変えました。やってることは変わりません。
+
+不具合修正：
+・FadeRefracted系のバリエーションを使用中、優先度の低いポイントライトの影響を受けた時にシェーダーエラーが発生する問題を修正しました。
+
+2020/12/09 build 9----------------------
+・不要なシェーダーファイルが入っていたため削除しました。
+・「Details」カテゴリを追加しました
+　Standardシェーダー等にあるDetailと同じ使い方で、主にカメラがオブジェクトに接近しても解像感を維持するために使われるセカンダリマップです。
+・Proximity Color Overrideで設定する色の設定方法を変更しました。
+
+
+2020/11/24 build 8----------------------
+・マテリアル設定インスペクタの一番上に、現在選択中のシェーダーバリエーションについての説明を追加しました。
+「〇〇について」の見出しをクリックすると説明が見られます。
+・各設定カテゴリについて説明するウィンドウを追加しました。
+説明を見たい設定カテゴリの右端にあるヘルプアイコンをクリックしてください。
+・Stencil, EmissiveFreak, Outline関連の類似バリエーションをOpaque, Fade, Cutoutから動的に作るメニューを追加しました。
+「AXCS/Generator」メニューから実行できますが、シェーダー改変の予定がなければ使用する意味もありません。
+　・↑に伴い、EmissiveFreakとOutlineバリエーションにいくつかシェーダーバリエーションが増えた気がする、たぶん。
+
+※ build 7 以前をインポートしている場合、正常に動作しない可能性がありますので、
+一度「ArxCharacterShaders」フォルダを削除した上で、改めてbuild8をインポートしてください。
+
+2020/11/04 build 7----------------------
+・以下のシェーダーバリエーションでAmbient Light Intensityが使用出来なくなっていた問題を修正
+EmissiveFreakFade
+EmissiveFreakFadeRefracted
+EmissiveFreakStencilReaderFade
+StencilReaderDoubleFade
+StencilReaderFade
+
+2020/11/01 build 6----------------------
+・マテリアルインスペクタの一番上に選択中のバリエーションの説明を追加
+・各AlphaCutoutとFadeバリエーションにIgnoreProjector=trueを設定
+・各FadeバリエーションのRenderQueueをTransparent-100（2900）に設定
+・シェーダーキーワード「_」がいちいち出ないように調整
+
+2020/11/01 build 5----------------------
+・Arktoon Shadersで実現していたバリデーションを全部復旧
+ただし並び替えとかいろいろしたのでひとまずサンプルシーン見てください。
+↓の並びは忘れた方が楽です
+
+2020/11/01 build 4----------------------
+バリエーションを追加
+- AlphaCutout
+- EmissiveFreak/AlphaCutout
+- Fade
+- FadeRefracted
+- Opaque
+- Outline/AlphaCutout
+- Outline/Opaque
+- Stencil/Reader/AlphaCutout
+- Stencil/Writer/AlphaCutout
+- Stencil/WriterMask/AlphaCutout
+
+Shadowカテゴリに「Ambient Light Intensity」を追加：
+ディレクショナルライトを除く、空間色がどの程度陰に反映されるかを指定できます。
+0:影響無し（真っ黒） ～ 1:影響度100%（Environment LightingまたはLight Probeの色）
+初期値は0.75です。
+
+以前のビルド----------------------
+忘れた

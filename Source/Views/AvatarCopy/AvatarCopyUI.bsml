@@ -1,0 +1,12 @@
+﻿<bg xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
+  <vertical pad-top="5" preferred-width="60" child-control-height="false" child-expand-height="false">
+    <button preferred-width="80" preferred-height="12" text="AvatarCopy To WorldPos" on-click="copy-avatarWPos"/>
+    <button preferred-width="80" preferred-height="12" text="AvatarCopy To WorldPos(Timer 5Sec)" on-click="copy-avatarWPosTimer"/>
+    <button preferred-width="80" preferred-height="12" text="AvatarCopy To AvatarPos" on-click="copy-avatarAPos"/>
+    <button preferred-width="80" preferred-height="12" text="AvatarCopy To AvatarPos(Timer 5Sec)" on-click="copy-avatarAPosTimer"/>
+  </vertical>
+  <vertical pad-top="60" preferred-width="60" child-control-height="false" child-expand-height="false">
+    <button preferred-width="80" preferred-height="12" text="Avatar Clear" on-click="copy-avatarDestroy"/>
+    <toggle-setting text="Auto Destroy" value="DestroyState"  on-change="auto-AvatarDestroyStateChange" />
+  </vertical>
+</bg>
