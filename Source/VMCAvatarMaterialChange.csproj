@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>VMCAvatarMaterialChange</RootNamespace>
     <AssemblyName>VMCAvatarMaterialChange</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <DebugType>portable</DebugType>
     <BeatSaberDir>$(ProjectDir)Refs</BeatSaberDir>
@@ -18,6 +18,7 @@
     <ReferencePath>$(ProjectDir)Refs</ReferencePath>
     <AppOutputBase>$(MSBuildProjectDirectory)\</AppOutputBase>
     <PathMap>$(AppOutputBase)=X:\$(AssemblyName)\</PathMap>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>false</DebugSymbols>
@@ -53,9 +54,29 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\BSML.dll</HintPath>
     </Reference>
+    <Reference Include="Chroma, Version=2.5.7.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\Chroma.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Colors, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Colors.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="Heck, Version=1.3.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Plugins\Heck.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="HMLib, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\HMLib.dll</HintPath>
+    </Reference>
+    <Reference Include="HMRendering, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMRendering.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -158,23 +179,39 @@
     <Reference Include="VMCAvatar, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\VMCAvatar.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="VRUI, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\VRUI.dll</HintPath>
     </Reference>
+    <Reference Include="Zenject, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Zenject.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="Zenject-usage, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Zenject-usage.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\PluginConfig.cs" />
+    <Compile Include="Harmony\LightHarmony.cs" />
     <Compile Include="InputManager.cs" />
+    <Compile Include="Option\VMCAvatarRoomAdjust.cs" />
+    <Compile Include="Option\VRMOptionLight.cs" />
     <Compile Include="Views\AvatarCopy\AvatarCopyUI.cs" />
+    <Compile Include="Views\AvatarLight\AvatarLightUI.cs" />
+    <Compile Include="Views\AvatarLight\ModMainFlowCoordinator_AvatarLight.cs" />
     <Compile Include="Views\MaterialChange\MaterialChangeUI.cs" />
-    <Compile Include="Views\AvatarCopy\ModMainFlowCoordinator.cs" />
+    <Compile Include="Views\AvatarCopy\ModMainFlowCoordinator_AvatarCopy.cs" />
     <Compile Include="Views\MaterialChange\ModMainFlowCoordinator2.cs" />
-    <Compile Include="Views\MaterialChange\OtherMaterialChangeSetting.cs" />
+    <Compile Include="Configuration\OtherMaterialChangeSetting.cs" />
     <Compile Include="VMCMaterialChange.cs" />
     <Compile Include="Harmony\Patches.cs" />
-    <Compile Include="Configuration\Param.cs" />
+    <Compile Include="Configuration\ParameterEnum.cs" />
     <Compile Include="Views\VMCAvatarMCSetting\Settings.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Logger.cs" />
@@ -190,6 +227,7 @@
     <None Include="BuildTargets.targets" />
     <EmbeddedResource Include="Views\AvatarCopy\AvatarCopyUI.bsml" />
     <EmbeddedResource Include="Views\MaterialChange\MaterialChangeUI.bsml" />
+    <EmbeddedResource Include="Views\AvatarLight\AvatarLightUI.bsml" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Views\VMCAvatarMCSetting\settings.bsml" />

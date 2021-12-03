@@ -1,5 +1,7 @@
 ﻿using HarmonyLib;
 using System;
+using System.Reflection;
+using VMCAvatar;
 
 namespace VMCAvatarMaterialChange.HarmonyPatches
 {
@@ -16,14 +18,34 @@ namespace VMCAvatarMaterialChange.HarmonyPatches
 
         public void Enable()
         {
+            Logger.log?.Warn("Applying Harmony patches.");
+            Patch(typeof(UniGLTF.ImporterContext).GetMethod("ShowMeshes"), new HarmonyMethod(typeof(VRMHarmony).GetMethod("Prefix")), null);
+            if (Plugin.instance.IsChroma)
+            {
+                ChromaPatch();
+            }
+            else
+            {
+                Patch(typeof(LightWithIdManager).GetMethod("SetColorForId"), null, new HarmonyMethod(typeof(LightHarmony).GetMethod("Postfix")));
+            }
+
+        }
+
+        private void ChromaPatch()
+        {
+            Patch(typeof(Chroma.Lighting.ChromaIDColorTween).GetMethod("SetColor"), null, new HarmonyMethod(typeof(ChromaLightColorSetHarmony).GetMethod("Postfix")));
+        }
+
+        private void Patch(MethodInfo original, HarmonyMethod prefix, HarmonyMethod postfix)
+        {
             try
             {
-                Logger.log?.Warn("Applying Harmony patches.");
-                harmony.PatchAll();
+                harmony.Patch(original, prefix, postfix);
+                Logger.log?.Warn($"Setup Harmony patch: {original.Name}");
             }
             catch (Exception ex)
             {
-                Logger.log?.Warn($"Error applying Harmony patches: {ex.Message}");
+                Logger.log?.Warn($"Error applying Harmony patch: {ex.Message}");
                 Logger.log?.Warn(ex);
             }
         }

@@ -7,8 +7,8 @@ namespace VMCAvatarMaterialChange.Views.AvatarCopy
 {
     class AvatarCopyUI : BSMLAutomaticViewController
     {
-        public ModMainFlowCoordinator mainFlowCoordinator { get; set; }
-        public void SetMainFlowCoordinator(ModMainFlowCoordinator mainFlowCoordinator)
+        public ModMainFlowCoordinator_AvatarCopy mainFlowCoordinator { get; set; }
+        public void SetMainFlowCoordinator(ModMainFlowCoordinator_AvatarCopy mainFlowCoordinator)
         {
             this.mainFlowCoordinator = mainFlowCoordinator;
         }
@@ -18,7 +18,7 @@ namespace VMCAvatarMaterialChange.Views.AvatarCopy
         }
         protected override void DidDeactivate(bool removedFromHierarchy, bool screenSystemDisabling)
         {
-            Plugin.VMCMC.VRMCopyDestroy();
+            VMCMaterialChange.instance.VRMCopyDestroy();
             base.DidDeactivate(removedFromHierarchy, screenSystemDisabling);
         }
 
@@ -26,7 +26,7 @@ namespace VMCAvatarMaterialChange.Views.AvatarCopy
         [UIAction("copy-avatarWPos")]
         private void AvatarCopyWPos()
         {
-            Plugin.VMCMC.VRMCopy(true);
+            VMCMaterialChange.instance.VRMCopy(true);
         }
         [UIAction("copy-avatarWPosTimer")]
         private void AvatarCopyWPosTime()
@@ -37,7 +37,7 @@ namespace VMCAvatarMaterialChange.Views.AvatarCopy
         [UIAction("copy-avatarAPos")]
         private void AvatarCopyAPos()
         {
-            Plugin.VMCMC.VRMCopy(false);
+            VMCMaterialChange.instance.VRMCopy(false);
         }
         [UIAction("copy-avatarAPosTimer")]
         private void AvatarCopyAPoTime()
@@ -58,7 +58,7 @@ namespace VMCAvatarMaterialChange.Views.AvatarCopy
         [UIAction("copy-avatarDestroy")]
         private void AvatarDestroy()
         {
-            Plugin.VMCMC.VRMCopyDestroy();
+            VMCMaterialChange.instance.VRMCopyDestroy();
         }
 
     }

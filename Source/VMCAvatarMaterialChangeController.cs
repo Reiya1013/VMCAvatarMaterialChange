@@ -4,6 +4,7 @@ using BeatSaberMarkupLanguage.MenuButtons;
 using UnityEngine;
 using VMCAvatarMaterialChange.Views.AvatarCopy;
 using VMCAvatarMaterialChange.Views.MaterialChange;
+using VMCAvatarMaterialChange.Views.AvatarLight;
 using IPALogger = IPA.Logging.Logger;
 using VRUIControls;
 
@@ -16,14 +17,17 @@ namespace VMCAvatarMaterialChange
     public class VMCAvatarMaterialChangeController : MonoBehaviour
     {
         public static VMCAvatarMaterialChangeController instance { get; private set; }
-        private ModMainFlowCoordinator mainFlowCoordinator;
+        private ModMainFlowCoordinator_AvatarCopy mainFlowCoordinator_AvatarCopy;
         private ModMainFlowCoordinator2 mainFlowCoordinator2;
+        private ModMainFlowCoordinator_AvatarLight mainFlowCoordinator_AvatarLight;
         internal static string Name => "VMCAvatarMaterialChange";
         internal static bool CopyStart = false;
         internal static bool CopyMode = false;
         internal static bool AutoDestroy = true;
 
-        HarmonyPatches.Patcher patcher;
+        //マテリアルチェンジクラス
+        //internal static VMCMaterialChange VMCMC = new VMCMaterialChange();
+
 
         private InputManager inputManager;
 
@@ -47,18 +51,18 @@ namespace VMCAvatarMaterialChange
             instance.name = Name;
             Logger.log?.Debug($"{name}: Awake()");
 
-            //Harmony
-            Logger.log?.Debug($"{name}: Harmony()");
-            patcher = new HarmonyPatches.Patcher("VMCAvatarMaterialChange");
-            patcher.Enable();
-
             //AvatarCopyMenu
-            MenuButton menuButton = new MenuButton("Avatar Copy", "Avatar Copy", ShowModFlowCoordinator, true);
+            MenuButton menuButton = new MenuButton("Avatar Copy", "Avatar Copy", ShowModMainFlowCoordinator_AvatarCopy, true);
             MenuButtons.instance.RegisterButton(menuButton);
 
             //MaterialChangeMenu
             MenuButton menuButton2 = new MenuButton("MaterialChange", "Material Change", ShowModFlowCoordinator2, true);
             MenuButtons.instance.RegisterButton(menuButton2);
+
+            //AvatarLightMenu
+            MenuButton menuButton3 = new MenuButton("Avata Light", "Set whether it is affected by ambient light", ShowModMainFlowCoordinator_AvatarLight, true);
+            MenuButtons.instance.RegisterButton(menuButton3);
+
 
             //コントローラーフック
             //InputManager.instance.BeginPolling();
@@ -67,13 +71,13 @@ namespace VMCAvatarMaterialChange
         /// <summary>
         /// アバターコピーメニューコントローラー
         /// </summary>
-        public void ShowModFlowCoordinator()
+        public void ShowModMainFlowCoordinator_AvatarCopy()
         {
-            if (this.mainFlowCoordinator == null)
-                this.mainFlowCoordinator = BeatSaberUI.CreateFlowCoordinator<ModMainFlowCoordinator>();
-            if (mainFlowCoordinator.IsBusy) return;
+            if (this.mainFlowCoordinator_AvatarCopy == null)
+                this.mainFlowCoordinator_AvatarCopy = BeatSaberUI.CreateFlowCoordinator<ModMainFlowCoordinator_AvatarCopy>();
+            if (mainFlowCoordinator_AvatarCopy.IsBusy) return;
 
-            BeatSaberUI.MainFlowCoordinator.PresentFlowCoordinator(mainFlowCoordinator);
+            BeatSaberUI.MainFlowCoordinator.PresentFlowCoordinator(mainFlowCoordinator_AvatarCopy);
         }
 
         /// <summary>
@@ -89,11 +93,22 @@ namespace VMCAvatarMaterialChange
         }
 
         /// <summary>
+        /// MaterialChangeメニューコントローラー
+        /// </summary>
+        public void ShowModMainFlowCoordinator_AvatarLight()
+        {
+            if (this.mainFlowCoordinator_AvatarLight == null)
+                this.mainFlowCoordinator_AvatarLight = BeatSaberUI.CreateFlowCoordinator<ModMainFlowCoordinator_AvatarLight>();
+            if (mainFlowCoordinator_AvatarLight.IsBusy) return;
+
+            BeatSaberUI.MainFlowCoordinator.PresentFlowCoordinator(mainFlowCoordinator_AvatarLight);
+        }
+
+        /// <summary>
         /// Called when the script is being destroyed.
         /// </summary>
         private void OnDestroy()
         {
-            patcher.Disable();
 
             Logger.log?.Debug($"{name}: OnDestroy()");
             instance = null; // This MonoBehaviour is being destroyed, so set the static instance property to null.
@@ -124,45 +139,6 @@ namespace VMCAvatarMaterialChange
                 inputManager.BeginGameCoreScene();
             }
 
-            //if (_vrPointer == null)
-            //{
-            //    _vrPointer = GetComponent<VRPointer>();
-            //    //デストロイされないようにする
-            //    DontDestroyOnLoad(_vrPointer);
-            //}
-
-            //if (_vrPointer.vrController != null)
-            //{
-            //    if (_vrPointer.vrController.node == UnityEngine.XR.XRNode.LeftHand)
-            //    {
-            //        if (_vrPointer.vrController.triggerValue < 0.9f)
-            //        {
-            //            RightTriggerDownCount = 0;
-            //            RightTriggerDownTime = 0;
-            //        }
-            //    }
-
-            //    if (_vrPointer.vrController.node == UnityEngine.XR.XRNode.RightHand)
-            //    {
-            //        if (_vrPointer.vrController.triggerValue >0.9f)
-            //        {
-            //            RightTriggerDownCount += 1;
-            //            RightTriggerDownTime = 0;   //最後に入力があってから１秒経過しても３回目入力しなかった場合のみクリアするようにする
-            //            Logger.log?.Debug($"{name}: ControllerInput() VRController RightTrigerCnt:{RightTriggerDownCount}");
-
-            //            if (RightTriggerDownCount >= 3)
-            //            {
-            //                RightTriggerDownCount = 0;
-            //                Logger.log?.Debug($"{name}: ToggleAnimation()");
-
-            //                Plugin.VMCMC.ToggleAnimation();
-            //            }
-            //        }
-            //    }
-
-            //}
-
-
             if (inputManager.GetLeftGripClicked())
                 Logger.log?.Debug($"GetLeftGripClicked True");
 
@@ -189,7 +165,7 @@ namespace VMCAvatarMaterialChange
                     RightTriggerDownCount = 0;
                     Logger.log?.Debug($"{name}: ToggleAnimation()");
 
-                    Plugin.VMCMC.ToggleAnimation();
+                    VMCMaterialChange.instance.ToggleAnimation();
                 }
 
             }
@@ -208,7 +184,7 @@ namespace VMCAvatarMaterialChange
 
             if (Input.GetKeyDown(KeyCode.T))
             {
-                Plugin.VMCMC.ToggleAnimation();
+                VMCMaterialChange.instance.ToggleAnimation();
             }
 
         }
@@ -224,9 +200,9 @@ namespace VMCAvatarMaterialChange
             if (isShift && isKey && !OldInput)
             {
                 OldInput = true;
-                if (Input.GetKey(KeyCode.Alpha1)) Plugin.VMCMC.SetOtherMaterialSelecter(0);
-                else if (Input.GetKey(KeyCode.Alpha2)) Plugin.VMCMC.SetOtherMaterialSelecter(1);
-                else if (Input.GetKey(KeyCode.Alpha3)) Plugin.VMCMC.SetOtherMaterialSelecter(2);
+                if (Input.GetKey(KeyCode.Alpha1)) VMCMaterialChange.instance.SetOtherMaterialSelecter(0);
+                else if (Input.GetKey(KeyCode.Alpha2)) VMCMaterialChange.instance.SetOtherMaterialSelecter(1);
+                else if (Input.GetKey(KeyCode.Alpha3)) VMCMaterialChange.instance.SetOtherMaterialSelecter(2);
             }
             else
                 OldInput = false;
@@ -241,7 +217,7 @@ namespace VMCAvatarMaterialChange
             if ((DateTime.Now - StartTime).TotalMilliseconds >= 5000)
             {
                 Logger.log?.Debug($"{name}: OnDestroy()");
-                Plugin.VMCMC.VRMCopy(CopyMode);
+                VMCMaterialChange.instance.VRMCopy(CopyMode);
                 StartTime = DateTime.MinValue;
                 CopyStart = false;
             }

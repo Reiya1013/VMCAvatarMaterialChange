@@ -2,18 +2,18 @@
 using HarmonyLib;
 using UnityEngine;
 using VRM;
+using VMCAvatar;
 
 namespace VMCAvatarMaterialChange
 {
     [HarmonyPatch(typeof(UniGLTF.ImporterContext), "ShowMeshes", MethodType.Normal)]
-    class VRMHarmony
+    public static class VRMHarmony
     {
-
         /// <summary>
         /// ロード済のアバターを表示するUniVRMのメソッドをHarmonyで割り込んでマテリアルチェンジする
         /// </summary>
         /// <param name="__instance"></param>
-        static void Prefix(UniGLTF.ImporterContext __instance)
+        public static void Prefix(UniGLTF.ImporterContext __instance)
         {
             try
             {
@@ -24,7 +24,7 @@ namespace VMCAvatarMaterialChange
                 Logger.log.Debug($"Harmony ChangeMaterial Start");
 
                 //マテリアル変更
-                SharedCoroutineStarter.instance.StartCoroutine(Plugin.VMCMC.ChangeMaterial(__instance));
+                SharedCoroutineStarter.instance.StartCoroutine(VMCMaterialChange.instance.ChangeMaterial(__instance));
 
                 Logger.log.Debug($"Harmony ChangeMaterial End");
             }
@@ -34,6 +34,16 @@ namespace VMCAvatarMaterialChange
             }
         }
     }
+
+    [HarmonyPatch(typeof(VRCenterAdjust), "Update", MethodType.Normal)]
+    class VMCAvatar_RoomAjust
+    {
+        static void Prefix(VRCenterAdjust __instance)
+        {
+
+        }
+    }
+
 
     //[HarmonyPatch(typeof(UniGLTF.ImporterContext), "AddMaterial", MethodType.Normal)]
     //class VRMHarmony_AddMaterial
@@ -56,7 +66,7 @@ namespace VMCAvatarMaterialChange
     //            Logger.log.Debug($"Harmony AddMaterial GetMaterialName {material.name} {material.shader.name}");
 
     //            //マテリアル変更
-    //            //Plugin.VMCMC.ChangeMaterial(__instance);
+    //            //VMCMaterialChange.instance.ChangeMaterial(__instance);
 
     //            Logger.log.Debug($"Harmony AddMaterial End");
     //        }

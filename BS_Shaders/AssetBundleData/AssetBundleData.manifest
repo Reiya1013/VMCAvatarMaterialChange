@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 635272317
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: bs_shaders
+      Dependencies: {}

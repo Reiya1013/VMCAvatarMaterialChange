@@ -7,11 +7,15 @@ using System.IO;
 using VRM;
 using System.Linq;
 using System.Collections;
+using Zenject;
+using VMCAvatar;
 
 namespace VMCAvatarMaterialChange
 {
     class VMCMaterialChange
     {
+        internal static VMCMaterialChange instance { get; private set; } = new VMCMaterialChange();
+
         //Shader Asset
         UnityEngine.Object[] Assets;
         private Dictionary<string, Shader> Shaders = new Dictionary<string, Shader>();
@@ -40,6 +44,31 @@ namespace VMCAvatarMaterialChange
         public const int LegacyOnlyInFirstPerson = 4;
         public const int OnlyInFirstPerson = 6;
         public const int AlwaysVisible = 10;
+
+        //[Inject]
+        //internal void Inject(AvatarController avatarController)
+        //{
+        //    Logger.log?.Debug($"Inject lobbyViewController");
+        //    lobbyViewController.didActivateEvent += OnActivate;
+        //}
+
+        Vector3 defaultPosition;
+        bool isGetDefaultPosition;
+        private void OnActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
+        {
+            if (firstActivation || isGetDefaultPosition == false)
+            {
+                if (VRMInstance != null)
+                {
+                    defaultPosition = VRMInstance.Root.transform.parent.position;
+                    isGetDefaultPosition = true;
+                }
+            }
+
+            VRMInstance.Root.transform.position = defaultPosition;
+            Logger.log?.Debug($"Reset Room Adjust{defaultPosition}");
+
+        }
 
         /// <summary>
         /// 初期化でシェーダー読み込み
@@ -199,7 +228,6 @@ namespace VMCAvatarMaterialChange
             ReturnAnimatorController = null;
             foreach (var asset in AssetsMaterial)
             {
-                Logger.log?.Debug($"OtherMaterialLoad {asset is Material}");
                 if (asset is Material material)
                 {
                     set[material.name] = material;
@@ -312,7 +340,6 @@ namespace VMCAvatarMaterialChange
                         if (otherMaterials1.Count != 0)
                         { 
                             SetOtherMaterial(otherMaterials1);
-                            Logger.log?.Debug($"アニメーション無い？ {otherAnimation1 is null}");
                             SetAnimation(otherAnimation1);
                             setter = true;
                         }
@@ -326,7 +353,7 @@ namespace VMCAvatarMaterialChange
                 //instaceからマテリアルを取得して変更する
                 foreach (Renderer renderer in VRMInstance.Root.GetComponentsInChildren<Renderer>())
                 {
-                    MaterialsSharch(renderer);
+                    MaterialsSearch(renderer);
                 }
             }
 
@@ -349,7 +376,7 @@ namespace VMCAvatarMaterialChange
 
                 if (PluginConfig.Instance._MaterialChange == MaterialChange.ON)
                 {
-                    MaterialsSharch(renderer);
+                    MaterialsSearch(renderer);
                 }
             }
         }
@@ -359,7 +386,7 @@ namespace VMCAvatarMaterialChange
         /// Rendererのマテリアルのコピーを取って、ビートセイバー用シェーダーに置き換えたマテリアルを作成して反映する
         /// </summary>
         /// <param name="mates"></param>
-        private void MaterialsSharch(Renderer renderer)
+        private void MaterialsSearch(Renderer renderer)
         {
             try
             {
@@ -409,59 +436,22 @@ namespace VMCAvatarMaterialChange
         {
             //Materialを一時保存しておく
             Material met = new Material(originMat);
-            Logger.log.Debug($"{met.GetFloat("_BlendMode") }");
-
-            //本体のShaderを変更(シェーダー紛失のため終了)
-            //if (PluginConfig.Instance._GraphicMode == GraphicMode.Lite)
-            //{
-            //    if (met.GetFloat("_BlendMode") == 0) originMat.shader = Shaders["BeatSaber/Unlit Glow"];
-            //    if (met.GetFloat("_BlendMode") == 1) originMat.shader = Shaders["BeatSaber/Unlit Glow Transparent"];
-            //    if (met.GetFloat("_BlendMode") == 2) originMat.shader = Shaders["BeatSaber/Unlit Glow Transparent"];
-            //    if (met.GetFloat("_BlendMode") == 3) originMat.shader = Shaders["BeatSaber/Unlit Glow"];
-            //}
-            //else
-            //{
-                Logger.log.Debug(Shaders["BeatSaber/MToon"].ToString());
-
-                originMat.shader = Shaders["BeatSaber/MToon"];
-                //originMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                //originMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
-                //originMat.SetInt("_ZWrite", 1);
-                //originMat.DisableKeyword("_ALPHATEST_ON");
-                //originMat.DisableKeyword("_ALPHABLEND_ON");
-                //originMat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            //Logger.log.Debug($"{originMat.GetFloat("_BlendMode") } renderQueue:{originMat.renderQueue}");
 
 
-                //renderQueueをこちらでセットする
-                //Opaque
-                if (met.GetFloat("_BlendMode") == 0)
-                    originMat.renderQueue = 2000;
+            originMat.shader = Shaders["BeatSaber/MToon"];
 
-                //Cutout
-                if (met.GetFloat("_BlendMode") == 1 ) 
-                    originMat.renderQueue = 2250;
+            //シェーダー置き換えるとrenderQueueが2000になるので、元のやつをセットする
+            originMat.renderQueue = met.renderQueue;
 
-                //TransparentWithZWrite 
-                if (met.GetFloat("_BlendMode") == 3)
-                    originMat.renderQueue = 2350;
+            Logger.log.Debug($"{originMat.GetFloat("_BlendMode") }  renderQueue:{originMat.renderQueue} ChangedRenderQueue:{originMat.renderQueue}");
 
-                //Transparent
-                if (met.GetFloat("_BlendMode") == 2)
-                    originMat.renderQueue = 2450;
-
-
-                //影色強制白の場合は影色を白に変更する
-                if (PluginConfig.Instance._ShadeColor == ShadeColor.White)
+            //影色強制白の場合は影色を白に変更する
+            if (PluginConfig.Instance._ShadeColor == ShadeColor.White)
                     originMat.SetColor("_ShadeColor", Color.white);
 
-                //Logger.log.Debug($"{originMat.renderQueue} , {originMat.GetFloat("_DebugMode")} , {originMat.GetField("RenderType")}  , {originMat.GetFloat("_ZWrite")} , {originMat.GetColor("_ShadeColor")}");
-            //}
-
-            //テスクチャが剥がれるので、保存しておいたMaterialから持ってくる
-            //originMat.SetTexture("_Tex", met.mainTexture);
             //保存しておいたマテリアルを破棄する
             Material.Destroy(met);
-            //originMat = met;
         }
 
         /// <summary>
@@ -470,7 +460,17 @@ namespace VMCAvatarMaterialChange
         /// <param name="originMat"></param>
         private void StandardChangeShader(Material originMat)
         {
+            //Materialを一時保存しておく
+            Material met = new Material(originMat);
+
+            //シェーダー変更
             originMat.shader = Shaders[originMat.shader.name];
+
+            //シェーダー置き換えるとデフォルトに戻るので、元のやつをセットする
+            originMat.renderQueue = met.renderQueue;
+            //保存しておいたマテリアルを破棄する
+            Material.Destroy(met);
+
         }
 
 
@@ -531,7 +531,7 @@ namespace VMCAvatarMaterialChange
             GameObject secondary = Avatar.transform.Find("secondary").gameObject;
             secondary.SetActive(false);
 
-            GameObject setAvataraObj = GameObject.Find("BSEvents");
+            GameObject setAvataraObj = GameObject.Find("VMCAvatarMaterialChange");
             //GameObject activeFalse1 = GameObject.Find("VMCAvatar/RoomAdjust");
 
             if (WPosSet)

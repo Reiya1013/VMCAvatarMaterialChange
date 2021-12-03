@@ -14,8 +14,12 @@ namespace VMCAvatarMaterialChange
         internal static Plugin instance { get; private set; }
         internal static string Name => "VMCAvatarMaterialChange";
 
-        //マテリアルチェンジクラス
-        internal static VMCMaterialChange VMCMC = new VMCMaterialChange();
+        internal VRMOptionLight OptionLight ;
+        internal VMCAvatarRoomAdjust RoomAjust;
+
+        internal bool IsChroma;
+
+        HarmonyPatches.Patcher patcher;
 
         [Init]
         /// <summary>
@@ -49,20 +53,31 @@ namespace VMCAvatarMaterialChange
         public void OnApplicationStart()
         {
             Logger.log.Debug("OnApplicationStart");
-            new GameObject("VMCAvatarMaterialChangeController").AddComponent<VMCAvatarMaterialChangeController>();
+            var vmcmcc = new GameObject("VMCAvatarMaterialChange").AddComponent<VMCAvatarMaterialChangeController>();
+
+            OptionLight = vmcmcc.gameObject.AddComponent<VRMOptionLight>();
+            RoomAjust = vmcmcc.gameObject.AddComponent<VMCAvatarRoomAdjust>();
+
             BSMLSettings.instance.AddSettingsMenu("VMC Avatar MC", "VMCAvatarMaterialChange.Views.VMCAvatarMCSetting.settings.bsml", Settings.instance);
 
             //JSON Load
             OtherMaterialChangeSetting.Instance.LoadConfiguration();
 
-            ////コントローラーInstance
-            //PersistentSingleton<BehaviorCatalog>.TouchInstance();
-            //BehaviorCatalog.instance.LoadStartBehaviors();
+            //DLL存在check
+            IsChroma = IPA.Loader.PluginManager.GetPlugin("Chroma") == null ? false : true;
+
+            //Harmony
+            Logger.log?.Debug($"{Name}: Harmony()");
+            patcher = new HarmonyPatches.Patcher("VMCAvatarMaterialChange");
+            patcher.Enable();
+
+            Logger.log.Debug("OnApplicationStarting");
         }
 
         [OnExit]
         public void OnApplicationQuit()
         {
+            patcher.Disable();
             Logger.log.Debug("OnApplicationQuit");
 
         }

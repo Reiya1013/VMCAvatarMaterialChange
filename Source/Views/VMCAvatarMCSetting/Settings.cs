@@ -56,7 +56,7 @@ namespace VMCAvatarMaterialChange
             PluginConfig.Instance._GraphicMode = _graphicMode;
             PluginConfig.Instance._Cutoff = _cutout;
 
-            Plugin.VMCMC.ChangeMaterial();
+            VMCMaterialChange.instance.ChangeMaterial();
         }
 
         public void Awake()
