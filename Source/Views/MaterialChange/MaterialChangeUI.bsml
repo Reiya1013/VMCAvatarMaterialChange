@@ -1,35 +1,41 @@
 ﻿<bg xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
-  <vertical pad-top="1" child-control-height="false" child-expand-height="false">
-    <horizontal bg='panel-top' pad-left='10' pad-right='10' horizontal-fit='PreferredSize'>
-      <vertical pad-bottom='10' pad-top='2' spacing='1' vertical-fit="PreferredSize" >
-        <text text='1st' align='Center' font-size='4'/>
-        <page-button event-click='MaterialChangeList#PageUp' direction='Up' />
-        <list id='MaterialChangeList' visible-cells='5' expand-cell='true' select-cell='materialSelect' />
-        <page-button event-click='MaterialChangeList#PageDown' direction='Down' />
-      </vertical>
-
-      <!--<vertical pad-bottom='10' pad-top='2' spacing='1' vertical-fit="PreferredSize" >
-        <text text='2nd(Shift+2)' align='Center' font-size='4'/>
-        <page-button event-click='MaterialChangeList2#PageUp' direction='Up' />
-        <list id='MaterialChangeList2' visible-cells='5' expand-cell='true' select-cell='materialSelect2' />
-        <page-button event-click='MaterialChangeList2#PageDown' direction='Down' />
-      </vertical>
-
-      <vertical pad-bottom='10' pad-top='2' spacing='1' vertical-fit="PreferredSize" >
-        <text text='3rd(Shift+3)' align='Center' font-size='4'/>
-        <page-button event-click='MaterialChangeList3#PageUp' direction='Up' />
-        <list id='MaterialChangeList3' visible-cells='5' expand-cell='true' select-cell='materialSelect3' />
-        <page-button event-click='MaterialChangeList3#PageDown' direction='Down' />
-      </vertical>-->
-    </horizontal>
-  </vertical>
-
-  <vertical pad-top="70" preferred-width="60" child-control-height="false" child-expand-height="false">
-    <horizontal bg='panel-top' pad-left='10' pad-right='10' horizontal-fit='PreferredSize'>
-      <toggle-setting preferred-width="40" preferred-height="12" text="Auto Change" value="AutoChangeToggle"  on-change="OnAutoChangeStateChange"/>
-      <button preferred-width="40" preferred-height="12" text="Material Change Start" on-click="goMaterialChange"/>
-      <button preferred-width="40" preferred-height="12" text="Save" on-click="Save"/>
-    </horizontal>
-  </vertical>
+	<vertical pad-top="1" child-control-height="false" child-expand-height="false">
+		<tab-selector tab-tag="yo" />
+	</vertical>
+	<vertical pad-top="10" child-control-height="false" child-expand-height="false">
+		<tab tab-name="MaterialChange" tags="yo" >
+			<vertical pad-top="1" child-control-height="false" child-expand-height="false">
+				<page-button event-click='MaterialChangeList#PageUp' direction='Up' />
+				<list id='MaterialChangeList' visible-cells='8' expand-cell='true' select-cell='materialSelect' />
+				<page-button event-click='MaterialChangeList#PageDown' direction='Down' />
+			</vertical>
+			<vertical pad-top="80" preferred-width="60" child-control-height="false" child-expand-height="false">
+				<horizontal bg='panel-top' pad-left='10' pad-right='10' horizontal-fit='PreferredSize'>
+					<toggle-setting preferred-width="40" preferred-height="12" text="Auto Change" value="AutoChangeToggle"  on-change="OnAutoChangeStateChange"/>
+					<button preferred-width="40" preferred-height="12" text="Material Change Start" on-click="goMaterialChange"/>
+					<button preferred-width="40" preferred-height="12" text="Save" on-click="Save"/>
+				</horizontal>
+			</vertical>	
+		</tab>
+		<tab tab-name="AvatarLight" tags="yo" >
+			<vertical pad-top="1" preferred-width="60" child-control-height="false" child-expand-height="false">
+				<toggle-setting preferred-width="40" preferred-height="12" text="Ambient Light" value="AmbientLight" on-change="AmbientLightChange"/>
+				<slider-setting text="Base Light Boost" value="VMCLightBoost" min="0" max="1" increment="0.01" on-change="VMCLightBoostChange"/>
+				<slider-setting text="Ambient Light Boost" value="AmbientLightBoost" min="0" max="1" increment="0.01" on-change="AmbientLightBoostChange"/>
+			</vertical>
+		</tab>
+		<tab tab-name="AvatarCopy" tags="yo">
+			<vertical pad-top="1" preferred-width="60" child-control-height="false" child-expand-height="false">
+				<button preferred-width="80" preferred-height="12" text="AvatarCopy To WorldPos" on-click="copy-avatarWPos"/>
+				<button preferred-width="80" preferred-height="12" text="AvatarCopy To WorldPos(Timer 5Sec)" on-click="copy-avatarWPosTimer"/>
+				<button preferred-width="80" preferred-height="12" text="AvatarCopy To AvatarPos" on-click="copy-avatarAPos"/>
+				<button preferred-width="80" preferred-height="12" text="AvatarCopy To AvatarPos(Timer 5Sec)" on-click="copy-avatarAPosTimer"/>
+			</vertical>
+			<vertical pad-top="65" preferred-width="60" child-control-height="false" child-expand-height="false">
+				<button preferred-width="80" preferred-height="12" text="Avatar Clear" on-click="copy-avatarDestroy"/>
+				<toggle-setting text="Auto Destroy" value="DestroyState"  on-change="auto-AvatarDestroyStateChange" />
+			</vertical>
+	</tab>
+	</vertical>
 </bg>
 

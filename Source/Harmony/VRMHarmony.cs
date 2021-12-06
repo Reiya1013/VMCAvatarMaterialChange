@@ -40,7 +40,8 @@ namespace VMCAvatarMaterialChange
     {
         static void Prefix(VRCenterAdjust __instance)
         {
-
+            if (!Plugin.instance.RoomAjust.CenterAdjust)
+                Plugin.instance.RoomAjust.SetupVRCenterAdjust( __instance);
         }
     }
 

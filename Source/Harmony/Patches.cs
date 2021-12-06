@@ -20,6 +20,7 @@ namespace VMCAvatarMaterialChange.HarmonyPatches
         {
             Logger.log?.Warn("Applying Harmony patches.");
             Patch(typeof(UniGLTF.ImporterContext).GetMethod("ShowMeshes"), new HarmonyMethod(typeof(VRMHarmony).GetMethod("Prefix")), null);
+            //Patch(typeof(SetSaberGlowColor).GetMethod("SetColors"), null, new HarmonyMethod(typeof(SetSaberGlowColorHarmony).GetMethod("Postfix")));
             if (Plugin.instance.IsChroma)
             {
                 ChromaPatch();

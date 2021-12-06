@@ -26,24 +26,9 @@ namespace VMCAvatarMaterialChange
         }
     }
 
-    //Chroma必須のMAPのライト(Chroma入ってるとこっちしか動かん)
-    //[HarmonyPatch(typeof(ChromaLightSwitchEventEffect))]
-    //static class ChromaLightColorSetHarmony
-    //{
-    //    [HarmonyPatch(typeof(ChromaLightSwitchEventEffect), "Refresh", MethodType.Normal)]
-    //    static void Postfix(ChromaLightSwitchEventEffect __instance, ColorSO ____lightColor0Accessor, ILightWithId selectLights)
-    //    {
-    //        if (!Plugin.instance.OptionLight.ChromaLights.ContainsKey(__instance))
-    //            Plugin.instance.OptionLight.AddLight(__instance);
-
-    //        Plugin.instance.OptionLight.ChromaLights[__instance].color = __instance.ColorTweens[selectLights].toValue;
-    //    }
-    //}
-
-    [HarmonyPatch(typeof(Chroma.Lighting.ChromaIDColorTween))]
+    [HarmonyPatch(typeof(Chroma.Lighting.ChromaIDColorTween), "SetColor", MethodType.Normal)]
     public static class ChromaLightColorSetHarmony
     {
-        [HarmonyPatch(typeof(Chroma.Lighting.ChromaIDColorTween), "SetColor", MethodType.Normal)]
         public static void Postfix(Chroma.Lighting.ChromaIDColorTween __instance, ILightWithId ____lightWithId, Color color)
         {
             if (!OtherMaterialChangeSetting.Instance.OtherParameter.IsAmbientLight) return;
@@ -53,7 +38,7 @@ namespace VMCAvatarMaterialChange
             Plugin.instance.OptionLight.AddLight(____lightWithId.lightId);
 
             Plugin.instance.OptionLight.Lights[____lightWithId.lightId].color = color;
-            Plugin.instance.OptionLight.Lights[____lightWithId.lightId].enabled = color.a == 0f ? false : true;
+            Plugin.instance.OptionLight.Lights[____lightWithId.lightId].enabled = color.a <= 0.1f ? false : true;
             Plugin.instance.OptionLight.Lights[____lightWithId.lightId].intensity = OtherMaterialChangeSetting.Instance.OtherParameter.AmbientLightBoost;
         }
     }
@@ -77,5 +62,40 @@ namespace VMCAvatarMaterialChange
         }
     }
 
+    //[HarmonyPatch(typeof(SetSaberGlowColor), "SetColors", MethodType.Normal)]
+    //public static class SetSaberGlowColorHarmony
+    //{
+    //    public static void Postfix(SetSaberGlowColor __instance, SaberType ____saberType, ColorManager ____colorManager)
+    //    {
+    //        if (____colorManager is null) return;
+    //        if (__instance.transform is null) return;
+    //        if (__instance.transform.name != "SaberGlowingEdges") return;
+    //        Plugin.instance.OptionLight.AddSaberLight(____saberType, __instance.gameObject, ____colorManager.ColorForSaberType(____saberType));
 
+
+    //        //Logger.log?.Warn($"SaberLight Setup Parent: {__instance.transform.name}");
+    //        //Logger.log?.Warn($"SaberLight Setup Parent: { Plugin.instance.OptionLight.SaberLights[____saberType] is null}");
+    //        //Logger.log?.Warn($"SaberLight Setup Parent: { Plugin.instance.OptionLight.SaberLights[____saberType].gameObject is null}");
+    //        //Logger.log?.Warn($"SaberLight Setup Parent: { Plugin.instance.OptionLight.SaberLights[____saberType].transform.name}");
+    //        //Plugin.instance.OptionLight.SaberLights[____saberType].transform.SetParent(__instance.transform);
+    //        //Plugin.instance.OptionLight.SaberLights[____saberType].color = ____colorManager.ColorForSaberType(____saberType);
+
+    //        //if (____saberType == SaberType.SaberA)
+    //        //{
+
+
+    //        //    //Logger.log?.Warn($"RightSaberLight Setup Parent: {__instance.transform} {Plugin.instance.OptionLight.RightSaberLight.transform.parent.name}");
+    //        //    //Logger.log?.Warn($"RightSaberLight Setup Color: {____colorManager is null} {Plugin.instance.OptionLight.RightSaberLight.transform.parent.name}");
+    //        //}
+    //        //else if (____saberType == SaberType.SaberB)
+    //        //{
+    //        //    //Logger.log?.Warn($"LeftSaberLight Setup: {Plugin.instance.OptionLight.LeftSaberLight is null} {Plugin.instance.OptionLight.LeftSaberLight.transform.parent.name}");
+    //        //    //Plugin.instance.OptionLight.LeftSaberLight.transform.parent = __instance.transform;
+    //        //    //Logger.log?.Warn($"LeftSaberLight Setup Parent: {__instance.transform} {Plugin.instance.OptionLight.LeftSaberLight.transform.parent.name}");
+    //        //    //Logger.log?.Warn($"LeftSaberLight Setup Color: {____colorManager is null} {Plugin.instance.OptionLight.LeftSaberLight.transform.parent.name}");
+    //        //    //Plugin.instance.OptionLight.LeftSaberLight.color = ____colorManager.ColorForSaberType(____saberType);
+    //        //}
+    //    }
+
+    //}
 }

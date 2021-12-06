@@ -11,8 +11,8 @@ namespace VMCAvatarMaterialChange.Views.MaterialChange
     {
         //public override string ResourceName => "VMCAvatarMaterialChange.Views.MaterialChange.MaterialChangeUI.bsml";
 
-        public ModMainFlowCoordinator2 mainFlowCoordinator { get; set; }
-        public void SetMainFlowCoordinator(ModMainFlowCoordinator2 mainFlowCoordinator)
+        public ModMainFlowCoordinator mainFlowCoordinator { get; set; }
+        public void SetMainFlowCoordinator(ModMainFlowCoordinator mainFlowCoordinator)
         {
             this.mainFlowCoordinator = mainFlowCoordinator;
         }
@@ -22,6 +22,8 @@ namespace VMCAvatarMaterialChange.Views.MaterialChange
         }
         protected override void DidDeactivate(bool removedFromHierarchy, bool screenSystemDisabling)
         {
+            OtherMaterialChangeSetting.Instance.SaveConfiguration();
+            VMCMaterialChange.instance.VRMCopyDestroy();
             base.DidDeactivate(removedFromHierarchy, screenSystemDisabling);
         }
 
@@ -132,5 +134,76 @@ namespace VMCAvatarMaterialChange.Views.MaterialChange
             }
         }
 
+        #region AvatarCopy
+
+
+        [UIAction("copy-avatarWPos")]
+        private void AvatarCopyWPos()
+        {
+            VMCMaterialChange.instance.VRMCopy(true);
+        }
+        [UIAction("copy-avatarWPosTimer")]
+        private void AvatarCopyWPosTime()
+        {
+            VMCAvatarMaterialChangeController.CopyMode = true;
+            VMCAvatarMaterialChangeController.CopyStart = true;
+        }
+        [UIAction("copy-avatarAPos")]
+        private void AvatarCopyAPos()
+        {
+            VMCMaterialChange.instance.VRMCopy(false);
+        }
+        [UIAction("copy-avatarAPosTimer")]
+        private void AvatarCopyAPoTime()
+        {
+            VMCAvatarMaterialChangeController.CopyMode = false;
+            VMCAvatarMaterialChangeController.CopyStart = true;
+        }
+
+
+        [UIValue("DestroyState")]
+        private bool DestroyState = VMCAvatarMaterialChangeController.AutoDestroy;
+        [UIAction("auto-AvatarDestroyStateChange")]
+        private void AvatarDestroyStateChange(bool value)
+        {
+            VMCAvatarMaterialChangeController.AutoDestroy = DestroyState = value;
+        }
+
+        [UIAction("copy-avatarDestroy")]
+        private void AvatarDestroy()
+        {
+            VMCMaterialChange.instance.VRMCopyDestroy();
+        }
+
+        #endregion
+
+
+        #region AvatarLight
+
+        [UIValue("AmbientLight")]
+        private bool IsAmbientLight = OtherMaterialChangeSetting.Instance.OtherParameter.IsAmbientLight;
+        [UIAction("AmbientLightChange")]
+        private void AmbientLightChange(bool value)
+        {
+            OtherMaterialChangeSetting.Instance.OtherParameter.IsAmbientLight = IsAmbientLight = value;
+        }
+
+        [UIValue("VMCLightBoost")]
+        private float VMCLightBoost = OtherMaterialChangeSetting.Instance.OtherParameter.VMCLightBoost;
+        [UIAction("VMCLightBoostChange")]
+        private void VMCLightBoostChange(float value)
+        {
+            OtherMaterialChangeSetting.Instance.OtherParameter.VMCLightBoost = VMCLightBoost = value;
+        }
+
+        [UIValue("AmbientLightBoost")]
+        private float AmbientLightBoost = OtherMaterialChangeSetting.Instance.OtherParameter.AmbientLightBoost;
+        [UIAction("AmbientLightBoostChange")]
+        private void AmbientLightBoostChange(float value)
+        {
+            OtherMaterialChangeSetting.Instance.OtherParameter.AmbientLightBoost = AmbientLightBoost = value;
+        }
+
+        #endregion
     }
 }

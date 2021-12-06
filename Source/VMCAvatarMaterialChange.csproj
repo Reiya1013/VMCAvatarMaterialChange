@@ -64,6 +64,11 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Colors.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
+    <Reference Include="GameplayCore, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\GameplayCore.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Heck, Version=1.3.1.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Plugins\Heck.dll</HintPath>
@@ -202,12 +207,8 @@
     <Compile Include="InputManager.cs" />
     <Compile Include="Option\VMCAvatarRoomAdjust.cs" />
     <Compile Include="Option\VRMOptionLight.cs" />
-    <Compile Include="Views\AvatarCopy\AvatarCopyUI.cs" />
-    <Compile Include="Views\AvatarLight\AvatarLightUI.cs" />
-    <Compile Include="Views\AvatarLight\ModMainFlowCoordinator_AvatarLight.cs" />
     <Compile Include="Views\MaterialChange\MaterialChangeUI.cs" />
-    <Compile Include="Views\AvatarCopy\ModMainFlowCoordinator_AvatarCopy.cs" />
-    <Compile Include="Views\MaterialChange\ModMainFlowCoordinator2.cs" />
+    <Compile Include="Views\MaterialChange\ModMainFlowCoordinator.cs" />
     <Compile Include="Configuration\OtherMaterialChangeSetting.cs" />
     <Compile Include="VMCMaterialChange.cs" />
     <Compile Include="Harmony\Patches.cs" />
@@ -225,9 +226,7 @@
   <ItemGroup>
     <EmbeddedResource Include="bs_shaders" />
     <None Include="BuildTargets.targets" />
-    <EmbeddedResource Include="Views\AvatarCopy\AvatarCopyUI.bsml" />
     <EmbeddedResource Include="Views\MaterialChange\MaterialChangeUI.bsml" />
-    <EmbeddedResource Include="Views\AvatarLight\AvatarLightUI.bsml" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Views\VMCAvatarMCSetting\settings.bsml" />

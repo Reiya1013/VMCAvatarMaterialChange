@@ -3,7 +3,7 @@ using HMUI;
 
 namespace VMCAvatarMaterialChange.Views.MaterialChange
 {
-    class ModMainFlowCoordinator2 : FlowCoordinator
+    class ModMainFlowCoordinator : FlowCoordinator
     {
         private const string titleString = "MaterialChange";
         private MaterialChangeUI materialChangeUI;

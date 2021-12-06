@@ -12,7 +12,8 @@ namespace VMCAvatarMaterialChange
     {
 
 		private Vector3 startOffset;
-		public VRCenterAdjust centerAdjust;
+		public VRCenterAdjust CenterAdjust;
+
 
 		private void Awake()
 		{
@@ -27,15 +28,24 @@ namespace VMCAvatarMaterialChange
 		/// <param name="nextScene"></param>
 		public void OnActiveSceneChanged(Scene prevScene, Scene nextScene)
 		{
-			if (!centerAdjust) return;
+			//作りかけのため一時停止
+			return;
+
+			if (!CenterAdjust) return;
 			if (nextScene.name == "MainMenu")
 			{
-				centerAdjust.transform.position = startOffset;
+				CenterAdjust.transform.position = startOffset;
 			}
 			if (nextScene.name == "GameCore")
 			{
-				startOffset = centerAdjust.transform.position;
+				startOffset = CenterAdjust.transform.position;
 			}
+		}
+
+		public void SetupVRCenterAdjust(VRCenterAdjust centerAdjust)
+        {
+			CenterAdjust = centerAdjust;
+			startOffset = CenterAdjust.transform.position;
 		}
 	}
 }

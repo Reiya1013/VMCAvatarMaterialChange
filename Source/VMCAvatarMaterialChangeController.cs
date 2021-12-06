@@ -2,9 +2,7 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.MenuButtons;
 using UnityEngine;
-using VMCAvatarMaterialChange.Views.AvatarCopy;
 using VMCAvatarMaterialChange.Views.MaterialChange;
-using VMCAvatarMaterialChange.Views.AvatarLight;
 using IPALogger = IPA.Logging.Logger;
 using VRUIControls;
 
@@ -17,17 +15,11 @@ namespace VMCAvatarMaterialChange
     public class VMCAvatarMaterialChangeController : MonoBehaviour
     {
         public static VMCAvatarMaterialChangeController instance { get; private set; }
-        private ModMainFlowCoordinator_AvatarCopy mainFlowCoordinator_AvatarCopy;
-        private ModMainFlowCoordinator2 mainFlowCoordinator2;
-        private ModMainFlowCoordinator_AvatarLight mainFlowCoordinator_AvatarLight;
+        private ModMainFlowCoordinator mainFlowCoordinator;
         internal static string Name => "VMCAvatarMaterialChange";
         internal static bool CopyStart = false;
         internal static bool CopyMode = false;
         internal static bool AutoDestroy = true;
-
-        //マテリアルチェンジクラス
-        //internal static VMCMaterialChange VMCMC = new VMCMaterialChange();
-
 
         private InputManager inputManager;
 
@@ -51,57 +43,24 @@ namespace VMCAvatarMaterialChange
             instance.name = Name;
             Logger.log?.Debug($"{name}: Awake()");
 
-            //AvatarCopyMenu
-            MenuButton menuButton = new MenuButton("Avatar Copy", "Avatar Copy", ShowModMainFlowCoordinator_AvatarCopy, true);
-            MenuButtons.instance.RegisterButton(menuButton);
-
             //MaterialChangeMenu
-            MenuButton menuButton2 = new MenuButton("MaterialChange", "Material Change", ShowModFlowCoordinator2, true);
+            MenuButton menuButton2 = new MenuButton("Material Change", "Material Change", ShowModFlowCoordinator, true);
             MenuButtons.instance.RegisterButton(menuButton2);
-
-            //AvatarLightMenu
-            MenuButton menuButton3 = new MenuButton("Avata Light", "Set whether it is affected by ambient light", ShowModMainFlowCoordinator_AvatarLight, true);
-            MenuButtons.instance.RegisterButton(menuButton3);
-
 
             //コントローラーフック
             //InputManager.instance.BeginPolling();
         }
 
         /// <summary>
-        /// アバターコピーメニューコントローラー
-        /// </summary>
-        public void ShowModMainFlowCoordinator_AvatarCopy()
-        {
-            if (this.mainFlowCoordinator_AvatarCopy == null)
-                this.mainFlowCoordinator_AvatarCopy = BeatSaberUI.CreateFlowCoordinator<ModMainFlowCoordinator_AvatarCopy>();
-            if (mainFlowCoordinator_AvatarCopy.IsBusy) return;
-
-            BeatSaberUI.MainFlowCoordinator.PresentFlowCoordinator(mainFlowCoordinator_AvatarCopy);
-        }
-
-        /// <summary>
         /// MaterialChangeメニューコントローラー
         /// </summary>
-        public void ShowModFlowCoordinator2()
+        public void ShowModFlowCoordinator()
         {
-            if (this.mainFlowCoordinator2 == null)
-                this.mainFlowCoordinator2 = BeatSaberUI.CreateFlowCoordinator<ModMainFlowCoordinator2>();
-            if (mainFlowCoordinator2.IsBusy) return;
+            if (this.mainFlowCoordinator == null)
+                this.mainFlowCoordinator = BeatSaberUI.CreateFlowCoordinator<ModMainFlowCoordinator>();
+            if (mainFlowCoordinator.IsBusy) return;
 
-            BeatSaberUI.MainFlowCoordinator.PresentFlowCoordinator(mainFlowCoordinator2);
-        }
-
-        /// <summary>
-        /// MaterialChangeメニューコントローラー
-        /// </summary>
-        public void ShowModMainFlowCoordinator_AvatarLight()
-        {
-            if (this.mainFlowCoordinator_AvatarLight == null)
-                this.mainFlowCoordinator_AvatarLight = BeatSaberUI.CreateFlowCoordinator<ModMainFlowCoordinator_AvatarLight>();
-            if (mainFlowCoordinator_AvatarLight.IsBusy) return;
-
-            BeatSaberUI.MainFlowCoordinator.PresentFlowCoordinator(mainFlowCoordinator_AvatarLight);
+            BeatSaberUI.MainFlowCoordinator.PresentFlowCoordinator(mainFlowCoordinator);
         }
 
         /// <summary>
