@@ -156,7 +156,7 @@ public class EditorWindowSample : EditorWindow
             }
         }
 
-        if (!CheckSaber())
+        if (!CheckSader())
         {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("※BeatSaber用シェーダー以外が使用されてます。");
@@ -201,14 +201,17 @@ public class EditorWindowSample : EditorWindow
         }
     }
 
-    private bool CheckSaber()
+    private bool CheckSader()
     {
         foreach (Material material in _base._newMaterialsValue.Values)
         {
-            //シェーダー名にBeatSaberが含まれてるか確認し、含まれてない場合頭にBeatSaber/をつけてシェーダーがあるか確認し、ある場合置き換える
-            if (!material.shader.name.Contains("BeatSaber/"))
+            if (material != null)
             {
-                return false;
+                //シェーダー名にBeatSaberが含まれてるか確認し、含まれてない場合頭にBeatSaber/をつけてシェーダーがあるか確認し、ある場合置き換える
+                if (!material.shader.name.Contains("BeatSaber/"))
+                {
+                    return false;
+                }
             }
         }
         return true;

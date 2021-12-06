@@ -159,48 +159,55 @@ Shader "BeatSaber/MToon"
             ENDCG
         }
         
-      
-        Pass
+
+
+
+
+        // Forward Base(BeatSaber)
+        Pass 
         {
+            Name "FORWARD_BASE_BS"
+            Tags { "LightMode" = "ForwardBase" }
+
+            //ZTest LEqual
+
             Blend Zero One,One Zero //AlphaÇæÇØè„èëÇ´
             Cull Off
             ZWrite Off
 
+            //Cull [_CullMode]
+            //Blend [_SrcBlend] [_DstBlend]
+            //ZWrite On
+            //ZTest LEqual
+            //AlphaToMask [_AlphaToMask]
+
             CGPROGRAM
-            
+            #pragma target 3.0
+            #pragma shader_feature _ MTOON_DEBUG_NORMAL MTOON_DEBUG_LITSHADERATE
+            #pragma multi_compile _ _NORMALMAP
+            #pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
+            #pragma multi_compile IS_BEATSABER
             #include "./MToonSM3.cginc"
             #pragma vertex vert_forward_base
-            #pragma fragment frag_AlphaOff
-            //#pragma vertex vert
-            //#pragma fragment frag
-
-            //struct v2f {
-            //    float4 pos : SV_POSITION;
-            //};
-            
-            //v2f vert (appdata_base v)
-            //{
-            //    v2f o;
-            //    o.pos = UnityObjectToClipPos(v.vertex);
-            //    return o;
-            //}
-
-            //fixed4 frag (v2f i) : SV_Target
-            //{
-            //    fixed4 rtn = fixed4(0,0,0,0);
-            //        half3 emission = tex2D(_EmissionMap, mainUv).rgb * _EmissionColor.rgb;
-
-            //    return rtn;
-            //}
+            #pragma fragment frag_forward
+            #pragma multi_compile_fwdbase
+            #pragma multi_compile_fog
+//            #pragma multi_compile_instancing
             ENDCG
         }
 
-        Pass
+        // Forward Base Outline Pass(BeatSaber)
+        Pass 
         {
+            Name "FORWARD_BASE_ONLY_OUTLINE_BS"
+            Tags { "LightMode" = "ForwardBase" }
+
+            //ZTest LEqual
+            Offset 1, 1
+
             Blend Zero One,One Zero //AlphaÇæÇØè„èëÇ´
             Cull Off
             ZWrite Off
-            Offset 1, 1
 
             CGPROGRAM
             #pragma target 3.0
@@ -210,19 +217,93 @@ Shader "BeatSaber/MToon"
             #pragma multi_compile _ _NORMALMAP
             #pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
             #define MTOON_CLIP_IF_OUTLINE_IS_NONE
+            #pragma multi_compile IS_BEATSABER
             #include "./MToonSM3.cginc"
             #pragma vertex vert_forward_base_outline
-            #pragma fragment frag
+            #pragma fragment frag_forward
             #pragma multi_compile_fwdbase
             #pragma multi_compile_fog
-
-            fixed4 frag (v2f i) : SV_Target
-            {
-                fixed4 rtn = fixed4(0,0,0,0);
-                return rtn;
-            }
+//            #pragma multi_compile_instancing
             ENDCG
         }
+        
+
+
+        //Pass
+        //{
+        //    Blend Zero One,One Zero //AlphaÇæÇØè„èëÇ´
+        //    Cull Off
+        //    ZWrite Off
+
+        //    CGPROGRAM
+            
+        //    #include "./MToonSM3.cginc"
+        //    #pragma vertex vert_forward_base
+        //    #pragma fragment frag_AlphaOff
+        //    //#pragma vertex vert
+        //    //#pragma fragment frag
+
+        //    //struct v2f {
+        //    //    float4 pos : SV_POSITION;
+        //    //};
+            
+        //    //v2f vert (appdata_base v)
+        //    //{
+        //    //    v2f o;
+        //    //    o.pos = UnityObjectToClipPos(v.vertex);
+        //    //    return o;
+        //    //}
+
+        //    //fixed4 frag (v2f i) : SV_Target
+        //    //{
+        //    //    fixed4 rtn = fixed4(0,0,0,0);
+        //    //        half3 emission = tex2D(_EmissionMap, mainUv).rgb * _EmissionColor.rgb;
+
+        //    //    return rtn;
+        //    //}
+        //    ENDCG
+        //}
+
+        //Pass
+        //{
+        //    Blend Zero One,One Zero //AlphaÇæÇØè„èëÇ´
+        //    Cull Off
+        //    ZWrite Off
+        //    Offset 1, 1
+
+        //    CGPROGRAM
+        //    #pragma target 3.0
+        //    #pragma shader_feature _ MTOON_DEBUG_NORMAL MTOON_DEBUG_LITSHADERATE
+        //    #pragma multi_compile _ MTOON_OUTLINE_WIDTH_WORLD MTOON_OUTLINE_WIDTH_SCREEN
+        //    #pragma multi_compile _ MTOON_OUTLINE_COLOR_FIXED MTOON_OUTLINE_COLOR_MIXED
+        //    #pragma multi_compile _ _NORMALMAP
+        //    #pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
+        //    #define MTOON_CLIP_IF_OUTLINE_IS_NONE
+        //    #include "./MToonSM3.cginc"
+        //    #pragma vertex vert_forward_base_outline
+        //    #pragma fragment frag
+        //    #pragma multi_compile_fwdbase
+        //    #pragma multi_compile_fog
+
+        //    fixed4 frag (v2f i) : SV_Target
+        //    {
+        //        fixed4 rtn = fixed4(0,0,0,0);
+        //        return rtn;
+        //    }
+        //    ENDCG
+        //}
+
+
+
+
+
+
+
+
+
+
+
+
 
         //Pass
         //{

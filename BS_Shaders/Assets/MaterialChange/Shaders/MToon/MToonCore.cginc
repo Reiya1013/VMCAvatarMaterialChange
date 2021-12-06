@@ -273,10 +273,12 @@ float4 frag_forward(v2f i) : SV_TARGET
 #endif
 
     // Emission
+float beatsabel_alpha = 0.0f;
 #ifdef MTOON_FORWARD_ADD
 #else
     half3 emission = tex2D(_EmissionMap, mainUv).rgb * _EmissionColor.rgb;
     col += lerp(emission, half3(0, 0, 0), i.isOutline);
+    beatsabel_alpha = emission;
 #endif
 
     // outline
@@ -301,6 +303,14 @@ float4 frag_forward(v2f i) : SV_TARGET
         return float4(lightIntensity * lighting, alpha);
     #endif
 #endif
+
+//BeatSabel‘Î‰ž
+#ifdef IS_BEATSABER
+    col = 0;
+    alpha = beatsabel_alpha;
+    alpha = 0.0f;
+#endif
+
 
 
     half4 result = half4(col, alpha);
