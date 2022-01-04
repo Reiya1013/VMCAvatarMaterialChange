@@ -1,6 +1,7 @@
 Shader "Hidden/ltspass_lite_opaque/BeatSaber"
 {
     HLSLINCLUDE
+        #pragma exclude_renderers d3d11_9x
         #define LIL_RENDER 0
         #define LIL_LITE
     ENDHLSL
@@ -13,7 +14,7 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
         // Forward
         Pass
         {
-            Name "FORWARD_BeatSaber"
+            Name "FORWARD"
             Tags {"LightMode" = "ForwardBase"}
 
             Stencil
@@ -26,32 +27,29 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
                 Fail [_StencilFail]
                 ZFail [_StencilZFail]
             }
-            Cull [_Cull]
-            ZTest [_ZTest]
-            //ColorMask [_ColorMask]
+            Cull Off
+            ZTest LEqual
             Offset [_OffsetFactor], [_OffsetUnits]
-            //BlendOp [_BlendOp], [_BlendOpAlpha]
             
-            Blend Zero One,One Zero //AlphaÇæÇØè„èëÇ´
+            Blend Zero One,One Zero //AlphaÔøΩÔøΩÔøΩÔøΩÔøΩ„èëÔøΩÔøΩ
             ZWrite Off
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.5
             #pragma multi_compile_fwdbase
-            #pragma multi_compile_fog
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma fragmentoption ARB_precision_hint_fastest
-            #pragma skip_variants SHADOWS_SCREEN
+            #pragma skip_variants SHADOWS_SCREEN DIRLIGHTMAP_COMBINED
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #define _BeatSaber_Alpha
-            #include "Includes/lil_pass_lite.hlsl"
+            #include "Includes/lil_pass_forward.hlsl"
 
             ENDHLSL
         }
@@ -59,7 +57,7 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
         // Forward Outline
         Pass
         {
-            Name "FORWARD_OUTLINE_BeatSaber"
+            Name "FORWARD_OUTLINE"
             Tags {"LightMode" = "ForwardBase"}
 
             Stencil
@@ -72,33 +70,30 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
                 Fail [_OutlineStencilFail]
                 ZFail [_OutlineStencilZFail]
             }
-            Cull [_OutlineCull]
-            ZTest [_OutlineZTest]
-            //ColorMask [_OutlineColorMask]
+            Cull Off
+            ZTest LEqual
             Offset [_OutlineOffsetFactor], [_OutlineOffsetUnits]
-            //BlendOp [_OutlineBlendOp], [_OutlineBlendOpAlpha]
             
-            Blend Zero One,One Zero //AlphaÇæÇØè„èëÇ´
+            Blend Zero One,One Zero //AlphaÔøΩÔøΩÔøΩÔøΩÔøΩ„èëÔøΩÔøΩ
             ZWrite Off
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.5
             #pragma multi_compile_fwdbase
-            #pragma multi_compile_fog
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma fragmentoption ARB_precision_hint_fastest
-            #pragma skip_variants SHADOWS_SCREEN
+            #pragma skip_variants SHADOWS_SCREEN DIRLIGHTMAP_COMBINED
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #define _BeatSaber_Alpha
             #define LIL_OUTLINE
-            #include "Includes/lil_pass_lite.hlsl"
+            #include "Includes/lil_pass_forward.hlsl"
 
             ENDHLSL
         }
@@ -106,7 +101,7 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
         // ForwardAdd
         Pass
         {
-            Name "FORWARD_ADD_BeatSaber"
+            Name "FORWARD_ADD"
             Tags {"LightMode" = "ForwardAdd"}
 
             Stencil
@@ -119,36 +114,87 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
                 Fail [_StencilFail]
                 ZFail [_StencilZFail]
             }
-		    Cull [_Cull]
+            Cull Off
             ZTest LEqual
-            //ColorMask [_ColorMask]
             Offset [_OffsetFactor], [_OffsetUnits]
-            //BlendOp [_BlendOpFA], [_BlendOpAlphaFA]
             Fog { Color(0,0,0,0) }
-                        
-            Blend Zero One,One Zero //AlphaÇæÇØè„èëÇ´
+            
+            Blend Zero One,One Zero //AlphaÔøΩÔøΩÔøΩÔøΩÔøΩ„èëÔøΩÔøΩ
             ZWrite Off
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.5
-            #pragma multi_compile_fwdadd
-            #pragma multi_compile_fog
+            #pragma multi_compile_fragment POINT DIRECTIONAL SPOT POINT_COOKIE DIRECTIONAL_COOKIE
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma fragmentoption ARB_precision_hint_fastest
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
+            #define _BeatSaber_Alpha
             #define LIL_PASS_FORWARDADD
-            #include "Includes/lil_pass_lite.hlsl"
+            #include "Includes/lil_pass_forward.hlsl"
 
             ENDHLSL
         }
 
+        // ShadowCaster
+        Pass
+        {
+            Name "SHADOW_CASTER"
+            Tags {"LightMode" = "ShadowCaster"}
+            Offset 1, 1
+            Cull Off
+            
+            Blend Zero One,One Zero //AlphaÔøΩÔøΩÔøΩÔøΩÔøΩ„èëÔøΩÔøΩ
+            ZWrite Off
+
+            HLSLPROGRAM
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Build Option
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_shadowcaster
+            #pragma multi_compile_instancing
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Pass
+             #define _BeatSaber_Alpha
+            #include "Includes/lil_pass_shadowcaster.hlsl"
+
+            ENDHLSL
+        }
+
+        // Meta
+        Pass
+        {
+            Name "META"
+            Tags {"LightMode" = "Meta"}
+            Cull Off
+            
+            Blend Zero One,One Zero //AlphaÔøΩÔøΩÔøΩÔøΩÔøΩ„èëÔøΩÔøΩ
+            ZWrite Off
+
+            HLSLPROGRAM
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Build Option
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma shader_feature EDITOR_VISUALIZATION
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Pass
+            #define _BeatSaber_Alpha
+            #include "Includes/lil_pass_meta.hlsl"
+
+            ENDHLSL
+        }
     }
 //
 // BRP End
@@ -203,8 +249,8 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
             // Skip receiving shadow
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            //#pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            //#pragma multi_compile_fragment _ _SHADOWS_SOFT
 
             //------------------------------------------------------------------------------------------------------------------
             // Pass
@@ -379,8 +425,8 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
             #pragma multi_compile_instancing
 
             // Skip receiving shadow
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            //#pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            //#pragma multi_compile_fragment _ _SHADOWS_SOFT
 
             //------------------------------------------------------------------------------------------------------------------
             // Pass
@@ -558,8 +604,8 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
             // Skip receiving shadow
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            //#pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            //#pragma multi_compile_fragment _ _SHADOWS_SOFT
 
             //------------------------------------------------------------------------------------------------------------------
             // Pass
@@ -805,8 +851,8 @@ Shader "Hidden/ltspass_lite_opaque/BeatSaber"
             #pragma multi_compile_instancing
 
             // Skip receiving shadow
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            //#pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            //#pragma multi_compile_fragment _ _SHADOWS_SOFT
 
             //------------------------------------------------------------------------------------------------------------------
             // Pass

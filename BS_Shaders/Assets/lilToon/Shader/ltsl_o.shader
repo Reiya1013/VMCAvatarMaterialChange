@@ -7,10 +7,17 @@ Shader "Hidden/lilToonLiteOutline"
         [lilToggle]     _Invisible                  ("Invisible", Int) = 0
                         _AsUnlit                    ("As Unlit", Range(0, 1)) = 0
                         _Cutoff                     ("Alpha Cutoff", Range(0,1)) = 0.5
+                        _SubpassCutoff              ("Subpass Alpha Cutoff", Range(0,1)) = 0.5
         [lilToggle]     _FlipNormal                 ("Flip Backface Normal", Int) = 0
+        [lilToggle]     _ShiftBackfaceUV            ("Shift Backface UV", Int) = 0
                         _BackfaceForceShadow        ("Backface Force Shadow", Range(0,1)) = 0
                         _VertexLightStrength        ("Vertex Light Strength", Range(0,1)) = 1
                         _LightMinLimit              ("Light Min Limit", Range(0,1)) = 0
+                        _LightMaxLimit              ("Light Max Limit", Range(0,10)) = 1
+                        _BeforeExposureLimit        ("Before Exposure Limit", Float) = 10000
+                        _MonochromeLighting         ("Monochrome lighting", Range(0,1)) = 0
+                        _lilDirectionalLightStrength ("Directional Light Strength", Range(0,1)) = 1
+        [lilVec3]       _LightDirectionOverride     ("Light Direction Override", Vector) = (0,0.001,0,0)
         [NoScaleOffset] _TriMask                    ("TriMask", 2D) = "white" {}
 
         //----------------------------------------------------------------------------------------------------------------------
@@ -28,16 +35,19 @@ Shader "Hidden/lilToonLiteOutline"
                         _Shadow2ndBorder            ("2nd Border", Range(0, 1)) = 0.5
                         _Shadow2ndBlur              ("2nd Blur", Range(0, 1)) = 0.3
         [NoScaleOffset] _Shadow2ndColorTex          ("Shadow 2nd Color", 2D) = "black" {}
-                        _ShadowEnvStrength          ("Environment Strength", Range(0, 1)) = 1
+                        _ShadowEnvStrength          ("Environment Strength", Range(0, 1)) = 0
                         _ShadowBorderColor          ("Border Color", Color) = (1,0,0,1)
                         _ShadowBorderRange          ("Border Range", Range(0, 1)) = 0
 
         //----------------------------------------------------------------------------------------------------------------------
         // MatCap
         [lilToggleLeft] _UseMatCap                  ("Use MatCap", Int) = 0
-        [NoScaleOffset] _MatCapTex                  ("Texture", 2D) = "white" {}
-        [lilToggle]     _MatCapMul                  ("Multiply", Int) = 0
+                        _MatCapTex                  ("Texture", 2D) = "white" {}
+        [lilVec2R]      _MatCapBlendUV1             ("Blend UV1", Vector) = (0,0,0,0)
         [lilToggle]     _MatCapZRotCancel           ("Z-axis rotation cancellation", Int) = 1
+        [lilToggle]     _MatCapPerspective          ("Fix Perspective", Int) = 1
+                        _MatCapVRParallaxStrength   ("VR Parallax Strength", Range(0, 1)) = 1
+        [lilToggle]     _MatCapMul                  ("Multiply", Int) = 0
 
         //----------------------------------------------------------------------------------------------------------------------
         // Rim
@@ -46,14 +56,15 @@ Shader "Hidden/lilToonLiteOutline"
                         _RimBorder                  ("Border", Range(0, 1)) = 0.5
                         _RimBlur                    ("Blur", Range(0, 1)) = 0.1
         [PowerSlider(3.0)]_RimFresnelPower          ("Fresnel Power", Range(0.01, 50)) = 3.0
-        [lilToggle]     _RimShadowMask              ("Shadow Mask", Int) = 0
+                        _RimShadowMask              ("Shadow Mask", Range(0, 1)) = 0
 
         //----------------------------------------------------------------------------------------------------------------------
         // Emmision
         [lilToggleLeft] _UseEmission                ("Use Emission", Int) = 0
-        [HDR][lilHDR]   _EmissionColor              ("Color", Color) = (1,1,1)
+        [HDR][lilHDR]   _EmissionColor              ("Color", Color) = (1,1,1,1)
                         _EmissionMap                ("Texture", 2D) = "white" {}
         [lilUVAnim]     _EmissionMap_ScrollRotate   ("Angle|UV Animation|Scroll|Rotate", Vector) = (0,0,0,0)
+        [lilEnum]       _EmissionMap_UVMode         ("UV Mode|UV0|UV1|UV2|UV3|Rim", Int) = 0
         [lilBlink]      _EmissionBlink              ("Blink Strength|Blink Type|Blink Speed|Blink Offset", Vector) = (0,0,3.141593,0)
 
         //----------------------------------------------------------------------------------------------------------------------
@@ -83,6 +94,7 @@ Shader "Hidden/lilToonLiteOutline"
                                                         _OffsetFactor       ("Offset Factor", Float) = 0
                                                         _OffsetUnits        ("Offset Units", Float) = 0
         [lilColorMask]                                  _ColorMask          ("Color Mask", Int) = 15
+        [lilToggle]                                     _AlphaToMask        ("AlphaToMask", Int) = 0
 
         //----------------------------------------------------------------------------------------------------------------------
         // Outline
@@ -97,7 +109,7 @@ Shader "Hidden/lilToonLiteOutline"
 
         //----------------------------------------------------------------------------------------------------------------------
         // Outline Advanced
-        [lilCullMode]                                   _OutlineCull                ("Cull Mode|Off|Front|Back", Int) = 1
+        [lilEnum]                                       _OutlineCull                ("Cull Mode|Off|Front|Back", Int) = 1
         [Enum(UnityEngine.Rendering.BlendMode)]         _OutlineSrcBlend            ("SrcBlend", Int) = 1
         [Enum(UnityEngine.Rendering.BlendMode)]         _OutlineDstBlend            ("DstBlend", Int) = 0
         [Enum(UnityEngine.Rendering.BlendMode)]         _OutlineSrcBlendAlpha       ("SrcBlendAlpha", Int) = 1
@@ -122,6 +134,13 @@ Shader "Hidden/lilToonLiteOutline"
                                                         _OutlineOffsetFactor        ("Offset Factor", Float) = 0
                                                         _OutlineOffsetUnits         ("Offset Units", Float) = 0
         [lilColorMask]                                  _OutlineColorMask           ("Color Mask", Int) = 15
+        [lilToggle]                                     _OutlineAlphaToMask         ("AlphaToMask", Int) = 0
+
+        //----------------------------------------------------------------------------------------------------------------------
+        // Save (Unused)
+        [HideInInspector] [MainColor]                   _BaseColor          ("Color", Color) = (1,1,1,1)
+        [HideInInspector] [MainTexture]                 _BaseMap            ("Texture", 2D) = "white" {}
+        [HideInInspector]                               _BaseColorMap       ("Texture", 2D) = "white" {}
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -136,8 +155,9 @@ Shader "Hidden/lilToonLiteOutline"
         UsePass "Hidden/ltspass_lite_opaque/SHADOW_CASTER"
         UsePass "Hidden/ltspass_lite_opaque/META"
          
-        //UsePass "Hidden/ltspass_lite_opaque/FORWARD_BeatSaber"
-        //UsePass "Hidden/ltspass_lite_opaque/FORWARD_OUTLINE_BeatSaber"
+        UsePass "Hidden/ltspass_lite_opaque/BeatSaber/FORWARD"
+        UsePass "Hidden/ltspass_lite_opaque/BeatSaber/FORWARD_OUTLINE"
+        UsePass "Hidden/ltspass_lite_opaque/BeatSaber/SHADOW_CASTER"
     }
 //
 // BRP End
@@ -173,6 +193,22 @@ Shader "Hidden/lilToonLiteOutline"
     }
 */
 // URP End
+
+//----------------------------------------------------------------------------------------------------------------------
+// HDRP Start
+/*
+    SubShader
+    {
+        Tags {"RenderPipeline"="HDRenderPipeline" "RenderType" = "HDLitShader" "Queue" = "Geometry"}
+        UsePass "Hidden/ltspass_lite_opaque/FORWARD"
+        UsePass "Hidden/ltspass_lite_opaque/FORWARD_OUTLINE"
+        UsePass "Hidden/ltspass_lite_opaque/SHADOW_CASTER"
+        UsePass "Hidden/ltspass_lite_opaque/DEPTHONLY_OUTLINE"
+        UsePass "Hidden/ltspass_lite_opaque/MOTIONVECTORS_OUTLINE"
+        UsePass "Hidden/ltspass_lite_opaque/META"
+    }
+*/
+// HDRP End
 
     Fallback "Unlit/Texture"
     CustomEditor "lilToon.lilToonInspector"

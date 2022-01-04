@@ -18,39 +18,22 @@ namespace lilToon
         [MenuItem("Assets/lilToon/Refresh shaders", false, 20)]
         static void RefreshShaders()
         {
-            string[] shaderFolderPaths = lilToonInspector.GetShaderFolderPaths();
-            string shaderPipelinePath = lilToonInspector.GetShaderPipelinePath();
+            lilToonInspector.RewriteShaderRP();
             string shaderSettingPath = lilToonInspector.GetShaderSettingPath();
+            lilToonSetting shaderSetting = (lilToonSetting)AssetDatabase.LoadAssetAtPath(shaderSettingPath, typeof(lilToonSetting));
+            if(shaderSetting != null) lilToonInspector.ApplyShaderSetting(shaderSetting);
+
+            string[] shaderFolderPaths = lilToonInspector.GetShaderFolderPaths();
+            bool isShadowReceive = shaderSetting.LIL_FEATURE_SHADOW && shaderSetting.LIL_FEATURE_RECEIVE_SHADOW || shaderSetting.LIL_FEATURE_BACKLIGHT;
             string[] shaderGuids = AssetDatabase.FindAssets("t:shader", shaderFolderPaths);
-            if(shaderGuids.Length > 33)
+            foreach(string shaderGuid in shaderGuids)
             {
-                // Render Pipeline
-                // BRP : null
-                // LWRP : LightweightPipeline.LightweightRenderPipelineAsset
-                // URP : Universal.UniversalRenderPipelineAsset
-                lilToonInspector.lilRenderPipeline lilRP = lilToonInspector.lilRenderPipeline.BRP;
-                if(UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset != null)
-                {
-                    string renderPipelineName = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset.ToString();
-                    if(String.IsNullOrEmpty(renderPipelineName))        lilRP = lilToonInspector.lilRenderPipeline.BRP;
-                    else if(renderPipelineName.Contains("Lightweight")) lilRP = lilToonInspector.lilRenderPipeline.LWRP;
-                    else if(renderPipelineName.Contains("Universal"))   lilRP = lilToonInspector.lilRenderPipeline.URP;
-                }
-                else
-                {
-                    lilRP = lilToonInspector.lilRenderPipeline.BRP;
-                }
-                foreach(string shaderGuid in shaderGuids)
-                {
-                    string shaderPath = AssetDatabase.GUIDToAssetPath(shaderGuid);
-                    lilToonInspector.RewriteShaderRP(shaderPath, lilRP);
-                }
-                lilToonInspector.RewriteShaderRP(shaderPipelinePath, lilRP);
-                lilToonSetting shaderSetting = (lilToonSetting)AssetDatabase.LoadAssetAtPath(shaderSettingPath, typeof(lilToonSetting));
-                if(shaderSetting != null) lilToonInspector.ApplyShaderSetting(shaderSetting);
-                lilToonInspector.ReimportPassShaders();
-                AssetDatabase.Refresh();
+                string shaderPath = AssetDatabase.GUIDToAssetPath(shaderGuid);
+                lilToonInspector.RewriteReceiveShadow(shaderPath, isShadowReceive);
             }
+
+            lilToonInspector.ReimportPassShaders();
+            AssetDatabase.Refresh();
         }
     }
 
@@ -307,19 +290,19 @@ namespace lilToon
 
             if(materialLowerName.Contains("cutout") || mainTexLowerName.Contains("cutout"))
             {
-                lilToonInspector.SetupMaterialWithRenderingMode(material, lilToonInspector.RenderingMode.Cutout, isOutl, false, false, false);
+                lilToonInspector.SetupMaterialWithRenderingMode(material, lilToonInspector.RenderingMode.Cutout, lilToonInspector.TransparentMode.Normal, isOutl, false, false, false);
             }
             else if(materialLowerName.Contains("alpha") || mainTexLowerName.Contains("alpha"))
             {
-                lilToonInspector.SetupMaterialWithRenderingMode(material, lilToonInspector.RenderingMode.Transparent, isOutl, false, false, false);
+                lilToonInspector.SetupMaterialWithRenderingMode(material, lilToonInspector.RenderingMode.Transparent, lilToonInspector.TransparentMode.Normal, isOutl, false, false, false);
             }
             else if(materialLowerName.Contains("fade") || mainTexLowerName.Contains("fade"))
             {
-                lilToonInspector.SetupMaterialWithRenderingMode(material, lilToonInspector.RenderingMode.Transparent, isOutl, false, false, false);
+                lilToonInspector.SetupMaterialWithRenderingMode(material, lilToonInspector.RenderingMode.Transparent, lilToonInspector.TransparentMode.Normal, isOutl, false, false, false);
             }
             else if(materialLowerName.Contains("transparent") || mainTexLowerName.Contains("transparent"))
             {
-                lilToonInspector.SetupMaterialWithRenderingMode(material, lilToonInspector.RenderingMode.Transparent, isOutl, false, false, false);
+                lilToonInspector.SetupMaterialWithRenderingMode(material, lilToonInspector.RenderingMode.Transparent, lilToonInspector.TransparentMode.Normal, isOutl, false, false, false);
             }
 
             EditorUtility.SetDirty(material);

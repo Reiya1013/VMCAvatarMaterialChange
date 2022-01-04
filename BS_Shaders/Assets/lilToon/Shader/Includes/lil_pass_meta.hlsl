@@ -3,135 +3,102 @@
 
 #define LIL_WITHOUT_ANIMATION
 #include "Includes/lil_pipeline.hlsl"
+#include "Includes/lil_common_appdata.hlsl"
+
+#if defined(LIL_HDRP)
+    CBUFFER_START(UnityMetaPass)
+        bool4 unity_MetaVertexControl;
+        bool4 unity_MetaFragmentControl;
+        int unity_VisualizationMode;
+    CBUFFER_END
+
+    float unity_OneOverOutputBoost;
+    float unity_MaxOutputValue;
+    float unity_UseLinearSpace;
+#endif
 
 //------------------------------------------------------------------------------------------------------------------------------
-// Struct
-struct appdata
-{
-    float4 positionOS   : POSITION;
-    float2 uv           : TEXCOORD0;
-    float2 uv1          : TEXCOORD1;
-    float2 uv2          : TEXCOORD2;
-    #if !defined(LIL_LITE) && defined(LIL_FEATURE_ENCRYPTION)
-        float2 uv6          : TEXCOORD6;
-        float2 uv7          : TEXCOORD7;
-    #endif
-};
+// Structure
+#if !defined(LIL_CUSTOM_V2F_MEMBER)
+    #define LIL_CUSTOM_V2F_MEMBER(id0,id1,id2,id3,id4,id5,id6,id7)
+#endif
+
+#define LIL_V2F_POSITION_CS
+#define LIL_V2F_VIZUV
+#define LIL_V2F_LIGHTCOORD
+#define LIL_V2F_PACKED_TEXCOORD01
+#define LIL_V2F_PACKED_TEXCOORD23
 
 struct v2f
 {
     float4 positionCS   : SV_POSITION;
-    float2 uv           : TEXCOORD0;
-    #ifdef EDITOR_VISUALIZATION
-        float2 vizUV        : TEXCOORD1;
-        float4 lightCoord   : TEXCOORD2;
+    float4 uv01         : TEXCOORD0;
+    float4 uv23         : TEXCOORD1;
+    #if defined(EDITOR_VISUALIZATION) && !defined(LIL_HDRP)
+        float2 vizUV        : TEXCOORD2;
+        float4 lightCoord   : TEXCOORD3;
     #endif
+    LIL_CUSTOM_V2F_MEMBER(4,5,6,7,8,9,10,11)
+    LIL_VERTEX_INPUT_INSTANCE_ID
+    LIL_VERTEX_OUTPUT_STEREO
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
-v2f vert (appdata input)
-{
-    v2f output;
-    LIL_INITIALIZE_STRUCT(v2f, output);
-
-    LIL_BRANCH
-    if(_Invisible) return output;
-
-    //----------------------------------------------------------------------------------------------------------------------
-    // Encryption
-    #if !defined(LIL_LITE) && defined(LIL_FEATURE_ENCRYPTION)
-        input.positionOS = vertexDecode(input.positionOS, input.normalOS, input.uv6, input.uv7);
-    #endif
-
-    LIL_TRANSFER_METAPASS(input,output);
-    output.uv = input.uv;
-    #ifdef EDITOR_VISUALIZATION
-        if (unity_VisualizationMode == EDITORVIZ_TEXTURE)
-            output.vizUV = UnityMetaVizUV(unity_EditorViz_UVIndex, input.uv, input.uv1, input.uv2, unity_EditorViz_Texture_ST);
-        else if (unity_VisualizationMode == EDITORVIZ_SHOWLIGHTMASK)
-        {
-            output.vizUV = input.uv1 * unity_LightmapST.xy + unity_LightmapST.zw;
-            output.lightCoord = mul(unity_EditorViz_WorldToLight, LIL_TRANSFORM_POS_OS_TO_WS(input.positionOS.xyz));
-        }
-    #endif
-
-    return output;
-}
+#include "Includes/lil_common_vert.hlsl"
+#include "Includes/lil_common_frag.hlsl"
 
 float4 frag(v2f input) : SV_Target
 {
-    MetaInput metaInput;
-    LIL_INITIALIZE_STRUCT(MetaInput, metaInput);
+    float facing = 1.0;
+    //------------------------------------------------------------------------------------------------------------------------------
+    // Initialize
+    lilFragData fd = lilInitFragData();
 
-    #if defined(LIL_FEATURE_ANIMATE_MAIN_UV)
-        float2 uvMain = lilCalcUVWithoutAnimation(input.uv, _MainTex_ST, _MainTex_ScrollRotate);
-    #else
-        float2 uvMain = lilCalcUV(input.uv, _MainTex_ST);
+    BEFORE_UNPACK_V2F
+    OVERRIDE_UNPACK_V2F
+
+    BEFORE_ANIMATE_MAIN_UV
+    OVERRIDE_ANIMATE_MAIN_UV
+
+    BEFORE_MAIN
+    OVERRIDE_MAIN
+    fd.albedo = fd.col.rgb;
+    fd.col.rgb = 0.0;
+    #if defined(LIL_LITE)
+        fd.triMask = LIL_SAMPLE_2D(_TriMask, sampler_MainTex, fd.uvMain);
     #endif
-    float4 col = _Color;
-    if(Exists_MainTex) col *= LIL_SAMPLE_2D(_MainTex, sampler_MainTex, uvMain);
-    metaInput.Albedo = col.rgb;
 
     #ifndef LIL_FUR
-        #if defined(LIL_FEATURE_EMISSION_1ST)
-            LIL_BRANCH
-            if(_UseEmission)
-            {
-                float4 emissionColor = _EmissionColor;
-                #if defined(LIL_FEATURE_EMISSION_UV) && defined(LIL_FEATURE_ANIMATE_EMISSION_UV)
-                    if(Exists_EmissionMap) emissionColor *= LIL_GET_EMITEX(_EmissionMap,input.uv);
-                #elif defined(LIL_FEATURE_EMISSION_UV)
-                    if(Exists_EmissionMap) emissionColor *= LIL_SAMPLE_2D(_EmissionMap, sampler_EmissionMap, lilCalcUV(input.uv, _EmissionMap_ST));
-                #else
-                    if(Exists_EmissionMap) emissionColor *= LIL_SAMPLE_2D(_EmissionMap, sampler_EmissionMap, uvMain);
-                #endif
-                #ifdef LIL_LITE
-                    metaInput.Emission = emissionColor.a * emissionColor.rgb;
-                #else
-                    #if defined(LIL_FEATURE_EMISSION_MASK_UV) && defined(LIL_FEATURE_ANIMATE_EMISSION_MASK_UV)
-                        if(Exists_EmissionBlendMask) emissionColor *= LIL_GET_EMIMASK(_EmissionBlendMask,input.uv);
-                    #elif defined(LIL_FEATURE_EMISSION_MASK_UV)
-                        if(Exists_EmissionBlendMask) emissionColor *= LIL_SAMPLE_2D(_EmissionBlendMask, sampler_MainTex, lilCalcUV(input.uv, _EmissionBlendMask_ST));
-                    #else
-                        if(Exists_EmissionBlendMask) emissionColor *= LIL_SAMPLE_2D(_EmissionBlendMask, sampler_MainTex, uvMain);
-                    #endif
-                    metaInput.Emission = _EmissionBlend * emissionColor.a * emissionColor.rgb;
-                #endif
-            }
+        BEFORE_EMISSION_1ST
+        #if defined(LIL_FEATURE_EMISSION_1ST) || defined(LIL_LITE)
+            OVERRIDE_EMISSION_1ST
         #endif
         #if !defined(LIL_LITE)
+            BEFORE_EMISSION_1ST
             #if defined(LIL_FEATURE_EMISSION_2ND)
-                LIL_BRANCH
-                if(_UseEmission2nd)
-                {
-                    float4 emission2ndColor = _Emission2ndColor;
-                    #if defined(LIL_FEATURE_EMISSION_UV) && defined(LIL_FEATURE_ANIMATE_EMISSION_UV)
-                        if(Exists_Emission2ndMap) emission2ndColor *= LIL_GET_EMITEX(_Emission2ndMap,input.uv);
-                    #elif defined(LIL_FEATURE_EMISSION_UV)
-                        if(Exists_Emission2ndMap) emission2ndColor *= LIL_SAMPLE_2D(_Emission2ndMap, sampler_Emission2ndMap, lilCalcUV(input.uv, _Emission2ndMap_ST));
-                    #else
-                        if(Exists_Emission2ndMap) emission2ndColor *= LIL_SAMPLE_2D(_Emission2ndMap, sampler_Emission2ndMap, uvMain);
-                    #endif
-                    #if defined(LIL_FEATURE_EMISSION_MASK_UV) && defined(LIL_FEATURE_ANIMATE_EMISSION_MASK_UV)
-                        if(Exists_Emission2ndBlendMask) emission2ndColor *= LIL_GET_EMIMASK(_Emission2ndBlendMask,input.uv);
-                    #elif defined(LIL_FEATURE_EMISSION_MASK_UV)
-                        if(Exists_Emission2ndBlendMask) emission2ndColor *= LIL_SAMPLE_2D(_Emission2ndBlendMask, sampler_MainTex, lilCalcUV(input.uv, _Emission2ndBlendMask_ST));
-                    #else
-                        if(Exists_Emission2ndBlendMask) emission2ndColor *= LIL_SAMPLE_2D(_Emission2ndBlendMask, sampler_MainTex, uvMain);
-                    #endif
-                    metaInput.Emission += _Emission2ndBlend * emission2ndColor.a * emission2ndColor.rgb;
-                }
+                OVERRIDE_EMISSION_2ND
             #endif
         #endif
+        BEFORE_BLEND_EMISSION
+        OVERRIDE_BLEND_EMISSION
     #endif
 
-    #ifdef EDITOR_VISUALIZATION
-        metaInput.VizUV = input.vizUV;
-        metaInput.LightCoord = input.lightCoord;
-    #endif
+    #if defined(LIL_HDRP)
+        if(!unity_MetaFragmentControl.y) fd.col.rgb = clamp(pow(abs(fd.albedo), saturate(unity_OneOverOutputBoost)), 0, unity_MaxOutputValue);
+        return fd.col;
+    #else
+        MetaInput metaInput;
+        LIL_INITIALIZE_STRUCT(MetaInput, metaInput);
+        metaInput.Albedo = abs(fd.albedo);
+        metaInput.Emission = fd.col.rgb;
+        #ifdef EDITOR_VISUALIZATION
+            metaInput.VizUV = input.vizUV;
+            metaInput.LightCoord = input.lightCoord;
+        #endif
 
-    return MetaFragment(metaInput);
+        return MetaFragment(metaInput);
+    #endif
 }
 
 #endif

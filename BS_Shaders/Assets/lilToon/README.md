@@ -1,17 +1,25 @@
 # lilToon
-Version 1.1.8
+Version 1.2.5
 
 # Overview
 This shader is developed for services using avatars (VRChat, etc.) and has the following features.
 - Easy to use (One-click settings from presets, Saving your own presets, Color correction and exporting textures)
 - Beautiful (Prevent overexposure, Anti-aliased shading)
 - Lightweight (Automatically rewrites shaders and turns features on / off)
-- Available in various versions (Unity 2017-2021, BRP/LWRP/URP)
+- Available in various versions (Unity 2017-2021, BRP/LWRP/URP/HDRP)
 - Compatible with all lighting and similar in brightness to StandardShader
 
 # Support
 Supported Unity versions
 - Unity 2017 - Unity 2021.2
+
+Tested version
+- Unity 2017.1.0f3
+- Unity 2018.4.20f1 (Built-in RP / LWRP 4.0.0 / HDRP 4.0.0)
+- Unity 2019.3.0f6  (Built-in RP / URP 7.1.8 / HDRP 7.1.8)
+- Unity 2019.4.31f1 (Built-in RP / URP 7.7.1 / HDRP 7.7.1)
+- Unity 2020.3.20f1 (Built-in RP / URP 10.6.0 / HDRP 10.6.0)
+- Unity 2021.1.24f1 (Built-in RP / URP 12.0.0 / HDRP 12.0.0)
 
 Supported Shader Models
 - Normal: SM4.0 / ES3.0 or later
@@ -20,10 +28,10 @@ Supported Shader Models
 - Tessellation: SM5.0 / ES3.1+AEP / ES3.2 or later
 
 Supported Rendering Pipelines
-- Built-in Render Pipeline (BRP)
-- Lightweight Render Pipeline (LWRP)
-- Universal Render Pipeline (URP)
-- Refraction and Gem shaders are supported only for BRP
+- Built-in Render Pipeline
+- Lightweight Render Pipeline 4.0.0 - 6.9.1
+- Universal Render Pipeline 7.0.0 - 12.0.0
+- High Definition Render Pipeline 4.0.0 - 12.0.0
 
 # Features
 - Main color x3 layers (Decal, Layer mask, Gif animation, Normal / Additive / Multiplicative / Screen blending)
@@ -31,11 +39,13 @@ Supported Rendering Pipelines
 - Flexible shadows (2 shadows, SSS, Environment light compositing, AO mask to adjust the ease of shadowing)
 - Emission x2 layers (Animation, Mask, Blinking, Color change over time, Parallax)
 - Normal map x2 layers
+- Anisotropic reflection
 - Specular reflection
-- MatCap (Z-axis rotation cancellation, Normal / Additive / Multiplicative / Screen blending)
+- MatCap x2 (Z-axis rotation cancellation, Normal / Additive / Multiplicative / Screen blending)
 - Rim light
+- Backlight
 - Outline (Color specification by texture, Mask, Thickness based on vertex color and distance)
-- Fur, Refraction
+- Fur, Refraction, Gem
 - Distance Clipping Canceler
 - Distance Fade (Changes color according to distance)
 - AudioLink (Animate materials in sync with sound in supported VRChat worlds)
@@ -43,12 +53,13 @@ Supported Rendering Pipelines
 - Mesh Encryption ([AvatarEncryption](https://github.com/lilxyzw/AvaterEncryption) is required)
 
 # License
-lilToon is available under the MIT License. Please refer to the `LICENSE` included in the package.
+lilToon is available under the MIT License. Please refer to the `LICENSE` included in the package.  
+For more information about third party licenses, please see [Third Party Notices.md](https://github.com/lilxyzw/lilToon/blob/master/Assets/lilToon/Third%20Party%20Notices.md).
 
 # Usage - Material Setup
 1. Import lilToon into Unity using one of the following methods.  
     i. Drag and drop unitypackage to the Unity window to import it.  
-    ii. Import ```https://github.com/lilxyzw/lilToon.git?path=Assets/lilToon#master``` from UPM.  
+    ii. Import ```https://github.com/lilxyzw/lilToon.git?path=Assets/lilToon#master``` from UPM.
 2. Select a material from Project.
 3. Select `lilToon` from `Shader` at the top of Inspector.
 4. If no texture has been applied, set the texture to `Main Color`.
@@ -58,10 +69,16 @@ lilToon is available under the MIT License. Please refer to the `LICENSE` includ
 Please refer to the [manual](https://github.com/lilxyzw/lilToon/blob/master/Assets/lilToon/MANUAL.md) for more detailed settings.
 
 # Usage - Update
+0. If you are updating from 1.1.8 or earlier to 1.2.0 or later, delete the lilToon folder before importing
 1. Import lilToon into Unity using one of the following methods.  
     i. Drag and drop unitypackage to the Unity window to import it.  
     ii. Import ```https://github.com/lilxyzw/lilToon.git?path=Assets/lilToon#master``` from UPM.  
 2. Click `Assets/lilToon/Refresh Shaders` in the top menu bar.
+
+# Shader variations
+- lilToon : This is the normal version. Optimizes shaders by using the shader settings instead of the shader keywords.
+- lilToonLite : This is a lightweight version with fixed and limited features. It is not affected by shader settings. [Details](#about-lite-version)
+- lilToonMulti : This is the version that uses the local shader keyword. It is not affected by shader settings. [Details](#about-multi-version)
 
 # How to distribute your works that use lilToon
 I recommend right-clicking on the material and running `lilToon/Remove unused properties` so that the appearance does not change when shader settings are changed. It used to be necessary to include lilToonSetting, but now it is not necessary. `Shader Setting` is automatically optimized by scanning materials and animations when importing assets.  
@@ -95,6 +112,14 @@ I recommend right-clicking on the material and running `lilToon/Remove unused pr
   → `Environment Strength` value affects the strength of shadows in bright places.
 - I don't know which ones to turn on in shader settings.  
   → The shader settings are automatically set by running `Assets/lilToon/Auto shader setting` from the top menu bar.
+- Errors occur in a specific version of SRP  
+  → SRP 7.0.0 or earlier cannot pick up the version number, so the shader cannot perform detailed version determination.  
+  If the error occurs, you need to specify the detailed version in `lilToon/Shader/Includes/lil_common_macro.hlsl` or update to the latest version.  
+  Example: HDRP 4.8.0
+  ```HLSL
+  #define SHADER_LIBRARY_VERSION_MAJOR 4
+  #define SHADER_LIBRARY_VERSION_MINOR 8
+  ```
 
 If you have any other problems and suspect a bug, please contact me on [Twitter](https://twitter.com/lil_xyzw), [GitHub](https://github.com/lilxyzw/lilToon), or [BOOTH](https://lilxyzw.booth.pm/).  
 Please refer to the following template when reporting a bug.
@@ -117,83 +142,16 @@ The following settings improve the problem of different brightness in one part o
 - Check the `Mip Maps Preserve Coverage` checkbox for textures used in Cutout materials.
 
 # About Lite version
-Lite version is a greatly optimized version that maintains the appearance of the normal version to some extent. This version is recommended for avatar displays because it has no shader settings and its features are unified. It is recommended to convert materials created with Normal version to the Lite version instead of setting materials directly from Lite version for more intuitive material setting.
+Lite version is a greatly optimized version that maintains the appearance of the normal version to some extent.  
+This version is recommended for avatar displays because it has no shader settings and its features are unified.  
+It is recommended to convert materials created with Normal version to the Lite version instead of setting materials directly from Lite version for more intuitive material setting.
 
-# References
-- [UnlitWF (whiteflare)](https://github.com/whiteflare/Unlit_WF_ShaderSuite) / [MIT LICENCE](https://github.com/whiteflare/Unlit_WF_ShaderSuite/blob/master/LICENSE)  
-I referred to many parts of both scripts and shaders, such as far shaders and property deletion.
-- [Arktoon-Shaders (synqark)](https://github.com/synqark/Arktoon-Shaders) / [MIT LICENCE](https://github.com/synqark/Arktoon-Shaders/blob/master/LICENSE)  
-I'm referred to the shadow setting part.
-- [MToon (Santarh)](https://github.com/Santarh/MToon) / [MIT LICENCE](https://github.com/Santarh/MToon/blob/master/LICENSE)  
-Comparing parameters when implementing `Convert to MToon (VRM)`
-- [GTAvaCrypt (rygo6)](https://github.com/rygo6/GTAvaCrypt) / [MIT LICENCE](https://github.com/rygo6/GTAvaCrypt/blob/master/LICENSE)
-- [Multi-channel signed distance field generator](https://github.com/Chlumsky/msdfgen) / [MIT LICENCE](https://github.com/Chlumsky/msdfgen/blob/master/LICENSE.txt)
-- [Optimized inverse trigonometric function (seblagarde)](https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/)
-- [視差オクルージョンマッピング(parallax occlution mapping) (コポコポ)](https://coposuke.hateblo.jp/entry/2019/01/20/043042)
+# About Multi version
+This is the version that uses the shader keyword and allows you to use all the features regardless of the shader settings.  
+You can convert from the normal version to the Mutli version with one click.  
+This also works well with the avatar display as it is not affected by shader settings.  
+It is not available in Unity 2018 and earlier, but you can use it by rewriting `shader_feature_local` to `shader_feature` in the shader.  
+If you use AvatarEncryption, replace `//#define LIL_FEATURE_ENCRYPTION` in `lil_replace_keywords.hlsl` with `#define LIL_FEATURE_ENCRYPTION`.
 
-# Change log
-## v1.1.8
-- Added lilToonGem and lilToonFakeShadow
-- Added UV1 for glitter
-- Added property to adjust the strength of parallax during VR to glitter
-- Fixed emission color space
-- Fixed an issue where glitter properties were not scanned when importing
-- Fixed an issue where meshes were not decrypted on some paths when using Avater Encryption
-## v1.1.7
-- Added color code next to HDR color picker (Unity 2019 or later)
-- Added mask to main color correction
-- Added distance fade to main color 2nd / 3rd
-- Added glitter function
-- Changed main color's color picker to HDR
-- Fixed UPM import
-- Fixed `Distance Fade` and `Dissolve` transparency
-- Fixed error in Unity 2019 URP
-- Moved some processing to the vertex shader for optimization
-- Changed transform calculation
-## v1.1.6
-- Changed the default value of ZTest in outline from LessEqual to Less
-- Fixed an issue where shadows were weakened when using `Lower brightness limit`
-- Added `Fix Now` button to help box
-## v1.1.5
-- Added `When in trouble...`
-- Improved transparency processing
-- Organize the UI
-- Added on / off of Z-axis rotation cancellation of MatCap
-- Fixed shader folder to be movable
-- Fixed an issue where opaque materials would show alpha mask properties
-- Fixed some translations
-## v1.1.4a
-- Fixed an issue where `Setup from FBX` did not work in Unity 2017.3 or earlier, Unity 2019.3 or later
-## v1.1.4
-- Added auto-scan materials and animations when importing unitypackage
-- Added `Auto shader setting`, which scans all materials and animations in the project and automatically optimizes Shader Setting
-- Added `Remove unused properties`, optimizes materials so that turning on additional shader settings does not affect their appearance
-- Added `Setup from FBX`, automatically generate materials from FBX files, apply presets, outline mask, and shadow mask
-- Added lock for `Shader Setting`
-- Changed the display name of some properties (`Environment Strength` → `Environment strength on shadow color`, `Fix Width` → `Fix width by distance`)
-- Inspector will be preserved in play mode
-- Changed the `As Unlit` parameter of the fur shader to a slider
-- Added length mask to fur shader
-## v1.1.3
-- Fixed problem with Inspector not showing up when version check fails
-- Fixed `[lilToon] Fix Lighting` breaking when an object has a Cloth component or no bones
-## v1.1.2
-- Added custom normal map for MatCap
-- Added customization of Rim Light by light direction
-- One-click lighting settings for meshes and materials
-- Outline width can now be set to any value
-- Alpha masks can now be applied to outline
-## v1.1.1
-- Show warning when property alpha is 0
-- Support for changing editor theme
-- Added shader refresh
-## v1.1
-- Added Alpha Mask
-- Added MatCap 2nd
-- Added properties to adjust Lower brightness limit and vertex light strength
-- Fixed a bug where CascadeShadow was not working properly in URP
-- Fixed a bug in MatCap where "Apply Lighting" was not working properly
-- Added warnings for high-load functions (refraction / POM)
-- Added references
-## v1.0
-- Opening to the public
+# Other
+[Developer Documentation](https://github.com/lilxyzw/lilToon/blob/master/Assets/lilToon/DeveloperDocumentation_JP.md)

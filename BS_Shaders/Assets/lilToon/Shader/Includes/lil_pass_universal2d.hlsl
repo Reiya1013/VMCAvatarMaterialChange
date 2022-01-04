@@ -2,67 +2,51 @@
 #define LIL_PASS_UNIVERSAL2D_INCLUDED
 
 #include "Includes/lil_pipeline.hlsl"
+#include "Includes/lil_common_appdata.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
-// Struct
-struct appdata
-{
-    float4 positionOS   : POSITION;
-    float2 uv           : TEXCOORD0;
-    #if !defined(LIL_LITE) && defined(LIL_FEATURE_ENCRYPTION)
-        float2 uv6          : TEXCOORD6;
-        float2 uv7          : TEXCOORD7;
-    #endif
-};
+// Structure
+#if !defined(LIL_CUSTOM_V2F_MEMBER)
+    #define LIL_CUSTOM_V2F_MEMBER(id0,id1,id2,id3,id4,id5,id6,id7)
+#endif
+
+#define LIL_V2F_POSITION_CS
+#define LIL_V2F_TEXCOORD0
 
 struct v2f
 {
     float4 positionCS   : SV_POSITION;
-    float2 uv           : TEXCOORD0;
+    float2 uv0          : TEXCOORD0;
+    LIL_CUSTOM_V2F_MEMBER(1,2,3,4,5,6,7,8)
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
-v2f vert(appdata input)
-{
-    v2f output;
-    LIL_INITIALIZE_STRUCT(v2f, output);
-
-    LIL_BRANCH
-    if(_Invisible) return output;
-
-    //----------------------------------------------------------------------------------------------------------------------
-    // Encryption
-    #if !defined(LIL_LITE) && defined(LIL_FEATURE_ENCRYPTION)
-        input.positionOS = vertexDecode(input.positionOS, input.normalOS, input.uv6, input.uv7);
-    #endif
-
-    LIL_VERTEX_POSITION_INPUTS(input.positionOS, vertexInput);
-    output.positionCS = vertexInput.positionCS;
-    output.uv = input.uv;
-
-    return output;
-}
+#include "Includes/lil_common_vert.hlsl"
+#include "Includes/lil_common_frag.hlsl"
 
 float4 frag(v2f input) : SV_Target
 {
-    #if defined(LIL_FEATURE_ANIMATE_MAIN_UV)
-        float2 uvMain = lilCalcUV(input.uv, _MainTex_ST, _MainTex_ScrollRotate);
-    #else
-        float2 uvMain = lilCalcUV(input.uv, _MainTex_ST);
-    #endif
-    float4 col = _Color;
-    if(Exists_MainTex) col *= LIL_SAMPLE_2D(_MainTex, sampler_MainTex, uvMain);
+    lilFragData fd = lilInitFragData();
+
+    BEFORE_UNPACK_V2F
+    OVERRIDE_UNPACK_V2F
+
+    BEFORE_ANIMATE_MAIN_UV
+    OVERRIDE_ANIMATE_MAIN_UV
+
+    BEFORE_MAIN
+    OVERRIDE_MAIN
     #if LIL_RENDER == 1
         #ifdef LIL_LITE
-            clip(col.a - _Cutoff);
+            clip(fd.col.a - _Cutoff);
         #else
-            col.a = saturate((col.a - _Cutoff) / max(fwidth(col.a), 0.0001) + 0.5);
+            fd.col.a = saturate((fd.col.a - _Cutoff) / max(fwidth(fd.col.a), 0.0001) + 0.5);
         #endif
     #elif LIL_RENDER == 2
-        clip(col.a - _Cutoff);
+        clip(fd.col.a - _Cutoff);
     #endif
-    return col;
+    return fd.col;
 }
 
 #endif

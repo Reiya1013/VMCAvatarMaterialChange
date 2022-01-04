@@ -6,11 +6,18 @@ Shader "Hidden/lilToonTessellationTransparent"
         // Base
         [lilToggle]     _Invisible                  ("Invisible", Int) = 0
                         _AsUnlit                    ("As Unlit", Range(0, 1)) = 0
-                        _Cutoff                     ("Alpha Cutoff", Range(0,1)) = 0.5
+                        _Cutoff                     ("Alpha Cutoff", Range(0,1)) = 0.001
+                        _SubpassCutoff              ("Subpass Alpha Cutoff", Range(0,1)) = 0.5
         [lilToggle]     _FlipNormal                 ("Flip Backface Normal", Int) = 0
+        [lilToggle]     _ShiftBackfaceUV            ("Shift Backface UV", Int) = 0
                         _BackfaceForceShadow        ("Backface Force Shadow", Range(0,1)) = 0
                         _VertexLightStrength        ("Vertex Light Strength", Range(0,1)) = 1
                         _LightMinLimit              ("Light Min Limit", Range(0,1)) = 0
+                        _LightMaxLimit              ("Light Max Limit", Range(0,10)) = 1
+                        _BeforeExposureLimit        ("Before Exposure Limit", Float) = 10000
+                        _MonochromeLighting         ("Monochrome lighting", Range(0,1)) = 0
+                        _lilDirectionalLightStrength ("Directional Light Strength", Range(0,1)) = 1
+        [lilVec3]       _LightDirectionOverride     ("Light Direction Override", Vector) = (0,0.001,0,0)
 
         //----------------------------------------------------------------------------------------------------------------------
         // Main
@@ -47,7 +54,7 @@ Shader "Hidden/lilToonTessellationTransparent"
         [lilHDR]        _Main2ndDissolveColor       ("Dissolve Color", Color) = (1,1,1,1)
         [lilDissolve]   _Main2ndDissolveParams      ("Dissolve Mode|None|Alpha|UV|Position|Dissolve Shape|Point|Line|Border|Blur", Vector) = (0,0,0.5,0.1)
         [lilDissolveP]  _Main2ndDissolvePos         ("Dissolve Position", Vector) = (0,0,0,0)
-        [lil3Param]     _Main2ndDistanceFade        ("Start|End|Strength", Vector) = (0.1,0.01,0,0)
+        [lilFFFB]       _Main2ndDistanceFade        ("Start|End|Strength|Fix backface", Vector) = (0.1,0.01,0,0)
 
         //----------------------------------------------------------------------------------------------------------------------
         // Main3rd
@@ -74,7 +81,7 @@ Shader "Hidden/lilToonTessellationTransparent"
         [lilHDR]        _Main3rdDissolveColor       ("Dissolve Color", Color) = (1,1,1,1)
         [lilDissolve]   _Main3rdDissolveParams      ("Dissolve Mode|None|Alpha|UV|Position|Dissolve Shape|Point|Line|Border|Blur", Vector) = (0,0,0.5,0.1)
         [lilDissolveP]  _Main3rdDissolvePos         ("Dissolve Position", Vector) = (0,0,0,0)
-        [lil3Param]     _Main3rdDistanceFade        ("Start|End|Strength", Vector) = (0.1,0.01,0,0)
+        [lilFFFB]       _Main3rdDistanceFade        ("Start|End|Strength|Fix backface", Vector) = (0.1,0.01,0,0)
 
         //----------------------------------------------------------------------------------------------------------------------
         // Alpha Mask
@@ -96,6 +103,39 @@ Shader "Hidden/lilToonTessellationTransparent"
         [NoScaleOffset] _Bump2ndScaleMask           ("Mask", 2D) = "white" {}
 
         //----------------------------------------------------------------------------------------------------------------------
+        // Anisotropy
+        [lilToggleLeft] _UseAnisotropy              ("Use Anisotropy", Int) = 0
+        [Normal]        _AnisotropyTangentMap       ("Tangent Map", 2D) = "bump" {}
+                        _AnisotropyScale            ("Scale", Range(-1,1)) = 1
+        [NoScaleOffset] _AnisotropyScaleMask        ("Scale Mask", 2D) = "white" {}
+                        _AnisotropyTangentWidth     ("Tangent Width", Range(0,10)) = 1
+                        _AnisotropyBitangentWidth   ("Bitangent Width", Range(0,10)) = 1
+                        _AnisotropyShift            ("Shift", Range(-10,10)) = 0
+                        _AnisotropyShiftNoiseScale  ("Shift Noise Scale", Range(-1,1)) = 0
+                        _AnisotropySpecularStrength ("Specular Strength", Range(0,10)) = 1
+                        _Anisotropy2ndTangentWidth  ("2nd Tangent Width", Range(0,10)) = 1
+                        _Anisotropy2ndBitangentWidth ("2nd Bitangent Width", Range(0,10)) = 1
+                        _Anisotropy2ndShift         ("2nd Shift", Range(-10,10)) = 0
+                        _Anisotropy2ndShiftNoiseScale ("2nd Shift Noise Scale", Range(-1,1)) = 0
+                        _Anisotropy2ndSpecularStrength ("2nd Specular Strength", Range(0,10)) = 0
+                        _AnisotropyShiftNoiseMask   ("Shift Noise Mask", 2D) = "white" {}
+        [lilToggle]     _Anisotropy2Reflection      ("Reflection", Int) = 0
+        [lilToggle]     _Anisotropy2MatCap          ("MatCap", Int) = 0
+        [lilToggle]     _Anisotropy2MatCap2nd       ("MatCap 2nd", Int) = 0
+
+        //----------------------------------------------------------------------------------------------------------------------
+        // Backlight
+        [lilToggleLeft] _UseBacklight               ("Use Backlight", Int) = 0
+        [lilHDR]        _BacklightColor             ("Color", Color) = (0.85,0.8,0.7,1.0)
+        [NoScaleOffset] _BacklightColorTex          ("Texture", 2D) = "white" {}
+                        _BacklightBorder            ("Border", Range(0, 1)) = 0.35
+                        _BacklightBlur              ("Blur", Range(0, 1)) = 0.05
+                        _BacklightDirectivity       ("Directivity", Float) = 5.0
+                        _BacklightViewStrength      ("View direction strength", Range(0, 1)) = 1
+        [lilToggle]     _BacklightReceiveShadow     ("Receive Shadow", Int) = 1
+        [lilToggle]     _BacklightBackfaceMask      ("Backface Mask", Int) = 1
+
+        //----------------------------------------------------------------------------------------------------------------------
         // Shadow
         [lilToggleLeft] _UseShadow                  ("Use Shadow", Int) = 0
         [lilToggle]     _ShadowReceive              ("Receive Shadow", Int) = 0
@@ -112,7 +152,7 @@ Shader "Hidden/lilToonTessellationTransparent"
                         _Shadow2ndColor             ("Shadow 2nd Color", Color) = (0,0,0,0)
         [NoScaleOffset] _Shadow2ndColorTex          ("Shadow 2nd Color", 2D) = "black" {}
                         _ShadowMainStrength         ("Main Color Strength", Range(0, 1)) = 1
-                        _ShadowEnvStrength          ("Environment Strength", Range(0, 1)) = 1
+                        _ShadowEnvStrength          ("Environment Strength", Range(0, 1)) = 0
                         _ShadowBorderColor          ("Border Color", Color) = (1,0,0,1)
                         _ShadowBorderRange          ("Border Range", Range(0, 1)) = 0
 
@@ -129,9 +169,12 @@ Shader "Hidden/lilToonTessellationTransparent"
         [Gamma]         _Reflectance                ("Reflectance", Range(0, 1)) = 0.04
         // Reflection
         [lilToggle]     _ApplySpecular              ("Apply Specular", Int) = 1
+        [lilToggle]     _ApplySpecularFA            ("Apply Specular in ForwardAdd", Int) = 1
         [lilToggle]     _SpecularToon               ("Specular Toon", Int) = 1
+                        _SpecularBorder             ("Border", Range(0, 1)) = 0.5
+                        _SpecularBlur               ("Blur", Range(0, 1)) = 0.0
         [lilToggle]     _ApplyReflection            ("Apply Reflection", Int) = 0
-                        _ReflectionColor            ("Color", Color) = (1,1,1,1)
+        [lilHDR]        _ReflectionColor            ("Color", Color) = (1,1,1,1)
         [NoScaleOffset] _ReflectionColorTex         ("Color", 2D) = "white" {}
         [lilToggle]     _ReflectionApplyTransparency ("Apply Transparency", Int) = 1
 
@@ -139,13 +182,18 @@ Shader "Hidden/lilToonTessellationTransparent"
         // MatCap
         [lilToggleLeft] _UseMatCap                  ("Use MatCap", Int) = 0
         [lilHDR]        _MatCapColor                ("Color", Color) = (1,1,1,1)
-        [NoScaleOffset] _MatCapTex                  ("Texture", 2D) = "white" {}
+                        _MatCapTex                  ("Texture", 2D) = "white" {}
+        [lilVec2R]      _MatCapBlendUV1             ("Blend UV1", Vector) = (0,0,0,0)
+        [lilToggle]     _MatCapZRotCancel           ("Z-axis rotation cancellation", Int) = 1
+        [lilToggle]     _MatCapPerspective          ("Fix Perspective", Int) = 1
+                        _MatCapVRParallaxStrength   ("VR Parallax Strength", Range(0, 1)) = 1
                         _MatCapBlend                ("Blend", Range(0, 1)) = 1
         [NoScaleOffset] _MatCapBlendMask            ("Mask", 2D) = "white" {}
                         _MatCapEnableLighting       ("Enable Lighting", Range(0, 1)) = 1
+                        _MatCapShadowMask           ("Shadow Mask", Range(0, 1)) = 0
+        [lilToggle]     _MatCapBackfaceMask         ("Backface Mask", Int) = 0
         [lilEnum]       _MatCapBlendMode            ("Blend Mode|Normal|Add|Screen|Multiply", Int) = 1
         [lilToggle]     _MatCapApplyTransparency    ("Apply Transparency", Int) = 1
-        [lilToggle]     _MatCapZRotCancel           ("Z-axis rotation cancellation", Int) = 1
         [lilToggle]     _MatCapCustomNormal         ("MatCap Custom Normal Map", Int) = 0
         [Normal]        _MatCapBumpMap              ("Normal Map", 2D) = "bump" {}
                         _MatCapBumpScale            ("Scale", Range(-10,10)) = 1
@@ -154,13 +202,18 @@ Shader "Hidden/lilToonTessellationTransparent"
         // MatCap 2nd
         [lilToggleLeft] _UseMatCap2nd               ("Use MatCap 2nd", Int) = 0
         [lilHDR]        _MatCap2ndColor             ("Color", Color) = (1,1,1,1)
-        [NoScaleOffset] _MatCap2ndTex               ("Texture", 2D) = "white" {}
+                        _MatCap2ndTex               ("Texture", 2D) = "white" {}
+        [lilVec2R]      _MatCap2ndBlendUV1          ("Blend UV1", Vector) = (0,0,0,0)
+        [lilToggle]     _MatCap2ndZRotCancel        ("Z-axis rotation cancellation", Int) = 1
+        [lilToggle]     _MatCap2ndPerspective       ("Fix Perspective", Int) = 1
+                        _MatCap2ndVRParallaxStrength ("VR Parallax Strength", Range(0, 1)) = 1
                         _MatCap2ndBlend             ("Blend", Range(0, 1)) = 1
         [NoScaleOffset] _MatCap2ndBlendMask         ("Mask", 2D) = "white" {}
                         _MatCap2ndEnableLighting    ("Enable Lighting", Range(0, 1)) = 1
+                        _MatCap2ndShadowMask        ("Shadow Mask", Range(0, 1)) = 0
+        [lilToggle]     _MatCap2ndBackfaceMask      ("Backface Mask", Int) = 0
         [lilEnum]       _MatCap2ndBlendMode         ("Blend Mode|Normal|Add|Screen|Multiply", Int) = 1
         [lilToggle]     _MatCap2ndApplyTransparency ("Apply Transparency", Int) = 1
-        [lilToggle]     _MatCap2ndZRotCancel        ("Z-axis rotation cancellation", Int) = 1
         [lilToggle]     _MatCap2ndCustomNormal      ("MatCap Custom Normal Map", Int) = 0
         [Normal]        _MatCap2ndBumpMap           ("Normal Map", 2D) = "bump" {}
                         _MatCap2ndBumpScale         ("Scale", Range(-10,10)) = 1
@@ -174,7 +227,8 @@ Shader "Hidden/lilToonTessellationTransparent"
                         _RimBlur                    ("Blur", Range(0, 1)) = 0.1
         [PowerSlider(3.0)]_RimFresnelPower          ("Fresnel Power", Range(0.01, 50)) = 3.0
                         _RimEnableLighting          ("Enable Lighting", Range(0, 1)) = 1
-        [lilToggle]     _RimShadowMask              ("Shadow Mask", Int) = 0
+                        _RimShadowMask              ("Shadow Mask", Range(0, 1)) = 0
+        [lilToggle]     _RimBackfaceMask            ("Backface Mask", Int) = 0
         [lilToggle]     _RimApplyTransparency       ("Apply Transparency", Int) = 1
                         _RimDirStrength             ("Light direction strength", Range(0, 1)) = 0
                         _RimDirRange                ("Direction range", Range(-1, 1)) = 0
@@ -193,16 +247,18 @@ Shader "Hidden/lilToonTessellationTransparent"
         [lilGlitParam1] _GlitterParams1             ("Tiling|Particle Size|Contrast", Vector) = (256,256,0.16,50)
         [lilGlitParam2] _GlitterParams2             ("Blink Speed|Angle|Blend Light Direction|Color Randomness", Vector) = (0.25,0,0,0)
                         _GlitterEnableLighting      ("Enable Lighting", Range(0, 1)) = 1
-        [lilToggle]     _GlitterShadowMask          ("Shadow Mask", Int) = 0
+                        _GlitterShadowMask          ("Shadow Mask", Range(0, 1)) = 0
+        [lilToggle]     _GlitterBackfaceMask        ("Backface Mask", Int) = 0
         [lilToggle]     _GlitterApplyTransparency   ("Apply Transparency", Int) = 1
                         _GlitterVRParallaxStrength  ("VR Parallax Strength", Range(0, 1)) = 1
 
         //----------------------------------------------------------------------------------------------------------------------
         // Emmision
         [lilToggleLeft] _UseEmission                ("Use Emission", Int) = 0
-        [HDR][lilHDR]   _EmissionColor              ("Color", Color) = (1,1,1)
+        [HDR][lilHDR]   _EmissionColor              ("Color", Color) = (1,1,1,1)
                         _EmissionMap                ("Texture", 2D) = "white" {}
         [lilUVAnim]     _EmissionMap_ScrollRotate   ("Angle|UV Animation|Scroll|Rotate", Vector) = (0,0,0,0)
+        [lilEnum]       _EmissionMap_UVMode         ("UV Mode|UV0|UV1|UV2|UV3|Rim", Int) = 0
                         _EmissionBlend              ("Blend", Range(0,1)) = 1
                         _EmissionBlendMask          ("Mask", 2D) = "white" {}
         [lilUVAnim]     _EmissionBlendMask_ScrollRotate ("Angle|UV Animation|Scroll|Rotate", Vector) = (0,0,0,0)
@@ -235,9 +291,10 @@ Shader "Hidden/lilToonTessellationTransparent"
         //----------------------------------------------------------------------------------------------------------------------
         // Emmision2nd
         [lilToggleLeft] _UseEmission2nd             ("Use Emission 2nd", Int) = 0
-        [HDR][lilHDR]   _Emission2ndColor           ("Color", Color) = (1,1,1)
+        [HDR][lilHDR]   _Emission2ndColor           ("Color", Color) = (1,1,1,1)
                         _Emission2ndMap             ("Texture", 2D) = "white" {}
         [lilUVAnim]     _Emission2ndMap_ScrollRotate ("Angle|UV Animation|Scroll|Rotate", Vector) = (0,0,0,0)
+        [lilEnum]       _Emission2ndMap_UVMode      ("UV Mode|UV0|UV1|UV2|UV3|Rim", Int) = 0
                         _Emission2ndBlend           ("Blend", Range(0,1)) = 1
                         _Emission2ndBlendMask       ("Mask", 2D) = "white" {}
         [lilUVAnim]     _Emission2ndBlendMask_ScrollRotate ("Angle|UV Animation|Scroll|Rotate", Vector) = (0,0,0,0)
@@ -277,7 +334,7 @@ Shader "Hidden/lilToonTessellationTransparent"
         //----------------------------------------------------------------------------------------------------------------------
         // Distance Fade
         [lilHDR]        _DistanceFadeColor          ("Color", Color) = (0,0,0,1)
-        [lil3Param]     _DistanceFade               ("Start|End|Strength", Vector) = (0.1,0.01,0,0)
+        [lilFFFB]       _DistanceFade               ("Start|End|Strength|Fix backface", Vector) = (0.1,0.01,0,0)
 
         //----------------------------------------------------------------------------------------------------------------------
         // AudioLink
@@ -340,6 +397,7 @@ Shader "Hidden/lilToonTessellationTransparent"
                                                         _OffsetFactor       ("Offset Factor", Float) = 0
                                                         _OffsetUnits        ("Offset Units", Float) = 0
         [lilColorMask]                                  _ColorMask          ("Color Mask", Int) = 15
+        [lilToggle]                                     _AlphaToMask        ("AlphaToMask", Int) = 0
 
         //----------------------------------------------------------------------------------------------------------------------
         // Tessellation
@@ -347,6 +405,12 @@ Shader "Hidden/lilToonTessellationTransparent"
                         _TessStrength               ("Tessellation Strength", Range(0, 1)) = 0.5
                         _TessShrink                 ("Tessellation Shrink", Range(0, 1)) = 0.0
         [IntRange]      _TessFactorMax              ("Tessellation Max", Range(1, 8)) = 3
+
+        //----------------------------------------------------------------------------------------------------------------------
+        // Save (Unused)
+        [HideInInspector] [MainColor]                   _BaseColor          ("Color", Color) = (1,1,1,1)
+        [HideInInspector] [MainTexture]                 _BaseMap            ("Texture", 2D) = "white" {}
+        [HideInInspector]                               _BaseColorMap       ("Texture", 2D) = "white" {}
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -354,13 +418,14 @@ Shader "Hidden/lilToonTessellationTransparent"
 //
     SubShader
     {
-        Tags {"RenderType" = "Transparent" "Queue" = "AlphaTest+2"}
+        Tags {"RenderType" = "TransparentCutout" "Queue" = "AlphaTest+10"}
         UsePass "Hidden/ltspass_tess_transparent/FORWARD"
         UsePass "Hidden/ltspass_tess_transparent/FORWARD_ADD"
         UsePass "Hidden/ltspass_tess_transparent/SHADOW_CASTER"
         UsePass "Hidden/ltspass_tess_transparent/META"
 
-        UsePass "Hidden/ltspass_tess_transparent/Beatsaber/FORWARD"
+        UsePass "Hidden/ltspass_tess_transparent/BeatSaber/FORWARD"
+        UsePass "Hidden/ltspass_tess_transparent/BeatSaber/SHADOW_CASTER"
     }
 //
 // BRP End
@@ -370,7 +435,7 @@ Shader "Hidden/lilToonTessellationTransparent"
 /*
     SubShader
     {
-        Tags {"RenderType" = "Transparent" "Queue" = "AlphaTest+2"}
+        Tags {"RenderType" = "TransparentCutout" "Queue" = "AlphaTest+10"}
         UsePass "Hidden/ltspass_tess_transparent/FORWARD"
         UsePass "Hidden/ltspass_tess_transparent/SHADOW_CASTER"
         UsePass "Hidden/ltspass_tess_transparent/DEPTHONLY"
@@ -384,7 +449,7 @@ Shader "Hidden/lilToonTessellationTransparent"
 /*
     SubShader
     {
-        Tags {"RenderType" = "Transparent" "Queue" = "AlphaTest+2"}
+        Tags {"RenderType" = "TransparentCutout" "Queue" = "AlphaTest+10"}
         UsePass "Hidden/ltspass_tess_transparent/FORWARD"
         UsePass "Hidden/ltspass_tess_transparent/SHADOW_CASTER"
         UsePass "Hidden/ltspass_tess_transparent/DEPTHONLY"
@@ -394,6 +459,21 @@ Shader "Hidden/lilToonTessellationTransparent"
     }
 */
 // URP End
+
+//----------------------------------------------------------------------------------------------------------------------
+// HDRP Start
+/*
+    SubShader
+    {
+        Tags {"RenderPipeline"="HDRenderPipeline" "RenderType" = "HDLitShader" "Queue" = "AlphaTest+10"}
+        UsePass "Hidden/ltspass_tess_transparent/FORWARD"
+        UsePass "Hidden/ltspass_tess_transparent/SHADOW_CASTER"
+        UsePass "Hidden/ltspass_tess_transparent/DEPTHONLY"
+        UsePass "Hidden/ltspass_tess_transparent/MOTIONVECTORS"
+        UsePass "Hidden/ltspass_tess_transparent/META"
+    }
+*/
+// HDRP End
 
     Fallback "Unlit/Texture"
     CustomEditor "lilToon.lilToonInspector"

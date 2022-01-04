@@ -56,7 +56,7 @@ namespace VMCAvatarMaterialChange.HarmonyPatches
             try
             {
                 Logger.log?.Warn("Removing Harmony patches.");
-                harmony.UnpatchAll(harmonyId);
+                harmony.UnpatchSelf();
             }
             catch (Exception ex)
             {

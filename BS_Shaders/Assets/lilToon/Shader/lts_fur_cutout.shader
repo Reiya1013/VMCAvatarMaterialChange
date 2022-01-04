@@ -7,10 +7,17 @@ Shader "Hidden/lilToonFurCutout"
         [lilToggle]     _Invisible                  ("Invisible", Int) = 0
                         _AsUnlit                    ("As Unlit", Range(0, 1)) = 0
                         _Cutoff                     ("Alpha Cutoff", Range(0,1)) = 0.5
+                        _SubpassCutoff              ("Subpass Alpha Cutoff", Range(0,1)) = 0.5
         [lilToggle]     _FlipNormal                 ("Flip Backface Normal", Int) = 0
+        [lilToggle]     _ShiftBackfaceUV            ("Shift Backface UV", Int) = 0
                         _BackfaceForceShadow        ("Backface Force Shadow", Range(0,1)) = 0
                         _VertexLightStrength        ("Vertex Light Strength", Range(0,1)) = 1
                         _LightMinLimit              ("Light Min Limit", Range(0,1)) = 0
+                        _LightMaxLimit              ("Light Max Limit", Range(0,10)) = 1
+                        _BeforeExposureLimit        ("Before Exposure Limit", Float) = 10000
+                        _MonochromeLighting         ("Monochrome lighting", Range(0,1)) = 0
+                        _lilDirectionalLightStrength ("Directional Light Strength", Range(0,1)) = 1
+        [lilVec3]       _LightDirectionOverride     ("Light Direction Override", Vector) = (0,0.001,0,0)
 
         //----------------------------------------------------------------------------------------------------------------------
         // Main
@@ -36,14 +43,14 @@ Shader "Hidden/lilToonFurCutout"
                         _Shadow2ndColor             ("Shadow 2nd Color", Color) = (0,0,0,0)
         [NoScaleOffset] _Shadow2ndColorTex          ("Shadow 2nd Color", 2D) = "black" {}
                         _ShadowMainStrength         ("Main Color Strength", Range(0, 1)) = 1
-                        _ShadowEnvStrength          ("Environment Strength", Range(0, 1)) = 1
+                        _ShadowEnvStrength          ("Environment Strength", Range(0, 1)) = 0
                         _ShadowBorderColor          ("Border Color", Color) = (1,0,0,1)
                         _ShadowBorderRange          ("Border Range", Range(0, 1)) = 0
 
         //----------------------------------------------------------------------------------------------------------------------
         // Distance Fade
         [lilHDR]        _DistanceFadeColor          ("Color", Color) = (0,0,0,1)
-        [lil3Param]     _DistanceFade               ("Start|End|Strength", Vector) = (0.1,0.01,0,0)
+        [lilFFFB]       _DistanceFade               ("Start|End|Strength|Fix backface", Vector) = (0.1,0.01,0,0)
 
         //----------------------------------------------------------------------------------------------------------------------
         // Encryption
@@ -77,6 +84,7 @@ Shader "Hidden/lilToonFurCutout"
                                                         _OffsetFactor       ("Offset Factor", Float) = 0
                                                         _OffsetUnits        ("Offset Units", Float) = 0
         [lilColorMask]                                  _ColorMask          ("Color Mask", Int) = 15
+        [lilToggle]                                     _AlphaToMask        ("AlphaToMask", Int) = 1
 
         //----------------------------------------------------------------------------------------------------------------------
         // Fur
@@ -89,7 +97,8 @@ Shader "Hidden/lilToonFurCutout"
         [lilToggle]     _VertexColor2FurVector      ("VertexColor->Vector", Int) = 0
                         _FurGravity                 ("Fur Gravity", Range(0,1)) = 0.25
                         _FurAO                      ("Fur AO", Range(0,1)) = 0
-        [IntRange]      _FurLayerNum                ("Fur Layer Num", Range(1, 6)) = 4
+        [IntRange]      _FurLayerNum                ("Fur Layer Num", Range(1, 6)) = 2
+                        _FurRootOffset              ("Fur Root Offset", Range(-1,0)) = 0
 
         //----------------------------------------------------------------------------------------------------------------------
         // Fur Advanced
@@ -118,8 +127,16 @@ Shader "Hidden/lilToonFurCutout"
                                                         _FurOffsetFactor        ("Offset Factor", Float) = 0
                                                         _FurOffsetUnits         ("Offset Units", Float) = 0
         [lilColorMask]                                  _FurColorMask           ("Color Mask", Int) = 15
+        [lilToggle]                                     _FurAlphaToMask         ("AlphaToMask", Int) = 1
+
+        //----------------------------------------------------------------------------------------------------------------------
+        // Save (Unused)
+        [HideInInspector] [MainColor]                   _BaseColor          ("Color", Color) = (1,1,1,1)
+        [HideInInspector] [MainTexture]                 _BaseMap            ("Texture", 2D) = "white" {}
+        [HideInInspector]                               _BaseColorMap       ("Texture", 2D) = "white" {}
     }
     HLSLINCLUDE
+        #pragma require geometry
         #define LIL_RENDER 1
         #define LIL_FUR
     ENDHLSL
@@ -135,8 +152,7 @@ Shader "Hidden/lilToonFurCutout"
         Pass
         {
             Name "FORWARD"
-            Tags {"LightMode" = "ForwardBase"
-                "RenderType" = "TransparentCutout"}
+            Tags {"LightMode" = "ForwardBase"}
 
             Stencil
             {
@@ -155,24 +171,23 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_OffsetFactor], [_OffsetUnits]
             BlendOp [_BlendOp], [_BlendOpAlpha]
             Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_AlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.0
             #pragma multi_compile_fwdbase
-            #pragma multi_compile_fog
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma fragmentoption ARB_precision_hint_fastest
-            #pragma skip_variants SHADOWS_SCREEN
+            #pragma skip_variants SHADOWS_SCREEN DIRLIGHTMAP_COMBINED
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_normal.hlsl"
+            #include "Includes/lil_pass_forward.hlsl"
 
             ENDHLSL
         }
@@ -181,8 +196,7 @@ Shader "Hidden/lilToonFurCutout"
         Pass
         {
             Name "FORWARD_FUR"
-            Tags {"LightMode" = "ForwardBase"
-                "RenderType" = "TransparentCutout"}
+            Tags {"LightMode" = "ForwardBase"}
 
             Stencil
             {
@@ -201,26 +215,24 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_FurOffsetFactor], [_FurOffsetUnits]
             BlendOp [_FurBlendOp], [_FurBlendOpAlpha]
             Blend [_FurSrcBlend] [_FurDstBlend], [_FurSrcBlendAlpha] [_FurDstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_FurAlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma geometry geom
             #pragma fragment frag
-            #pragma require geometry
-            #pragma target 4.0
             #pragma multi_compile_fwdbase
-            #pragma multi_compile_fog
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma fragmentoption ARB_precision_hint_fastest
             #pragma skip_variants SHADOWS_SCREEN
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_fur.hlsl"
+            #include "Includes/lil_pass_forward_fur.hlsl"
 
             ENDHLSL
         }
@@ -229,8 +241,7 @@ Shader "Hidden/lilToonFurCutout"
         Pass
         {
             Name "FORWARD_ADD"
-            Tags {"LightMode" = "ForwardAdd"
-                "RenderType" = "TransparentCutout"}
+            Tags {"LightMode" = "ForwardAdd"}
 
             Stencil
             {
@@ -249,25 +260,24 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_OffsetFactor], [_OffsetUnits]
             Blend [_SrcBlendFA] [_DstBlendFA], Zero One
             BlendOp [_BlendOpFA], [_BlendOpAlphaFA]
+            AlphaToMask [_AlphaToMask]
             Fog { Color(0,0,0,0) }
-            AlphaToMask On
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.0
-            #pragma multi_compile_fwdadd
-            #pragma multi_compile_fog
+            #pragma multi_compile_fragment POINT DIRECTIONAL SPOT POINT_COOKIE DIRECTIONAL_COOKIE
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma fragmentoption ARB_precision_hint_fastest
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #define LIL_PASS_FORWARDADD
-            #include "Includes/lil_pass_normal.hlsl"
+            #include "Includes/lil_pass_forward.hlsl"
 
             ENDHLSL
         }
@@ -276,8 +286,7 @@ Shader "Hidden/lilToonFurCutout"
         Pass
         {
             Name "FORWARD_ADD_FUR"
-            Tags {"LightMode" = "ForwardAdd"
-                "RenderType" = "TransparentCutout"}
+            Tags {"LightMode" = "ForwardAdd"}
 
             Stencil
             {
@@ -297,26 +306,24 @@ Shader "Hidden/lilToonFurCutout"
             Blend [_FurSrcBlendFA] [_FurDstBlendFA], Zero One
             BlendOp [_FurBlendOpFA], [_FurBlendOpAlphaFA]
             Fog { Color(0,0,0,0) }
-            AlphaToMask On
+            AlphaToMask [_FurAlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma geometry geom
             #pragma fragment frag
-            #pragma target 4.0
-            #pragma require geometry
-            #pragma multi_compile_fwdadd
-            #pragma multi_compile_fog
+            #pragma multi_compile_fragment POINT DIRECTIONAL SPOT POINT_COOKIE DIRECTIONAL_COOKIE
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma fragmentoption ARB_precision_hint_fastest
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #define LIL_PASS_FORWARDADD
-            #include "Includes/lil_pass_fur.hlsl"
+            #include "Includes/lil_pass_forward_fur.hlsl"
 
             ENDHLSL
         }
@@ -327,23 +334,68 @@ Shader "Hidden/lilToonFurCutout"
         Pass
         {
             Name "META"
-            Tags {"LightMode" = "Meta"
-                "RenderType" = "TransparentCutout"}
+            Tags {"LightMode" = "Meta"}
             Cull Off
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
             #pragma shader_feature EDITOR_VISUALIZATION
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_meta.hlsl"
             ENDHLSL
         }
+
+
+        // Forward
+        Pass
+        {
+            Name "FORWARD_BS"
+            Tags {"LightMode" = "ForwardBase"}
+
+            Stencil
+            {
+                Ref [_StencilRef]
+                ReadMask [_StencilReadMask]
+                WriteMask [_StencilWriteMask]
+                Comp [_StencilComp]
+                Pass [_StencilPass]
+                Fail [_StencilFail]
+                ZFail [_StencilZFail]
+            }
+            Cull [_Cull]
+            ZWrite Off
+            ZTest [_ZTest]
+            Offset [_OffsetFactor], [_OffsetUnits]
+            BlendOp [_BlendOp], [_BlendOpAlpha]
+            Blend Zero One,One Zero //Alpha�����㏑��
+            AlphaToMask [_AlphaToMask]
+
+            HLSLPROGRAM
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Build Option
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_fwdbase
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
+            #pragma multi_compile_instancing
+            #pragma fragmentoption ARB_precision_hint_fastest
+            #pragma skip_variants SHADOWS_SCREEN DIRLIGHTMAP_COMBINED
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Pass
+            #define _BeatSaber_Alpha
+            #include "Includes/lil_pass_forward.hlsl"
+
+            ENDHLSL
+        }
+
     }
 //
 // BRP End
@@ -351,13 +403,16 @@ Shader "Hidden/lilToonFurCutout"
 //----------------------------------------------------------------------------------------------------------------------
 // LWRP Start
 /*
-    //------------------------------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------------------------------
     // Lightweight Render Pipeline SM4.5
     SubShader
     {
         Tags {"RenderType" = "TransparentCutout" "Queue" = "AlphaTest" "ShaderModel" = "4.5"}
+        HLSLINCLUDE
+            #pragma target 4.5
+        ENDHLSL
 
-        // ForwardLit
+        // Forward
         Pass
         {
             Name "FORWARD"
@@ -380,29 +435,25 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_OffsetFactor], [_OffsetUnits]
             BlendOp [_BlendOp], [_BlendOpAlpha]
             Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_AlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile_fog
+            #pragma multi_compile_fragment _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_normal.hlsl"
+            #include "Includes/lil_pass_forward.hlsl"
 
             ENDHLSL
         }
@@ -430,31 +481,26 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_FurOffsetFactor], [_FurOffsetUnits]
             BlendOp [_FurBlendOp], [_FurBlendOpAlpha]
             Blend [_FurSrcBlend] [_FurDstBlend], [_FurSrcBlendAlpha] [_FurDstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_FurAlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma geometry geom
             #pragma fragment frag
-            #pragma target 4.5
-            #pragma require geometry
             #pragma exclude_renderers gles gles3 glcore
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile_fog
+            #pragma multi_compile_fragment _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_fur.hlsl"
+            #include "Includes/lil_pass_forward_fur.hlsl"
 
             ENDHLSL
         }
@@ -468,17 +514,16 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_shadowcaster.hlsl"
 
@@ -494,16 +539,15 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_depthonly.hlsl"
 
@@ -519,27 +563,26 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_meta.hlsl"
             ENDHLSL
         }
     }
 
-    //------------------------------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------------------------------
     // Lightweight Render Pipeline
     SubShader
     {
         Tags {"RenderType" = "TransparentCutout" "Queue" = "AlphaTest"}
 
-        // ForwardLit
+        // Forward
         Pass
         {
             Name "FORWARD"
@@ -562,28 +605,24 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_OffsetFactor], [_OffsetUnits]
             BlendOp [_BlendOp], [_BlendOpAlpha]
             Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_AlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.0
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile_fog
+            #pragma multi_compile_fragment _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_normal.hlsl"
+            #include "Includes/lil_pass_forward.hlsl"
 
             ENDHLSL
         }
@@ -611,30 +650,25 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_FurOffsetFactor], [_FurOffsetUnits]
             BlendOp [_FurBlendOp], [_FurBlendOpAlpha]
             Blend [_FurSrcBlend] [_FurDstBlend], [_FurSrcBlendAlpha] [_FurDstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_FurAlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma geometry geom
             #pragma fragment frag
-            #pragma target 4.0
-            #pragma require geometry
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile_fog
+            #pragma multi_compile_fragment _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_fur.hlsl"
+            #include "Includes/lil_pass_forward_fur.hlsl"
 
             ENDHLSL
         }
@@ -648,16 +682,15 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 3.5
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_shadowcaster.hlsl"
 
@@ -673,15 +706,14 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 3.5
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma multi_compile_instancing
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_depthonly.hlsl"
 
@@ -697,13 +729,13 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma exclude_renderers gles gles3 glcore
+            #pragma only_renderers gles gles3 glcore d3d11
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_meta.hlsl"
             ENDHLSL
@@ -715,13 +747,16 @@ Shader "Hidden/lilToonFurCutout"
 //----------------------------------------------------------------------------------------------------------------------
 // URP Start
 /*
-    //------------------------------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------------------------------
     // Universal Render Pipeline SM4.5
     SubShader
     {
         Tags {"RenderType" = "TransparentCutout" "Queue" = "AlphaTest" "ShaderModel" = "4.5"}
+        HLSLINCLUDE
+            #pragma target 4.5
+        ENDHLSL
 
-        // ForwardLit
+        // Forward
         Pass
         {
             Name "FORWARD"
@@ -744,29 +779,25 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_OffsetFactor], [_OffsetUnits]
             BlendOp [_BlendOp], [_BlendOpAlpha]
             Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_AlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile_fog
+            #pragma multi_compile_fragment _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_normal.hlsl"
+            #include "Includes/lil_pass_forward.hlsl"
 
             ENDHLSL
         }
@@ -794,31 +825,34 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_FurOffsetFactor], [_FurOffsetUnits]
             BlendOp [_FurBlendOp], [_FurBlendOpAlpha]
             Blend [_FurSrcBlend] [_FurDstBlend], [_FurSrcBlendAlpha] [_FurDstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_FurAlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma geometry geom
             #pragma fragment frag
-            #pragma target 4.5
-            #pragma require geometry
             #pragma exclude_renderers gles gles3 glcore
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile_fog
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTERED_RENDERING
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ LIGHTMAP_SHADOW_MIXING
+            #pragma multi_compile_fragment _ SHADOWS_SHADOWMASK
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_fragment _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_fur.hlsl"
+            #include "Includes/lil_pass_forward_fur.hlsl"
 
             ENDHLSL
         }
@@ -832,17 +866,16 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_shadowcaster.hlsl"
 
@@ -858,16 +891,15 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_depthonly.hlsl"
 
@@ -883,16 +915,15 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_depthnormals.hlsl"
 
@@ -925,14 +956,13 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_universal2d.hlsl"
             ENDHLSL
@@ -947,27 +977,26 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
             #pragma exclude_renderers gles gles3 glcore
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_meta.hlsl"
             ENDHLSL
         }
     }
 
-    //------------------------------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------------------------------
     // Universal Render Pipeline
     SubShader
     {
         Tags {"RenderType" = "TransparentCutout" "Queue" = "AlphaTest"}
 
-        // ForwardLit
+        // Forward
         Pass
         {
             Name "FORWARD"
@@ -990,28 +1019,24 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_OffsetFactor], [_OffsetUnits]
             BlendOp [_BlendOp], [_BlendOpAlpha]
             Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_AlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.0
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile_fog
+            #pragma multi_compile_fragment _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_normal.hlsl"
+            #include "Includes/lil_pass_forward.hlsl"
 
             ENDHLSL
         }
@@ -1039,30 +1064,33 @@ Shader "Hidden/lilToonFurCutout"
             Offset [_FurOffsetFactor], [_FurOffsetUnits]
             BlendOp [_FurBlendOp], [_FurBlendOpAlpha]
             Blend [_FurSrcBlend] [_FurDstBlend], [_FurSrcBlendAlpha] [_FurDstBlendAlpha]
-            AlphaToMask On
+            AlphaToMask [_FurAlphaToMask]
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma geometry geom
             #pragma fragment frag
-            #pragma target 4.0
-            #pragma require geometry
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile_fog
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTERED_RENDERING
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ LIGHTMAP_SHADOW_MIXING
+            #pragma multi_compile_fragment _ SHADOWS_SHADOWMASK
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_fragment _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile_vertex _ FOG_LINEAR FOG_EXP FOG_EXP2
             #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
-            #include "Includes/lil_pass_fur.hlsl"
+            #include "Includes/lil_pass_forward_fur.hlsl"
 
             ENDHLSL
         }
@@ -1076,16 +1104,15 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 3.5
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_shadowcaster.hlsl"
 
@@ -1101,15 +1128,14 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 3.5
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma multi_compile_instancing
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_depthonly.hlsl"
 
@@ -1125,15 +1151,14 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 3.5
             #pragma only_renderers gles gles3 glcore d3d11
             #pragma multi_compile_instancing
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_depthnormals.hlsl"
 
@@ -1166,13 +1191,13 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
             #pragma only_renderers gles gles3 glcore d3d11
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_universal2d.hlsl"
             ENDHLSL
@@ -1187,13 +1212,13 @@ Shader "Hidden/lilToonFurCutout"
 
             HLSLPROGRAM
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Build Option
             #pragma vertex vert
             #pragma fragment frag
-            #pragma exclude_renderers gles gles3 glcore
+            #pragma only_renderers gles gles3 glcore d3d11
 
-            //------------------------------------------------------------------------------------------------------------------
+            //----------------------------------------------------------------------------------------------------------------------
             // Pass
             #include "Includes/lil_pass_meta.hlsl"
             ENDHLSL
@@ -1201,6 +1226,261 @@ Shader "Hidden/lilToonFurCutout"
     }
 */
 // URP End
+
+//----------------------------------------------------------------------------------------------------------------------
+// HDRP Start
+/*
+    //----------------------------------------------------------------------------------------------------------------------
+    // High Definition Render Pipeline
+    HLSLINCLUDE
+        #pragma target 4.5
+    ENDHLSL
+    SubShader
+    {
+        Tags {"RenderPipeline"="HDRenderPipeline" "RenderType" = "HDLitShader" "Queue" = "AlphaTest"}
+
+        // Forward
+        Pass
+        {
+            Name "FORWARD"
+            Tags {"LightMode" = "ForwardOnly"}
+
+            Stencil
+            {
+                Ref [_StencilRef]
+                ReadMask [_StencilReadMask]
+                WriteMask [_StencilWriteMask]
+                Comp [_StencilComp]
+                Pass [_StencilPass]
+                Fail [_StencilFail]
+                ZFail [_StencilZFail]
+            }
+            Cull [_Cull]
+            ZWrite [_ZWrite]
+            ZTest [_ZTest]
+            ColorMask [_ColorMask]
+            Offset [_OffsetFactor], [_OffsetUnits]
+            BlendOp [_BlendOp], [_BlendOpAlpha]
+            Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
+            AlphaToMask [_AlphaToMask]
+
+            HLSLPROGRAM
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Build Option
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_fragment _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile_fragment _ SHADOWS_SHADOWMASK
+
+            #define SHADERPASS SHADERPASS_FORWARD
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Pass
+            #include "Includes/lil_pass_forward.hlsl"
+
+            ENDHLSL
+        }
+
+        // Fur
+        Pass
+        {
+            Name "FORWARD_FUR"
+            Tags {"LightMode" = "SRPDefaultUnlit"}
+
+            Stencil
+            {
+                Ref [_FurStencilRef]
+                ReadMask [_FurStencilReadMask]
+                WriteMask [_FurStencilWriteMask]
+                Comp [_FurStencilComp]
+                Pass [_FurStencilPass]
+                Fail [_FurStencilFail]
+                ZFail [_FurStencilZFail]
+            }
+            Cull [_FurCull]
+            ZWrite [_FurZWrite]
+            ZTest [_FurZTest]
+            ColorMask [_FurColorMask]
+            Offset [_FurOffsetFactor], [_FurOffsetUnits]
+            BlendOp [_FurBlendOp], [_FurBlendOpAlpha]
+            Blend [_FurSrcBlend] [_FurDstBlend], [_FurSrcBlendAlpha] [_FurDstBlendAlpha]
+            AlphaToMask [_FurAlphaToMask]
+
+            HLSLPROGRAM
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Build Option
+            #pragma vertex vert
+            #pragma geometry geom
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #pragma multi_compile_fragment _ LIGHTMAP_ON
+            #pragma multi_compile_fragment _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile_fragment _ SHADOWS_SHADOWMASK
+
+            #define SHADERPASS SHADERPASS_FORWARD
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Pass
+            #include "Includes/lil_pass_forward_fur.hlsl"
+
+            ENDHLSL
+        }
+
+        // ShadowCaster
+        Pass
+        {
+            Name "SHADOW_CASTER"
+            Tags {"LightMode" = "ShadowCaster"}
+
+            Cull[_Cull]
+            ZClip [_ZClip]
+            ZWrite On
+            ZTest LEqual
+            AlphaToMask On
+
+            HLSLPROGRAM
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Build Option
+            #pragma vertex vert
+            #pragma geometry geom
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #define SHADERPASS SHADERPASS_SHADOWS
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Pass
+            #define LIL_ONEPASS_FUR
+            #include "Includes/lil_pass_depthonly.hlsl"
+
+            ENDHLSL
+        }
+
+        // DepthOnly
+        Pass
+        {
+            Name "DEPTHONLY"
+            Tags {"LightMode" = "DepthForwardOnly"}
+
+            Stencil
+            {
+                Ref [_StencilRef]
+                ReadMask [_StencilReadMask]
+                WriteMask [_StencilWriteMask]
+                Comp [_StencilComp]
+                Pass [_StencilPass]
+                Fail [_StencilFail]
+                ZFail [_StencilZFail]
+            }
+            Cull Back
+            ZWrite [_ZWrite]
+            ZTest [_ZTest]
+            Offset [_OffsetFactor], [_OffsetUnits]
+            AlphaToMask [_AlphaToMask]
+
+            HLSLPROGRAM
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Build Option
+            #pragma vertex vert
+            #pragma geometry geom
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #pragma multi_compile _ WRITE_NORMAL_BUFFER
+            #pragma multi_compile _ WRITE_MSAA_DEPTH
+
+            #define SHADERPASS SHADERPASS_DEPTH_ONLY
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Pass
+            #define LIL_ONEPASS_FUR
+            #include "Includes/lil_pass_depthonly.hlsl"
+
+            ENDHLSL
+        }
+
+        // MotionVectors
+        Pass
+        {
+            Name "MOTIONVECTORS"
+            Tags {"LightMode" = "MotionVectors"}
+
+            Stencil
+            {
+                WriteMask [_StencilWriteMaskMV]
+                Ref [_StencilRefMV]
+                Comp Always
+                Pass Replace
+            }
+            Cull Back
+            ZWrite [_ZWrite]
+            ZTest [_ZTest]
+            Offset [_OffsetFactor], [_OffsetUnits]
+            AlphaToMask [_AlphaToMask]
+
+            HLSLPROGRAM
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Build Option
+            #pragma vertex vert
+            #pragma geometry geom
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #pragma multi_compile _ WRITE_NORMAL_BUFFER
+            #pragma multi_compile _ WRITE_MSAA_DEPTH
+
+            #define SHADERPASS SHADERPASS_MOTION_VECTORS
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Pass
+            #define LIL_ONEPASS_FUR
+            #include "Includes/lil_pass_motionvectors.hlsl"
+
+            ENDHLSL
+        }
+
+        // Meta
+        Pass
+        {
+            Name "META"
+            Tags {"LightMode" = "META"}
+            Cull Off
+
+            HLSLPROGRAM
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Build Option
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
+
+            //----------------------------------------------------------------------------------------------------------------------
+            // Pass
+            #include "Includes/lil_pass_meta.hlsl"
+            ENDHLSL
+        }
+    }
+*/
+// HDRP End
 
     Fallback "Unlit/Texture"
     CustomEditor "lilToon.lilToonInspector"

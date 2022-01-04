@@ -190,16 +190,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\VRUI.dll</HintPath>
     </Reference>
-    <Reference Include="Zenject, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <Private>False</Private>
-      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Zenject.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="Zenject-usage, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <Private>False</Private>
-      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Zenject-usage.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\PluginConfig.cs" />

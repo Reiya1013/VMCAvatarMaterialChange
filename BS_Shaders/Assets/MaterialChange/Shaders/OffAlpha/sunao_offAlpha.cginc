@@ -29,7 +29,7 @@
 			}
 
 			//Emission /= 2;
-			rtn.a = Emission;
+			rtn.a = Emission / 5;
 		}
 
 		return rtn;

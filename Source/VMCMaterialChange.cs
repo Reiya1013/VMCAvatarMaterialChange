@@ -7,7 +7,6 @@ using System.IO;
 using VRM;
 using System.Linq;
 using System.Collections;
-using Zenject;
 using VMCAvatar;
 
 namespace VMCAvatarMaterialChange
@@ -44,13 +43,6 @@ namespace VMCAvatarMaterialChange
         public const int LegacyOnlyInFirstPerson = 4;
         public const int OnlyInFirstPerson = 6;
         public const int AlwaysVisible = 10;
-
-        //[Inject]
-        //internal void Inject(AvatarController avatarController)
-        //{
-        //    Logger.log?.Debug($"Inject lobbyViewController");
-        //    lobbyViewController.didActivateEvent += OnActivate;
-        //}
 
         Vector3 defaultPosition;
         bool isGetDefaultPosition;

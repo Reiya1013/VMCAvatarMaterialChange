@@ -6,10 +6,10 @@
 		<tab tab-name="MaterialChange" tags="yo" >
 			<vertical pad-top="1" child-control-height="false" child-expand-height="false">
 				<page-button event-click='MaterialChangeList#PageUp' direction='Up' />
-				<list id='MaterialChangeList' visible-cells='6' expand-cell='true' select-cell='materialSelect' />
+				<list id='MaterialChangeList' visible-cells='5' expand-cell='true' select-cell='materialSelect' />
 				<page-button event-click='MaterialChangeList#PageDown' direction='Down' />
 			</vertical>
-			<vertical pad-top="60" preferred-width="60" child-control-height="false" child-expand-height="false">
+			<vertical pad-top="53" preferred-width="60" child-control-height="false" child-expand-height="false">
 				<horizontal bg='panel-top' pad-left='10' pad-right='10' horizontal-fit='PreferredSize'>
 					<toggle-setting preferred-width="40" preferred-height="12" text="Auto Change" value="AutoChangeToggle"  on-change="OnAutoChangeStateChange"/>
 					<button preferred-width="40" preferred-height="12" text="Material Change Start" on-click="goMaterialChange"/>

@@ -51,10 +51,16 @@ lilTessellationFactors hullConst(InputPatch<appdata, 3> input)
     tessFactor.xyz = min(tessFactor.xyz, _TessFactorMax);
 
     // Rim
-    float3 nv = float3(abs(dot(vertexNormalInput_0.normalWS, LIL_GET_VIEWDIR_WS(vertexInput_0.positionWS))),
-                       abs(dot(vertexNormalInput_1.normalWS, LIL_GET_VIEWDIR_WS(vertexInput_1.positionWS))),
-                       abs(dot(vertexNormalInput_2.normalWS, LIL_GET_VIEWDIR_WS(vertexInput_2.positionWS))));
-    nv = 1.0 - float3(nv.y + nv.z, nv.z + nv.x, nv.x + nv.y) * 0.5;
+    #if defined(LIL_HDRP)
+        float3 nv = float3(abs(dot(vertexNormalInput_0.normalWS, lilViewDirection(GetAbsolutePositionWS(vertexInput_0.positionWS)))),
+                        abs(dot(vertexNormalInput_1.normalWS, lilViewDirection(GetAbsolutePositionWS(vertexInput_1.positionWS)))),
+                        abs(dot(vertexNormalInput_2.normalWS, lilViewDirection(GetAbsolutePositionWS(vertexInput_2.positionWS)))));
+    #else
+        float3 nv = float3(abs(dot(vertexNormalInput_0.normalWS, lilViewDirection(vertexInput_0.positionWS))),
+                        abs(dot(vertexNormalInput_1.normalWS, lilViewDirection(vertexInput_1.positionWS))),
+                        abs(dot(vertexNormalInput_2.normalWS, lilViewDirection(vertexInput_2.positionWS))));
+    #endif
+    nv = saturate(1.0 - float3(nv.y + nv.z, nv.z + nv.x, nv.x + nv.y) * 0.5);
     tessFactor.xyz = max(tessFactor.xyz * nv * nv, 1.0);
     tessFactor.w = (tessFactor.x+tessFactor.y+tessFactor.z) / 3.0;
 
@@ -79,29 +85,65 @@ lilTessellationFactors hullConst(InputPatch<appdata, 3> input)
 //------------------------------------------------------------------------------------------------------------------------------
 // Domain Shader
 [domain("tri")]
+#if defined(LIL_ONEPASS_OUTLINE)
+v2g domain(lilTessellationFactors hsConst, const OutputPatch<appdata, 3> input, float3 bary : SV_DomainLocation)
+#else
 v2f domain(lilTessellationFactors hsConst, const OutputPatch<appdata, 3> input, float3 bary : SV_DomainLocation)
+#endif
 {
     appdata output;
     LIL_INITIALIZE_STRUCT(appdata, output);
     LIL_TRANSFER_INSTANCE_ID(input[0], output);
 
-    LIL_TRI_INTERPOLATION(input,output,bary,positionOS);
-    LIL_TRI_INTERPOLATION(input,output,bary,normalOS);
-    LIL_TRI_INTERPOLATION(input,output,bary,uv);
-
-    #if defined(LIL_USE_LIGHTMAP_UV) || (!defined(LIL_OUTLINE) && defined(LIL_SHOULD_UV1))
+    #if defined(LIL_APP_POSITION)
+        LIL_TRI_INTERPOLATION(input,output,bary,positionOS);
+    #endif
+    #if defined(LIL_APP_TEXCOORD0)
+        LIL_TRI_INTERPOLATION(input,output,bary,uv0);
+    #endif
+    #if defined(LIL_APP_TEXCOORD1)
         LIL_TRI_INTERPOLATION(input,output,bary,uv1);
     #endif
-    #if !defined(LIL_STRUCT_LITE_INCLUDED) && !defined(LIL_OUTLINE) && defined(LIL_SHOULD_TANGENT)
+    #if defined(LIL_APP_TEXCOORD2)
+        LIL_TRI_INTERPOLATION(input,output,bary,uv2);
+    #endif
+    #if defined(LIL_APP_TEXCOORD3)
+        LIL_TRI_INTERPOLATION(input,output,bary,uv3);
+    #endif
+    #if defined(LIL_APP_TEXCOORD4)
+        LIL_TRI_INTERPOLATION(input,output,bary,uv4);
+    #endif
+    #if defined(LIL_APP_TEXCOORD5)
+        LIL_TRI_INTERPOLATION(input,output,bary,uv5);
+    #endif
+    #if defined(LIL_APP_TEXCOORD6)
+        LIL_TRI_INTERPOLATION(input,output,bary,uv6);
+    #endif
+    #if defined(LIL_APP_TEXCOORD7)
+        LIL_TRI_INTERPOLATION(input,output,bary,uv7);
+    #endif
+    #if defined(LIL_APP_COLOR)
+        LIL_TRI_INTERPOLATION(input,output,bary,color);
+    #endif
+    #if defined(LIL_APP_NORMAL)
+        LIL_TRI_INTERPOLATION(input,output,bary,normalOS);
+    #endif
+    #if defined(LIL_APP_TANGENT)
         LIL_TRI_INTERPOLATION(input,output,bary,tangentOS);
     #endif
-    #if defined(LIL_PASS_FUR_INCLUDED)
-        LIL_TRI_INTERPOLATION(input,output,bary,color);
+    #if defined(LIL_APP_VERTEXID)
+		output.vertexID = input[0].vertexID;
+    #endif
+    #if defined(LIL_APP_PREVPOS)
+        LIL_TRI_INTERPOLATION(input,output,bary,previousPositionOS);
+    #endif
+    #if defined(LIL_APP_PREVEL)
+        LIL_TRI_INTERPOLATION(input,output,bary,precomputedVelocity);
     #endif
 
     output.normalOS = normalize(output.normalOS);
     float3 pt[3];
-    for (int i = 0; i < 3; i++)
+    for(int i = 0; i < 3; i++)
         pt[i] = input[i].normalOS * (dot(input[i].positionOS.xyz, input[i].normalOS) - dot(output.positionOS.xyz, input[i].normalOS) - _TessShrink*0.01);
     output.positionOS.xyz += (pt[0] * bary.x + pt[1] * bary.y + pt[2] * bary.z) * _TessStrength;
 
