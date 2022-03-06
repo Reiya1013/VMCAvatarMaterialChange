@@ -2,6 +2,8 @@
 using System;
 using System.Reflection;
 using VMCAvatar;
+using VRM;
+using static VRM.VRMFirstPerson;
 
 namespace VMCAvatarMaterialChange.HarmonyPatches
 {
@@ -20,6 +22,7 @@ namespace VMCAvatarMaterialChange.HarmonyPatches
         {
             Logger.log?.Warn("Applying Harmony patches.");
             Patch(typeof(UniGLTF.ImporterContext).GetMethod("ShowMeshes"), new HarmonyMethod(typeof(VRMHarmony).GetMethod("Prefix")), null);
+            //Patch(typeof(VRMFirstPerson).GetMethod("Setup", new Type[] { typeof(bool), typeof(SetVisiblityFunc) }), new HarmonyMethod(typeof(VRMFirstPerson_Setup).GetMethod("Prefix")), null);
             //Patch(typeof(SetSaberGlowColor).GetMethod("SetColors"), null, new HarmonyMethod(typeof(SetSaberGlowColorHarmony).GetMethod("Postfix")));
             if (Plugin.instance.IsChroma)
             {
@@ -42,7 +45,7 @@ namespace VMCAvatarMaterialChange.HarmonyPatches
             try
             {
                 harmony.Patch(original, prefix, postfix);
-                Logger.log?.Warn($"Setup Harmony patch: {original.Name}");
+                Logger.log?.Debug($"Setup Harmony patch: {original.Name}");
             }
             catch (Exception ex)
             {
@@ -55,7 +58,7 @@ namespace VMCAvatarMaterialChange.HarmonyPatches
         {
             try
             {
-                Logger.log?.Warn("Removing Harmony patches.");
+                Logger.log?.Debug("Removing Harmony patches.");
                 harmony.UnpatchSelf();
             }
             catch (Exception ex)

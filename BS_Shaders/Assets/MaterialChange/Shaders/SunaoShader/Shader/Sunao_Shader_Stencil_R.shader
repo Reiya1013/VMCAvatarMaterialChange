@@ -473,29 +473,6 @@ Shader "BeatSaber/Sunao Shader/[Stencil]/Read" {
 
             ENDCG
         }
-		
-		Pass {
-			Tags {
-				"LightMode" = "AlphaOff_ShadowCaster"
-			}
-            Blend Zero One,One Zero //Alphaだけ上書き
-            Cull Off
-            ZWrite Off
-			ZTest LEqual
-
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			#pragma multi_compile_shadowcaster
-			#pragma target 4.5
-
-			#define PASS_SC
-			#define TRANSPARENT
-
-			#include "./../../OffAlpha/sunao_offAlpha_SC.cginc"
-
-			ENDCG
-		}
 	}
 
 	FallBack "Diffuse"

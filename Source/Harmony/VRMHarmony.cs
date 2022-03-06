@@ -35,15 +35,24 @@ namespace VMCAvatarMaterialChange
         }
     }
 
-    [HarmonyPatch(typeof(VRCenterAdjust), "Update", MethodType.Normal)]
-    class VMCAvatar_RoomAjust
-    {
-        static void Prefix(VRCenterAdjust __instance)
-        {
-            if (!Plugin.instance.RoomAjust.CenterAdjust)
-                Plugin.instance.RoomAjust.SetupVRCenterAdjust( __instance);
-        }
-    }
+    //[HarmonyPatch(typeof(VRMFirstPerson), "Setup", MethodType.Normal)]
+    //public static class VRMFirstPerson_Setup
+    //{
+    //    public static void Prefix(VRMFirstPerson __instance)
+    //    {
+    //        VMCMaterialChange.instance.SetVRMFirstPerson(__instance);
+    //    }
+    //}
+
+    //[HarmonyPatch(typeof(VRCenterAdjust), "Update", MethodType.Normal)]
+    //class VMCAvatar_RoomAjust
+    //{
+    //    static void Prefix(VRCenterAdjust __instance)
+    //    {
+    //        if (!Plugin.instance.RoomAjust.CenterAdjust)
+    //            Plugin.instance.RoomAjust.SetupVRCenterAdjust( __instance);
+    //    }
+    //}
 
 
     //[HarmonyPatch(typeof(UniGLTF.ImporterContext), "AddMaterial", MethodType.Normal)]

@@ -62,6 +62,17 @@ namespace VMCAvatarMaterialChange
 
         }
 
+        public void SetVRMFirstPerson(VRMFirstPerson instance)
+        {
+            // firstPerson
+            for (int i = 0; i < instance.Renderers.Count;i++)
+            {
+                var fpf = instance.Renderers[i];
+                fpf.FirstPersonFlag = FirstPersonFlag.ThirdPersonOnly;
+                instance.Renderers[i] = fpf;
+            }
+        }
+
         /// <summary>
         /// 初期化でシェーダー読み込み
         /// </summary>

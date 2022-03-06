@@ -35,7 +35,21 @@
 				<button preferred-width="80" preferred-height="12" text="Avatar Clear" on-click="copy-avatarDestroy"/>
 				<toggle-setting text="Auto Destroy" value="DestroyState"  on-change="auto-AvatarDestroyStateChange" />
 			</vertical>
-	</tab>
+		</tab>
+		<tab tab-name="VRMFirstPerson" tags="yo" >
+			<vertical pad-top="1" child-control-height="false" child-expand-height="false">
+				<page-button event-click='VRMFirstPersonList#PageUp' direction='Up' />
+				<list id='VRMFirstPersonList' visible-cells='5' expand-cell='true' select-cell='VRMFirstPersonSelect' />
+				<page-button event-click='VRMFirstPersonList#PageDown' direction='Down' />
+			</vertical>
+			<vertical pad-top="53" preferred-width="60" child-control-height="false" child-expand-height="false">
+				<horizontal bg='panel-top' pad-left='10' pad-right='10' horizontal-fit='PreferredSize'>
+					<button preferred-width="40" preferred-height="12" text="Setup VRMFirstPerson" on-click="SetVRMFirstPerson"/>
+					<button preferred-width="40" preferred-height="12" text="Save" on-click="SaveFRMFP"/>
+				</horizontal>
+			</vertical>	
+		</tab>
+
 	</vertical>
 </bg>
 

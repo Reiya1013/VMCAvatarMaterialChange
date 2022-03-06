@@ -1,0 +1,119 @@
+fileFormatVersion: 2
+guid: 2eb350b0dd339cb49b9824cf13995641
+timeCreated: 1542973684
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: //RootNode
+    100002: "\u3048\u308A\u305D\u3067"
+    100004: "\u30A8\u30DD\u30FC\u30EC\u30C3\u30C8"
+    100006: "\u30B9\u30AB\u30FC\u30C8\u88CF"
+    100008: "\u30EA\u30DC\u30F3\u7D10"
+    100010: "\u30EA\u30DC\u30F3\u8F2A"
+    100012: "\u524D\u306E\u30E4\u30C4"
+    100014: "\u670D"
+    100016: "\u80F8\u30EA\u30DC\u30F3"
+    400000: //RootNode
+    400002: "\u3048\u308A\u305D\u3067"
+    400004: "\u30A8\u30DD\u30FC\u30EC\u30C3\u30C8"
+    400006: "\u30B9\u30AB\u30FC\u30C8\u88CF"
+    400008: "\u30EA\u30DC\u30F3\u7D10"
+    400010: "\u30EA\u30DC\u30F3\u8F2A"
+    400012: "\u524D\u306E\u30E4\u30C4"
+    400014: "\u670D"
+    400016: "\u80F8\u30EA\u30DC\u30F3"
+    2300000: "\u3048\u308A\u305D\u3067"
+    2300002: "\u30A8\u30DD\u30FC\u30EC\u30C3\u30C8"
+    2300004: "\u30B9\u30AB\u30FC\u30C8\u88CF"
+    2300006: "\u30EA\u30DC\u30F3\u7D10"
+    2300008: "\u30EA\u30DC\u30F3\u8F2A"
+    2300010: "\u524D\u306E\u30E4\u30C4"
+    2300012: "\u670D"
+    2300014: "\u80F8\u30EA\u30DC\u30F3"
+    3300000: "\u3048\u308A\u305D\u3067"
+    3300002: "\u30A8\u30DD\u30FC\u30EC\u30C3\u30C8"
+    3300004: "\u30B9\u30AB\u30FC\u30C8\u88CF"
+    3300006: "\u30EA\u30DC\u30F3\u7D10"
+    3300008: "\u30EA\u30DC\u30F3\u8F2A"
+    3300010: "\u524D\u306E\u30E4\u30C4"
+    3300012: "\u670D"
+    3300014: "\u80F8\u30EA\u30DC\u30F3"
+    4300000: "\u670D"
+    4300002: "\u3048\u308A\u305D\u3067"
+    4300004: "\u30A8\u30DD\u30FC\u30EC\u30C3\u30C8"
+    4300006: "\u524D\u306E\u30E4\u30C4"
+    4300008: "\u30B9\u30AB\u30FC\u30C8\u88CF"
+    4300010: "\u30EA\u30DC\u30F3\u8F2A"
+    4300012: "\u30EA\u30DC\u30F3\u7D10"
+    4300014: "\u80F8\u30EA\u30DC\u30F3"
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
