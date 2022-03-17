@@ -10,14 +10,14 @@ namespace VMCAvatarMaterialChange
     [HarmonyPatch(typeof(LightWithIdManager), "SetColorForId", MethodType.Normal)]
     public static class LightHarmony
     {
-        public static void Postfix(LightWithIdManager __instance,int lightId, Color color)
+        public static void Postfix(LightWithIdManager __instance,int lightId, Color color,Color[] ____colors)
         {
             if (!OtherMaterialChangeSetting.Instance.OtherParameter.IsAmbientLight) return;
             
             if (!Plugin.instance.OptionLight.Lights.ContainsKey(lightId))
                 Plugin.instance.OptionLight.AddLight(lightId);
 
-            if (__instance.colors[lightId] != null)
+            if (____colors[lightId] != null)
             {
                 Plugin.instance.OptionLight.Lights[lightId].color = color;
                 Plugin.instance.OptionLight.Lights[lightId].enabled = color.a == 0f ? false : true;
