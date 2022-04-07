@@ -110,6 +110,7 @@ Shader "BeatSaber/MToon"
             #pragma multi_compile_fog
 //            #pragma multi_compile_instancing
             ENDCG
+
         }
                 
         // Forward Add

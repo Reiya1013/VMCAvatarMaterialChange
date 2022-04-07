@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 2273892715
+CRC: 2969790275
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e71ea80288ce817e38a2bc87178cff9d
+    Hash: 4e3a15c3cd6198ae0271d98dc9fbf61a
   TypeTreeHash:
     serializedVersion: 2
     Hash: 55d48f4ad9c3b13330b9eb5ee5686477
@@ -11,6 +11,7 @@ HashAppended: 0
 ClassTypes:
 - Class: 48
   Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/MaterialChange/Shaders/UTS/Shader/Toon_ShadingGradeMap_Mobile_StencilMask.shader
 - Assets/MaterialChange/Shaders/Unlit_WF_ShaderSuite/Shaders/Unlit_WF_UnToon_Outline_Transparent.shader

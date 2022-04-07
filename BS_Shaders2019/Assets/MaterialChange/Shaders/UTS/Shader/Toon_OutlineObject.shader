@@ -71,7 +71,11 @@ Shader "BeatSaber/UnityChanToonShader/Helper/Toon_OutlineObject" {
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment alpha_off_frag
+            #pragma only_renderers d3d9 d3d11 glcore gles gles3 metal vulkan xboxone ps4 switch
             #pragma target 3.0
+            //V.2.0.4
+            #pragma multi_compile _IS_OUTLINE_CLIPPING_NO 
+            #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
 
 			#include "./../../OffAlpha/uts2_offAlpha_OL.cginc"
             ENDCG

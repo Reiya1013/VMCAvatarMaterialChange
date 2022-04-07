@@ -361,6 +361,7 @@ Shader "BeatSaber/Sunao Shader/Cutout" {
 
 			#include "./cginc/SunaoShader_Core.cginc"
 
+
 			ENDCG
 		}
 

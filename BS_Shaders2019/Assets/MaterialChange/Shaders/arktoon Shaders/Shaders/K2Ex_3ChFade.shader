@@ -310,6 +310,7 @@ Shader "BeatSaber/arktoon/_K2Extra/3ChFade" {
             #define ARKTOON_ADD
             #define _EMISSION_ALPHA
 
+
             #include "cginc/arkludeDecl.cginc"
             #include "cginc/arkludeOther.cginc"
             #include "cginc/arkludeVertGeom.cginc"

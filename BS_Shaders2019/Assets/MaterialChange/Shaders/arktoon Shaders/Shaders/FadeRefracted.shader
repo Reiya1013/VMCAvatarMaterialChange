@@ -225,6 +225,7 @@ Shader "BeatSaber/arktoon/FadeRefracted" {
 
             #include "cginc/arkludeFadeShadowCaster.cginc"
 
+
             ENDCG
         }
 

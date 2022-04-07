@@ -265,8 +265,28 @@ Shader "BeatSaber/UnityChanToonShader/Toon_ShadingGradeMap" {
         }
 
 
-                
-		Pass
+
+
+        Pass {
+            Name "AlphaOff_Reiya_OL"
+            Blend Zero One,One Zero //Alphaだけ上書き
+            Cull Front
+            ZWrite Off
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment alpha_off_frag
+            #pragma only_renderers d3d9 d3d11 glcore gles gles3 metal vulkan xboxone ps4 switch
+            #pragma target 3.0
+            //V.2.0.4
+            #pragma multi_compile _IS_OUTLINE_CLIPPING_NO 
+            #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
+
+			#include "./../../OffAlpha/uts2_offAlpha_OL.cginc"
+            ENDCG
+        }
+        
+        Pass
         {
             Name "AlphaOff_Reiya_BS"
             Blend Zero One,One Zero //Alphaだけ上書き
@@ -296,21 +316,38 @@ Shader "BeatSaber/UnityChanToonShader/Toon_ShadingGradeMap" {
             ENDCG
         }
 
+
         Pass {
-            Name "AlphaOff_Reiya_OL"
+            Name "FORWARD_DELTA_Reiya_D"
+            Tags {
+                "LightMode"="ForwardAdd"
+            }
             Blend Zero One,One Zero //Alphaだけ上書き
             Cull Off
             ZWrite Off
-
+            
+            
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment alpha_off_frag
+            //#define UNITY_PASS_FORWARDADD
+            #include "UnityCG.cginc"
+            #include "AutoLight.cginc"
+            #include "Lighting.cginc"
+            //for Unity2018.x
+            #pragma multi_compile_fwdadd_fullshadows
+            #pragma multi_compile_fog
+            #pragma only_renderers d3d9 d3d11 glcore gles gles3 metal vulkan xboxone ps4 switch
             #pragma target 3.0
 
-			#include "./../../OffAlpha/uts2_offAlpha_OL.cginc"
+            //v.2.0.4
+            #pragma multi_compile _IS_TRANSCLIPPING_OFF
+            #pragma multi_compile _IS_ANGELRING_OFF
+            #pragma multi_compile _IS_PASS_FWDDELTA
+            #include "./../../OffAlpha/uts2_offAlpha_S.cginc"
+
             ENDCG
         }
-
 		Pass
         {
             Name "AlphaOff_Reiya_SH"

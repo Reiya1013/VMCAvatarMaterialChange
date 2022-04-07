@@ -288,7 +288,22 @@ Shader "BeatSaber/UnityChanToonShader/Toon_ShadingGradeMap_StencilOut" {
 
 
 
-                
+         
+        Pass {
+            Name "AlphaOff_Reiya_OL"
+            Blend Zero One,One Zero //Alphaだけ上書き
+            Cull Off
+            ZWrite Off
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment alpha_off_frag
+            #pragma target 3.0
+
+			#include "./../../OffAlpha/uts2_offAlpha_OL.cginc"
+            ENDCG
+        }
+        
 		Pass
         {
             Name "AlphaOff_Reiya_BS"
@@ -320,21 +335,6 @@ Shader "BeatSaber/UnityChanToonShader/Toon_ShadingGradeMap_StencilOut" {
             ENDCG
         }
         
-        Pass {
-            Name "AlphaOff_Reiya_OL"
-            Blend Zero One,One Zero //Alphaだけ上書き
-            Cull Off
-            ZWrite Off
-
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment alpha_off_frag
-            #pragma target 3.0
-
-			#include "./../../OffAlpha/uts2_offAlpha_OL.cginc"
-            ENDCG
-        }
-
 		Pass
         {
             Name "AlphaOff_Reiya_SH"

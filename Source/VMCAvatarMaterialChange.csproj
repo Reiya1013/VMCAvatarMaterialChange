@@ -54,10 +54,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\BSML.dll</HintPath>
     </Reference>
-    <Reference Include="Chroma, Version=2.5.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\Chroma.dll</HintPath>
+    <Reference Include="Chroma, Version=2.5.11.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
+      <HintPath>$(BeatSaberDir)\Plugins\Chroma.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Colors, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
@@ -121,9 +121,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.AssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+    <Reference Include="UnityEngine.AssetBundleModule.2019.31">
+      <HintPath>dll\UnityEngine.AssetBundleModule.2019.31.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.ClothModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

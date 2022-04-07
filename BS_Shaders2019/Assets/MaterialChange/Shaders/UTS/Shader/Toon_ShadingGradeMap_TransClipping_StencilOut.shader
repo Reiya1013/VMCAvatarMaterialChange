@@ -299,7 +299,26 @@ Shader "BeatSaber/UnityChanToonShader/Toon_ShadingGradeMap_TransClipping_Stencil
 
 
 
-                
+          
+        Pass {
+            Name "AlphaOff_Reiya_OL"
+            Blend Zero One,One Zero //Alphaだけ上書き
+            Cull Off
+            ZWrite Off
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment alpha_off_frag
+            #pragma only_renderers d3d9 d3d11 glcore gles gles3 metal vulkan xboxone ps4 switch
+            #pragma target 3.0
+            //V.2.0.4
+            #pragma multi_compile _IS_OUTLINE_CLIPPING_YES 
+            #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
+
+			#include "./../../OffAlpha/uts2_offAlpha_OL.cginc"
+            ENDCG
+        }
+      
 		Pass
         {
             Name "AlphaOff_Reiya_BS"
@@ -331,21 +350,6 @@ Shader "BeatSaber/UnityChanToonShader/Toon_ShadingGradeMap_TransClipping_Stencil
             ENDCG
         }
         
-        Pass {
-            Name "AlphaOff_Reiya_OL"
-            Blend Zero One,One Zero //Alphaだけ上書き
-            Cull Off
-            ZWrite Off
-
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment alpha_off_frag
-            #pragma target 3.0
-
-			#include "./../../OffAlpha/uts2_offAlpha_OL.cginc"
-            ENDCG
-        }
-
 		Pass
         {
             Name "AlphaOff_Reiya_SH"

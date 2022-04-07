@@ -467,7 +467,12 @@ Shader "BeatSaber/Sunao Shader/[Stencil]/Write" {
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment alpha_off_frag
+			#pragma multi_compile_fwdbase
+			#pragma multi_compile_fog
 			#pragma target 4.5
+
+			#define PASS_OL_FB
+			#define CUTOUT
             
 			#include "./../../OffAlpha/sunao_offAlpha.cginc"
 
