@@ -2,7 +2,7 @@
 using HarmonyLib;
 using UnityEngine;
 using VRM;
-using VMCAvatar;
+//using VMCAvatar;
 
 namespace VMCAvatarMaterialChange
 {

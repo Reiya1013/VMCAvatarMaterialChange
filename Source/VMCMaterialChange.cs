@@ -7,7 +7,7 @@ using System.IO;
 using VRM;
 using System.Linq;
 using System.Collections;
-using VMCAvatar;
+//using VMCAvatar;
 
 namespace VMCAvatarMaterialChange
 {

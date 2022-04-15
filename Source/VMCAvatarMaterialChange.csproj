@@ -180,10 +180,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Beat Saber_Data\Managed\UnityEngine.XRModule.dll</HintPath>
     </Reference>
-    <Reference Include="VMCAvatar, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="VMCAvatar, Version=0.5.3.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Beat Saber\Plugins\VMCAvatar.dll</HintPath>
-      <Private>False</Private>
     </Reference>
     <Reference Include="VRUI, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
 using System;
 using System.Reflection;
-using VMCAvatar;
+//using VMCAvatar;
 using VRM;
 using static VRM.VRMFirstPerson;
 

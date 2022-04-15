@@ -33,7 +33,9 @@ namespace VMCAvatarMaterialChange
 		{
 			if (VMCLight is null)
             {
-				VMCLight = GameObject.Find("VMCAvatar/VMCLight").GetComponent<Light>();
+				var vrcLight = GameObject.Find("VMCAvatar/VMCLight");
+				if (vrcLight != null)
+					VMCLight = vrcLight.GetComponent<Light>();
 			}
 
 			if (nextScene.name == "MainMenu")
