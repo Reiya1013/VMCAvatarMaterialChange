@@ -28,10 +28,7 @@ namespace VMCAvatarMaterialChange.HarmonyPatches
             {
                 ChromaPatch();
             }
-            else
-            {
-                Patch(typeof(LightWithIdManager).GetMethod("SetColorForId"), null, new HarmonyMethod(typeof(LightHarmony).GetMethod("Postfix")));
-            }
+            Patch(typeof(LightWithIdManager).GetMethod("SetColorForId"), null, new HarmonyMethod(typeof(LightHarmony).GetMethod("Postfix")));
 
         }
 
