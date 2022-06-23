@@ -16,9 +16,9 @@ namespace VMCAvatarMaterialChange
         internal static VMCMaterialChange instance { get; private set; } = new VMCMaterialChange();
 
         //Shader Asset
-        UnityEngine.Object[] Assets;
+        Shader[] Assets;
         private Dictionary<string, Shader> Shaders = new Dictionary<string, Shader>();
-        private ImporterContext VRMInstance;
+        public RuntimeGltfInstance VRMInstance { get; set; }
         private Dictionary<Renderer, Material[]> DefaultMaterials = new Dictionary<Renderer, Material[]>();
         private GameObject CopyVRM;
 
@@ -44,33 +44,28 @@ namespace VMCAvatarMaterialChange
         public const int OnlyInFirstPerson = 6;
         public const int AlwaysVisible = 10;
 
-        Vector3 defaultPosition;
-        bool isGetDefaultPosition;
-        private void OnActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
+       
+        public void SetVRMFirstPerson()
         {
-            if (firstActivation || isGetDefaultPosition == false)
+            if (VRMInstance == null) return;
+            VRMFirstPerson firstPerson = VRMInstance.GetComponent<VRMFirstPerson>();
+
+            // firstPerson
+            for (int i = 0; i < firstPerson.Renderers.Count;i++)
             {
-                if (VRMInstance != null)
+                var fpf = firstPerson.Renderers[i];
+                fpf.FirstPersonFlag = FirstPersonFlag.ThirdPersonOnly;
+                firstPerson.Renderers[i] = fpf;
+            }
+
+            foreach (var skinnedMeshRenderer in VRMInstance.GetComponentsInChildren<Renderer>(true))
+            {
+                if (skinnedMeshRenderer.gameObject.layer != 10)
                 {
-                    defaultPosition = VRMInstance.Root.transform.parent.position;
-                    isGetDefaultPosition = true;
+                    skinnedMeshRenderer.gameObject.layer = 10;
                 }
             }
 
-            VRMInstance.Root.transform.position = defaultPosition;
-            Logger.log?.Debug($"Reset Room Adjust{defaultPosition}");
-
-        }
-
-        public void SetVRMFirstPerson(VRMFirstPerson instance)
-        {
-            // firstPerson
-            for (int i = 0; i < instance.Renderers.Count;i++)
-            {
-                var fpf = instance.Renderers[i];
-                fpf.FirstPersonFlag = FirstPersonFlag.ThirdPersonOnly;
-                instance.Renderers[i] = fpf;
-            }
         }
 
         /// <summary>
@@ -104,15 +99,8 @@ namespace VMCAvatarMaterialChange
         {
             //assetシェーダーを読み込む
             AssetBundle assetBundle = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("VMCAvatarMaterialChange.bs_shaders"));
-            Assets = assetBundle.LoadAllAssets();
-            foreach (var asset in Assets)
-            {
-                if (asset is Shader shader)
-                {
-                    Shaders[shader.name] = shader;
-                }
-            }
-            //assetBundle.Unload(false);
+            Assets = assetBundle.LoadAllAssets<Shader>();
+            Array.ForEach(Assets, x => Shaders[x.name] = x);
         }
 
         /// <summary>
@@ -311,7 +299,7 @@ namespace VMCAvatarMaterialChange
         /// UniVRMでのVRMセットを検知してのMaterial変更
         /// </summary>
         /// <param name="__instance"></param>
-        public IEnumerator ChangeMaterial(ImporterContext __instance)
+        public IEnumerator ChangeMaterial(RuntimeGltfInstance __instance)
         {
             //VRM変更の場合は保持していたマテリアルを開放
             DefaultMaterials.Clear();
@@ -492,7 +480,7 @@ namespace VMCAvatarMaterialChange
                 VRMInstance.Root.AddComponent<Animator>();
 
             VRMAnimator = animator;
-
+            
             //Animationが登録済みの場合でレイヤーMaterialChangeがある場合は削除する
             Logger.log?.Debug($"SetAnimation Set");
             VRMAnimator.runtimeAnimatorController = animation;
@@ -515,6 +503,20 @@ namespace VMCAvatarMaterialChange
             set = set == 0 ? 1 : set;
             VRMAnimator.SetInteger("SetPoint", set);
             Logger.log?.Debug($"ToggleAnimation SetPoint:{set}");
+        }
+
+        /// <summary>
+        /// ゲームシーンフラグの切り替え
+        /// </summary>
+        public void GameSceneAnimation(bool isOn)
+        {
+            //アニメーターがなかったり、遷移中は実行しない
+            if (VRMAnimator == null) return;
+            if (VRMAnimator.IsInTransition(LayerNo)) return;
+
+            VRMAnimator.SetBool("GameStart", isOn);
+            var _isOn = VRMAnimator.GetBool("GameStart");
+            Logger.log?.Debug($"ToggleAnimation GameStart:{_isOn}");
         }
 
         #endregion
@@ -556,10 +558,7 @@ namespace VMCAvatarMaterialChange
             GameObject copyAvatarsecondary = CopyVRM.transform.Find("secondary").gameObject;
             copyAvatarsecondary.SetActive(true);
 
-            //OnAvatarDance();
-
             secondary.SetActive(true);
-
 
         }
 

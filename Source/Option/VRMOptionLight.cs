@@ -24,6 +24,12 @@ namespace VMCAvatarMaterialChange
 			SceneManager.activeSceneChanged += OnActiveSceneChanged;
 		}
 
+		private void OnDisable()
+        {
+			//シーンチェンジイベントセット
+			SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+		}
+
 		/// <summary>
 		/// シーンチェンジで表示を切り替える
 		/// </summary>

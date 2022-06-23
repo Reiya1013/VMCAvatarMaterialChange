@@ -2,6 +2,7 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.MenuButtons;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using VMCAvatarMaterialChange.Views.MaterialChange;
 using IPALogger = IPA.Logging.Logger;
 using VRUIControls;
@@ -47,8 +48,8 @@ namespace VMCAvatarMaterialChange
             MenuButton menuButton2 = new MenuButton("Material Change", "Material Change", ShowModFlowCoordinator, true);
             MenuButtons.instance.RegisterButton(menuButton2);
 
-            //コントローラーフック
-            //InputManager.instance.BeginPolling();
+            //シーンチェンジイベントセット
+            SceneManager.activeSceneChanged += OnActiveSceneChanged;
         }
 
         /// <summary>
@@ -64,19 +65,38 @@ namespace VMCAvatarMaterialChange
         }
 
         /// <summary>
+        /// シーンチェンジでGameSceneフラグを切り替える
+        /// </summary>
+        /// <param name="prevScene"></param>
+        /// <param name="nextScene"></param>
+        public void OnActiveSceneChanged(Scene prevScene, Scene nextScene)
+        {
+            if (nextScene.name == "MainMenu")
+            {
+                VMCMaterialChange.instance.GameSceneAnimation(false);
+            }
+            if (nextScene.name == "GameCore")
+            {
+                VMCMaterialChange.instance.GameSceneAnimation(true);
+            }
+        }
+
+
+        /// <summary>
         /// Called when the script is being destroyed.
         /// </summary>
         private void OnDestroy()
         {
+            //シーンチェンジイベントセット
+            SceneManager.activeSceneChanged -= OnActiveSceneChanged;
 
             Logger.log?.Debug($"{name}: OnDestroy()");
             instance = null; // This MonoBehaviour is being destroyed, so set the static instance property to null.
-
         }
 
         private void Update()
         {
-            MaterialChangeKeyDown();
+            //MaterialChangeKeyDown();
             AvatarCopy();
             ControllerInput();
         }
@@ -84,6 +104,9 @@ namespace VMCAvatarMaterialChange
 
         Int32 RightTriggerDownCount;
         float RightTriggerDownTime;
+        Int32 LeftTriggerDownCount;
+        float LeftTriggerDownTime;
+
         protected VRPointer _vrPointer;
 
 
@@ -106,46 +129,106 @@ namespace VMCAvatarMaterialChange
 
 
             //左手トリガー握りっぱなしで右トリガー3連続で入力されたらチェンジアニメーション
-            if (!(bool)(inputManager.GetLeftTriggerDown()))
-            {
-                RightTriggerDownCount = 0;
-                RightTriggerDownTime = 0;
-            }
-
-
-            if ((bool)(inputManager.GetRightTriggerClicked()))
-            {
-                RightTriggerDownCount += 1;
-                RightTriggerDownTime = 0;   //最後に入力があってから１秒経過しても３回目入力しなかった場合のみクリアするようにする
-                Logger.log?.Debug($"{name}: ControllerInput() RightTrigerCnt:{RightTriggerDownCount}");
-
-                if (RightTriggerDownCount >= 3)
+            { 
+                if (!(bool)(inputManager.GetLeftTriggerDown()))
                 {
                     RightTriggerDownCount = 0;
-                    Logger.log?.Debug($"{name}: ToggleAnimation()");
-
-                    VMCMaterialChange.instance.ToggleAnimation();
+                    RightTriggerDownTime = 0;
                 }
 
+                if ((bool)(inputManager.GetRightTriggerClicked()))
+                {
+                    RightTriggerDownCount += 1;
+                    RightTriggerDownTime = 0;   //最後に入力があってから１秒経過しても３回目入力しなかった場合のみクリアするようにする
+                    Logger.log?.Debug($"{name}: ControllerInput() RightTrigerCnt:{RightTriggerDownCount}");
+
+                    if (RightTriggerDownCount >= 3)
+                    {
+                        RightTriggerDownCount = 0;
+                        Logger.log?.Debug($"{name}: ToggleAnimation()");
+
+                        VMCMaterialChange.instance.ToggleAnimation();
+                    }
+
+                }
+
+
+                if (RightTriggerDownCount != 0)
+                    RightTriggerDownTime += Time.deltaTime;
+
+                if (RightTriggerDownTime > 0.5f)
+                {
+                    Logger.log?.Debug($"{name}: ControllerInput() ResetDeltaTime:{RightTriggerDownTime}");
+                    RightTriggerDownCount = 0;
+                    RightTriggerDownTime = 0;
+                }
             }
 
 
-            if (RightTriggerDownCount != 0)
-                RightTriggerDownTime += Time.deltaTime;
 
-            if (RightTriggerDownTime > 0.5f)
+
+            //→手トリガー握りっぱなしで左トリガー3連続で入力されたらアバターチェンジ
             {
-                Logger.log?.Debug($"{name}: ControllerInput() ResetDeltaTime:{RightTriggerDownTime}");
-                RightTriggerDownCount = 0;
-                RightTriggerDownTime = 0;
+                if (!(bool)(inputManager.GetRightTriggerDown()))
+                {
+                    LeftTriggerDownCount = 0;
+                    LeftTriggerDownTime = 0;
+                }
+
+                if ((bool)(inputManager.GetLeftTriggerClicked()))
+                {
+                    LeftTriggerDownCount += 1;
+                    LeftTriggerDownTime = 0;   //最後に入力があってから１秒経過しても３回目入力しなかった場合のみクリアするようにする
+                    Logger.log?.Debug($"{name}: ControllerInput() LeftTrigerCnt:{LeftTriggerDownCount}");
+
+                    if (LeftTriggerDownCount >= 3)
+                    {
+                        LeftTriggerDownCount = 0;
+                        Logger.log?.Debug($"{name}: ChangeActiveAvatar()");
+
+                        Plugin.instance.ChangeAvatas.ChangeActiveAvatar();
+                    }
+
+                }
+
+
+                if (RightTriggerDownCount != 0)
+                    RightTriggerDownTime += Time.deltaTime;
+
+                if (RightTriggerDownTime > 0.5f)
+                {
+                    Logger.log?.Debug($"{name}: ControllerInput() ResetDeltaTime:{RightTriggerDownTime}");
+                    RightTriggerDownCount = 0;
+                    RightTriggerDownTime = 0;
+                }
             }
+
+
+
 
 
             if (Input.GetKeyDown(KeyCode.T))
             {
                 VMCMaterialChange.instance.ToggleAnimation();
             }
-
+            //if (Input.GetKeyDown(KeyCode.Alpha1))
+            //{
+            //    Plugin.instance.DisposeVRMOff = true;
+            //    Plugin.instance.ChangeAvatas.SetAvatar(VMCMaterialChange.instance.VRMInstance);
+            //}
+            //if (Input.GetKeyDown(KeyCode.Alpha2))
+            //{
+            //    Plugin.instance.DisposeVRMOff = true;
+            //    Plugin.instance.ChangeAvatas.Setup(VMCMaterialChange.instance.VRMInstance);
+            //}
+            //if (Input.GetKeyDown(KeyCode.Alpha3))
+            //{
+            //    Plugin.instance.ChangeAvatas.ChangeActiveAvatar();
+            //}
+            //if (Input.GetKeyDown(KeyCode.Alpha4))
+            //{
+            //    Plugin.instance.ChangeAvatas.Reset();
+            //}
         }
 
 

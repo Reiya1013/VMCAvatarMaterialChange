@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
 using System;
 using System.Reflection;
-//using VMCAvatar;
+using UniGLTF;
 using VRM;
 using static VRM.VRMFirstPerson;
 
@@ -21,14 +21,19 @@ namespace VMCAvatarMaterialChange.HarmonyPatches
         public void Enable()
         {
             Logger.log?.Warn("Applying Harmony patches.");
-            Patch(typeof(UniGLTF.ImporterContext).GetMethod("ShowMeshes"), new HarmonyMethod(typeof(VRMHarmony).GetMethod("Prefix")), null);
-            //Patch(typeof(VRMFirstPerson).GetMethod("Setup", new Type[] { typeof(bool), typeof(SetVisiblityFunc) }), new HarmonyMethod(typeof(VRMFirstPerson_Setup).GetMethod("Prefix")), null);
-            //Patch(typeof(SetSaberGlowColor).GetMethod("SetColors"), null, new HarmonyMethod(typeof(SetSaberGlowColorHarmony).GetMethod("Postfix")));
-            if (Plugin.instance.IsChroma)
-            {
-                ChromaPatch();
-            }
-            Patch(typeof(LightWithIdManager).GetMethod("SetColorForId"), null, new HarmonyMethod(typeof(LightHarmony).GetMethod("Postfix")));
+            harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+            //Patch(typeof(RuntimeGltfInstance).GetMethod("ShowMeshes"), new HarmonyMethod(typeof(VRMHarmony).GetMethod("Prefix")), null);
+            ////Patch(typeof(RuntimeGltfInstance).GetMethod("Dispose"), new HarmonyMethod(typeof(VRMDisposeHarmony).GetMethod("Prefix")), null);
+            //Patch(typeof(VRMBlendShapeProxy).GetMethod("AccumulateValue"), new HarmonyMethod(typeof(VRMBlendShapeProxyDisable).GetMethod("Prefix")), null);
+            //Patch(typeof(CustomPreviewBeatmapLevel).GetMethod(nameof(CustomPreviewBeatmapLevel.GetCoverImageAsync)), null, new HarmonyMethod(typeof(CustomPreviewBeatmapLevelHarmony).GetMethod("Postfix")));
+            ////Patch(typeof(VRMFirstPerson).GetMethod("Setup", new Type[] { typeof(bool), typeof(SetVisiblityFunc) }), new HarmonyMethod(typeof(VRMFirstPerson_Setup).GetMethod("Prefix")), null);
+            ////Patch(typeof(SetSaberGlowColor).GetMethod("SetColors"), null, new HarmonyMethod(typeof(SetSaberGlowColorHarmony).GetMethod("Postfix")));
+            //if (Plugin.instance.IsChroma)
+            //{
+            //    ChromaPatch();
+            //}
+            //Patch(typeof(LightWithIdManager).GetMethod("SetColorForId"), null, new HarmonyMethod(typeof(LightHarmony).GetMethod("Postfix")));
 
         }
 

@@ -170,7 +170,7 @@ namespace VMCAvatarMaterialChange.Views.MaterialChange
         [UIAction("SetVRMFirstPerson")]
         private void SetVRMFirstPerson()
         {
-            //VMCMaterialChange.instance.SetVRMFirstPerson();
+            VMCMaterialChange.instance.SetVRMFirstPerson();
         }
         [UIAction("SaveVRMFP")]
         private void SaveVRMFP()
@@ -180,5 +180,30 @@ namespace VMCAvatarMaterialChange.Views.MaterialChange
 
 
         #endregion
+
+        #region ChangeAvatar
+
+        [UIAction("AddVRM")]
+        private void AddVRM()
+        {
+            Plugin.instance.DisposeVRMOff = true;
+            Plugin.instance.ChangeAvatas.SetAvatar(VMCMaterialChange.instance.VRMInstance);
+        }
+        [UIAction("SetUpVRM")]
+        private void SetUpVRM()
+        {
+            Plugin.instance.DisposeVRMOff = true;
+            Plugin.instance.ChangeAvatas.Setup(VMCMaterialChange.instance.VRMInstance);
+        }
+        [UIAction("ResetVRM")]
+        private void ResetVRM()
+        {
+            Plugin.instance.ChangeAvatas.Reset();
+        }
+
+
+        #endregion
+
+
     }
 }

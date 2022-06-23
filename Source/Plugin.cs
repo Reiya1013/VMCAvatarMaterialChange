@@ -15,9 +15,10 @@ namespace VMCAvatarMaterialChange
         internal static string Name => "VMCAvatarMaterialChange";
 
         internal VRMOptionLight OptionLight ;
-        internal VMCAvatarRoomAdjust RoomAjust;
+        internal ChangeAvatar ChangeAvatas;
 
         internal bool IsChroma;
+        internal bool DisposeVRMOff;
 
         HarmonyPatches.Patcher patcher;
 
@@ -56,7 +57,7 @@ namespace VMCAvatarMaterialChange
             var vmcmcc = new GameObject("VMCAvatarMaterialChange").AddComponent<VMCAvatarMaterialChangeController>();
 
             OptionLight = vmcmcc.gameObject.AddComponent<VRMOptionLight>();
-            RoomAjust = vmcmcc.gameObject.AddComponent<VMCAvatarRoomAdjust>();
+            ChangeAvatas = vmcmcc.gameObject.AddComponent<ChangeAvatar>();
 
             BSMLSettings.instance.AddSettingsMenu("VMC Avatar MC", "VMCAvatarMaterialChange.Views.VMCAvatarMCSetting.settings.bsml", Settings.instance);
 

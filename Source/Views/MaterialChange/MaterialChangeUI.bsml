@@ -49,6 +49,13 @@
 				</horizontal>
 			</vertical>	
 		</tab>
+		<tab tab-name="ChangeVRM" tags="yo" >
+			<vertical pad-top="10" preferred-width="100" child-control-height="false" child-expand-height="false">
+				<button preferred-width="40" preferred-height="12" text="AddVRM" on-click="AddVRM"/>
+				<button preferred-width="40" preferred-height="12" text="SetUpVRM" on-click="SetUpVRM"/>
+				<button preferred-width="40" preferred-height="12" text="ResetVRM" on-click="ResetVRM"/>
+			</vertical>
+		</tab>
 
 	</vertical>
 </bg>

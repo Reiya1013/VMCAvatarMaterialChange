@@ -43,59 +43,23 @@ namespace VMCAvatarMaterialChange
         }
     }
 
-    //本当はOnEnableで取りたいけど、こっちのほうが起動が遅いと取れないため仕方なく・・・
-    [HarmonyPatch(typeof(LightController), "OnDirectionalLightTransformAndColor", MethodType.Normal)]
-    public static class LightControllerHarmony
-    {
-        public static void Postfix(LightController __instance)
-        {
-            if (!Plugin.instance.OptionLight.VMCLight)
-            {
-                Plugin.instance.OptionLight.VMCLight = __instance.VMCLight;
-            }
-            //if (Plugin.instance.OptionLight.IsVMCLightBoost)
-            //{
-            //    Color color = __instance.VMCLight.color;
-            //    color.a *= Plugin.instance.OptionLight.VMCLightBoost;
-            //    __instance.VMCLight.color = color;
-            //}
-        }
-    }
-
-    //[HarmonyPatch(typeof(SetSaberGlowColor), "SetColors", MethodType.Normal)]
-    //public static class SetSaberGlowColorHarmony
+    ////本当はOnEnableで取りたいけど、こっちのほうが起動が遅いと取れないため仕方なく・・・
+    //[HarmonyPatch(typeof(LightController), "OnDirectionalLightTransformAndColor", MethodType.Normal)]
+    //public static class LightControllerHarmony
     //{
-    //    public static void Postfix(SetSaberGlowColor __instance, SaberType ____saberType, ColorManager ____colorManager)
+    //    public static void Postfix(LightController __instance)
     //    {
-    //        if (____colorManager is null) return;
-    //        if (__instance.transform is null) return;
-    //        if (__instance.transform.name != "SaberGlowingEdges") return;
-    //        Plugin.instance.OptionLight.AddSaberLight(____saberType, __instance.gameObject, ____colorManager.ColorForSaberType(____saberType));
-
-
-    //        //Logger.log?.Warn($"SaberLight Setup Parent: {__instance.transform.name}");
-    //        //Logger.log?.Warn($"SaberLight Setup Parent: { Plugin.instance.OptionLight.SaberLights[____saberType] is null}");
-    //        //Logger.log?.Warn($"SaberLight Setup Parent: { Plugin.instance.OptionLight.SaberLights[____saberType].gameObject is null}");
-    //        //Logger.log?.Warn($"SaberLight Setup Parent: { Plugin.instance.OptionLight.SaberLights[____saberType].transform.name}");
-    //        //Plugin.instance.OptionLight.SaberLights[____saberType].transform.SetParent(__instance.transform);
-    //        //Plugin.instance.OptionLight.SaberLights[____saberType].color = ____colorManager.ColorForSaberType(____saberType);
-
-    //        //if (____saberType == SaberType.SaberA)
+    //        if (!Plugin.instance.OptionLight.VMCLight)
+    //        {
+    //            Plugin.instance.OptionLight.VMCLight = __instance.VMCLight;
+    //        }
+    //        //if (Plugin.instance.OptionLight.IsVMCLightBoost)
     //        //{
-
-
-    //        //    //Logger.log?.Warn($"RightSaberLight Setup Parent: {__instance.transform} {Plugin.instance.OptionLight.RightSaberLight.transform.parent.name}");
-    //        //    //Logger.log?.Warn($"RightSaberLight Setup Color: {____colorManager is null} {Plugin.instance.OptionLight.RightSaberLight.transform.parent.name}");
-    //        //}
-    //        //else if (____saberType == SaberType.SaberB)
-    //        //{
-    //        //    //Logger.log?.Warn($"LeftSaberLight Setup: {Plugin.instance.OptionLight.LeftSaberLight is null} {Plugin.instance.OptionLight.LeftSaberLight.transform.parent.name}");
-    //        //    //Plugin.instance.OptionLight.LeftSaberLight.transform.parent = __instance.transform;
-    //        //    //Logger.log?.Warn($"LeftSaberLight Setup Parent: {__instance.transform} {Plugin.instance.OptionLight.LeftSaberLight.transform.parent.name}");
-    //        //    //Logger.log?.Warn($"LeftSaberLight Setup Color: {____colorManager is null} {Plugin.instance.OptionLight.LeftSaberLight.transform.parent.name}");
-    //        //    //Plugin.instance.OptionLight.LeftSaberLight.color = ____colorManager.ColorForSaberType(____saberType);
+    //        //    Color color = __instance.VMCLight.color;
+    //        //    color.a *= Plugin.instance.OptionLight.VMCLightBoost;
+    //        //    __instance.VMCLight.color = color;
     //        //}
     //    }
-
     //}
+
 }
