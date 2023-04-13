@@ -1,4 +1,4 @@
-Shader "BeatSaber/MToon"
+Shader "BeatSaber_old/MToon"
 {
     Properties
     {
@@ -94,6 +94,7 @@ Shader "BeatSaber/MToon"
             Offset 1, 1
             BlendOp Add, Max
             AlphaToMask [_AlphaToMask]
+            ColorMask  RGB
 
             CGPROGRAM
             #pragma target 3.0

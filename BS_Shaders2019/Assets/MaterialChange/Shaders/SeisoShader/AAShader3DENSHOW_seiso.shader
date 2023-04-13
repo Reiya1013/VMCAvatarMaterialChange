@@ -80,6 +80,7 @@ Shader "BeatSaber/Toon/AAShader3DENSHOW_seiso"
 
 			//アウトライン処理はAASD_Outline.cgincへ
 			#include "AASD3_Outline.cginc"
+
 			ENDCG
 		}
 		Pass//シャドゥマップの処理　ほぼ丸投げ

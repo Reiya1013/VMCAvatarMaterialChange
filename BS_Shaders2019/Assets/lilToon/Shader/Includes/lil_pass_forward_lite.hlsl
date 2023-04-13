@@ -1,8 +1,8 @@
 #ifndef LIL_PASS_FORWARD_LITE_INCLUDED
 #define LIL_PASS_FORWARD_LITE_INCLUDED
 
-#include "Includes/lil_pipeline.hlsl"
-#include "Includes/lil_common_appdata.hlsl"
+#include "lil_common.hlsl"
+#include "lil_common_appdata.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Structure
@@ -34,7 +34,7 @@
             float3 positionWS   : TEXCOORD2;
         #endif
         #if defined(LIL_V2F_NORMAL_WS)
-            float3 normalWS     : TEXCOORD3;
+            LIL_VECTOR_INTERPOLATION float3 normalWS     : TEXCOORD3;
         #endif
         LIL_LIGHTCOLOR_COORDS(4)
         LIL_VERTEXLIGHT_FOG_COORDS(5)
@@ -62,7 +62,7 @@
         float4 uv01         : TEXCOORD0;
         float4 uv23         : TEXCOORD1;
         float2 uvMat        : TEXCOORD2;
-        float3 normalWS     : TEXCOORD3;
+        LIL_VECTOR_INTERPOLATION float3 normalWS     : TEXCOORD3;
         float3 positionWS   : TEXCOORD4;
         LIL_LIGHTCOLOR_COORDS(5)
         LIL_LIGHTDIRECTION_COORDS(6)
@@ -76,21 +76,24 @@
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
-#include "Includes/lil_common_vert.hlsl"
-#include "Includes/lil_common_frag.hlsl"
+#include "lil_common_vert.hlsl"
+#include "lil_common_frag.hlsl"
 
 float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
 {
     //------------------------------------------------------------------------------------------------------------------------------
     // Initialize
+    LIL_SETUP_INSTANCE_ID(input);
+    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     lilFragData fd = lilInitFragData();
 
     BEFORE_UNPACK_V2F
     OVERRIDE_UNPACK_V2F
     LIL_COPY_VFACE(fd.facing);
-    LIL_SETUP_INSTANCE_ID(input);
-    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     LIL_GET_HDRPDATA(input,fd);
+    #if defined(LIL_V2F_SHADOW) || defined(LIL_PASS_FORWARDADD)
+        LIL_LIGHT_ATTENUATION(fd.attenuation, input);
+    #endif
     LIL_GET_LIGHTING_DATA(input,fd);
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -112,6 +115,8 @@ float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
         // UV
         BEFORE_ANIMATE_OUTLINE_UV
         OVERRIDE_ANIMATE_OUTLINE_UV
+        BEFORE_CALC_DDX_DDY
+        OVERRIDE_CALC_DDX_DDY
 
         //------------------------------------------------------------------------------------------------------------------------------
         // Main Color
@@ -122,6 +127,7 @@ float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
         // Alpha
         #if LIL_RENDER == 0
             // Opaque
+            fd.col.a = 1.0;
         #elif LIL_RENDER == 1
             // Cutout
             clip(fd.col.a - _Cutoff);
@@ -136,12 +142,22 @@ float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
 
         //------------------------------------------------------------------------------------------------------------------------------
         // Lighting
-        fd.col.rgb = lerp(fd.col.rgb, fd.col.rgb * min(fd.lightColor + fd.addLightColor, _LightMaxLimit), _OutlineEnableLighting);
+        #if defined(LIL_PASS_FORWARDADD)
+            fd.col.rgb = fd.col.rgb * fd.lightColor * _OutlineEnableLighting;
+        #else
+            fd.col.rgb = lerp(fd.col.rgb, fd.col.rgb * min(fd.lightColor + fd.addLightColor, _LightMaxLimit), _OutlineEnableLighting);
+        #endif
+
+        //------------------------------------------------------------------------------------------------------------------------------
+        // Premultiply
+        LIL_PREMULTIPLY
     #else
         //------------------------------------------------------------------------------------------------------------------------------
         // UV
         BEFORE_ANIMATE_MAIN_UV
         OVERRIDE_ANIMATE_MAIN_UV
+        BEFORE_CALC_DDX_DDY
+        OVERRIDE_CALC_DDX_DDY
 
         //------------------------------------------------------------------------------------------------------------------------------
         // Main Color
@@ -153,6 +169,7 @@ float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
         // Alpha
         #if LIL_RENDER == 0
             // Opaque
+            fd.col.a = 1.0;
         #elif LIL_RENDER == 1
             // Cutout
             clip(fd.col.a - _Cutoff);
@@ -179,7 +196,7 @@ float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
         //------------------------------------------------------------------------------------------------------------------------------
         // Lighting
         BEFORE_SHADOW
-        #ifndef LIL_PASS_FORWARDADD
+        #if !defined(LIL_PASS_FORWARDADD)
             OVERRIDE_SHADOW
 
             fd.lightColor += fd.addLightColor;
@@ -190,7 +207,7 @@ float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
             fd.shadowmix = saturate(fd.shadowmix);
             fd.col.rgb = min(fd.col.rgb, fd.albedo * _LightMaxLimit);
         #else
-            fd.col.rgb *= fd.lightColor;
+            OVERRIDE_SHADOW
         #endif
 
         //------------------------------------------------------------------------------------------------------------------------------
@@ -207,19 +224,21 @@ float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
             BEFORE_BLEND_EMISSION
             OVERRIDE_BLEND_EMISSION
         #endif
+
+        //------------------------------------------------------------------------------------------------------------------------------
+        // Premultiply
+        LIL_PREMULTIPLY
     #endif
 
     //------------------------------------------------------------------------------------------------------------------------------
     // Fix Color
     LIL_HDRP_DEEXPOSURE(fd.col);
-
+    
     //--------------------------------------------------------------------------------------------------------------------------
     // BeatSaber‘Î‰ž
     #if defined(_BeatSaber_Alpha)
         BeatSaber_Alpha(fd);
-        //fd.col.a = 0;
     #endif
-   
 
     //------------------------------------------------------------------------------------------------------------------------------
     // Fog

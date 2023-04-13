@@ -1,8 +1,8 @@
 #ifndef LIL_PASS_FORWARD_GEM_INCLUDED
 #define LIL_PASS_FORWARD_GEM_INCLUDED
 
-#include "Includes/lil_pipeline.hlsl"
-#include "Includes/lil_common_appdata.hlsl"
+#include "lil_common.hlsl"
+#include "lil_common_appdata.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Structure
@@ -51,10 +51,10 @@
         float4 positionCS   : SV_POSITION;
         float4 uv01         : TEXCOORD0;
         float4 uv23         : TEXCOORD1;
-        float3 normalWS     : TEXCOORD2;
-        float3 positionWS   : TEXCOORD3;
+        float3 positionWS   : TEXCOORD2;
+        LIL_VECTOR_INTERPOLATION float3 normalWS     : TEXCOORD3;
         #if defined(LIL_V2F_TANGENT_WS)
-            float4 tangentWS    : TEXCOORD4;
+            LIL_VECTOR_INTERPOLATION float4 tangentWS    : TEXCOORD4;
         #endif
         #if defined(LIL_V2F_POSITION_OS)
             float3 positionOS   : TEXCOORD5;
@@ -68,20 +68,20 @@
     };
 #endif
 
-#include "Includes/lil_common_vert.hlsl"
-#include "Includes/lil_common_frag.hlsl"
+#include "lil_common_vert.hlsl"
+#include "lil_common_frag.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
 #if defined(LIL_GEM_PRE)
     float4 frag(v2f input) : SV_Target
     {
+        LIL_SETUP_INSTANCE_ID(input);
+        LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
         lilFragData fd = lilInitFragData();
 
         BEFORE_UNPACK_V2F
         OVERRIDE_UNPACK_V2F
-        LIL_SETUP_INSTANCE_ID(input);
-        LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
         LIL_GET_HDRPDATA(input,fd);
         #if defined(LIL_HDRP)
             fd.V = normalize(lilViewDirection(input.positionWS));
@@ -95,14 +95,17 @@
     {
         //------------------------------------------------------------------------------------------------------------------------------
         // Initialize
+        LIL_SETUP_INSTANCE_ID(input);
+        LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
         lilFragData fd = lilInitFragData();
 
         BEFORE_UNPACK_V2F
         OVERRIDE_UNPACK_V2F
         LIL_COPY_VFACE(fd.facing);
-        LIL_SETUP_INSTANCE_ID(input);
-        LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
         LIL_GET_HDRPDATA(input,fd);
+        #if defined(LIL_V2F_SHADOW) || defined(LIL_PASS_FORWARDADD)
+            LIL_LIGHT_ATTENUATION(fd.attenuation, input);
+        #endif
         LIL_GET_LIGHTING_DATA(input,fd);
 
         //------------------------------------------------------------------------------------------------------------------------------
@@ -110,10 +113,10 @@
         #if defined(LIL_V2F_POSITION_WS)
             LIL_GET_POSITION_WS_DATA(input,fd);
         #endif
-        #if defined(LIL_V2F_NORMAL_WS) && defined(LIL_V2F_TANGENT_WS) && defined(LIL_V2F_BITANGENT_WS)
+        #if defined(LIL_V2F_NORMAL_WS) && defined(LIL_V2F_TANGENT_WS)
             LIL_GET_TBN_DATA(input,fd);
         #endif
-        #if defined(LIL_V2F_NORMAL_WS) && defined(LIL_V2F_TANGENT_WS) && defined(LIL_V2F_BITANGENT_WS) && defined(LIL_V2F_POSITION_WS)
+        #if defined(LIL_V2F_NORMAL_WS) && defined(LIL_V2F_TANGENT_WS) && defined(LIL_V2F_POSITION_WS)
             LIL_GET_PARALLAX_DATA(input,fd);
         #endif
 
@@ -121,14 +124,12 @@
         // UV
         BEFORE_ANIMATE_MAIN_UV
         OVERRIDE_ANIMATE_MAIN_UV
+        BEFORE_CALC_DDX_DDY
+        OVERRIDE_CALC_DDX_DDY
 
         //------------------------------------------------------------------------------------------------------------------------------
         // Gem View Direction
-        #if defined(USING_STEREO_MATRICES)
-            float3 gemViewDirection = lerp(fd.headV, fd.V, _GemVRParallaxStrength);
-        #else
-            float3 gemViewDirection = fd.V;
-        #endif
+        float3 gemViewDirection = lilBlendVRParallax(fd.headV, fd.V, _GemVRParallaxStrength);
 
         //------------------------------------------------------------------------------------------------------------------------------
         // Main Color
@@ -160,6 +161,8 @@
             fd.N = fd.facing < 0.0 ? -fd.N - fd.V * 0.2 : fd.N;
             fd.N = normalize(fd.N);
         #endif
+        fd.origN = normalize(input.normalWS);
+        fd.uvMat = mul(fd.cameraMatrix, fd.N).xy * 0.5 + 0.5;
         fd.reflectionN = fd.N;
         fd.matcapN = fd.N;
         fd.matcap2ndN = fd.N;
@@ -181,7 +184,7 @@
         #endif
 
         //------------------------------------------------------------------------------------------------------------------------------
-        // AudioLink (https://github.com/llealloo/vrc-udon-audio-link)
+        // AudioLink
         BEFORE_AUDIOLINK
         #if defined(LIL_FEATURE_AUDIOLINK)
             OVERRIDE_AUDIOLINK
@@ -215,7 +218,9 @@
         //------------------------------------------------------------------------------------------------------------------------------
         // Reflection
         fd.smoothness = _Smoothness;
-        if(Exists_SmoothnessTex) fd.smoothness *= LIL_SAMPLE_2D(_SmoothnessTex, sampler_MainTex, fd.uvMain).r;
+        #if defined(LIL_FEATURE_SmoothnessTex)
+            fd.smoothness *= LIL_SAMPLE_2D(_SmoothnessTex, sampler_MainTex, fd.uvMain).r;
+        #endif
         fd.perceptualRoughness = fd.perceptualRoughness - fd.smoothness * fd.perceptualRoughness;
         fd.roughness = fd.perceptualRoughness * fd.perceptualRoughness;
 
@@ -286,15 +291,15 @@
         BEFORE_BLEND_EMISSION
         OVERRIDE_BLEND_EMISSION
 
-        //--------------------------------------------------------------------------------------------------------------------------
-        // BeatSaber‘Î‰ž
-        #if defined(_BeatSaber_Alpha)
-            BeatSaber_Alpha(fd);
-        #endif
-
         //------------------------------------------------------------------------------------------------------------------------------
         // Fix Color
         LIL_HDRP_DEEXPOSURE(fd.col);
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        // BeatSaber‘Î‰ž
+#if defined(_BeatSaber_Alpha)
+        BeatSaber_Alpha(fd);
+#endif
 
         float4 fogColor = float4(0,0,0,0);
         BEFORE_FOG

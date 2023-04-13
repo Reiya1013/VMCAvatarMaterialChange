@@ -1,8 +1,8 @@
 #ifndef LIL_PASS_DEPTHNORMAL_INCLUDED
 #define LIL_PASS_DEPTHNORMAL_INCLUDED
 
-#include "Includes/lil_pipeline.hlsl"
-#include "Includes/lil_common_appdata.hlsl"
+#include "lil_common.hlsl"
+#include "lil_common_appdata.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Structure
@@ -15,7 +15,7 @@
 #if defined(LIL_V2F_FORCE_TEXCOORD0) || (LIL_RENDER > 0)
     #define LIL_V2F_TEXCOORD0
 #endif
-#if defined(LIL_V2F_FORCE_POSITION_OS) || ((LIL_RENDER > 0) && !defined(LIL_LITE) && !defined(LIL_FUR) && defined(LIL_FEATURE_DISSOLVE))
+#if defined(LIL_V2F_FORCE_POSITION_OS) || ((LIL_RENDER > 0) && !defined(LIL_LITE) && defined(LIL_FEATURE_DISSOLVE))
     #define LIL_V2F_POSITION_OS
 #endif
 
@@ -37,23 +37,30 @@ struct v2f
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
 #define LIL_NORMALIZE_NORMAL_IN_VS
-#include "Includes/lil_common_vert.hlsl"
-#include "Includes/lil_common_frag.hlsl"
+#include "lil_common_vert.hlsl"
+#include "lil_common_frag.hlsl"
 
 float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
 {
+    LIL_SETUP_INSTANCE_ID(input);
+    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     lilFragData fd = lilInitFragData();
 
     BEFORE_UNPACK_V2F
     OVERRIDE_UNPACK_V2F
     LIL_COPY_VFACE(fd.facing);
-    LIL_SETUP_INSTANCE_ID(input);
-    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-    #include "Includes/lil_common_frag_alpha.hlsl"
+    #include "lil_common_frag_alpha.hlsl"
 
-    #if VERSION_GREATER_EQUAL(10, 1)
-        return float4(PackNormalOctRectEncode(normalize(mul((float3x3)LIL_MATRIX_V, input.normalWS))), 0.0, 0.0);
+    #if LIL_SRP_VERSION_GREATER_EQUAL(10, 1)
+        float3 normalDirection = normalize(input.normalWS);
+        normalDirection = fd.facing < (_FlipNormal-1.0) ? -normalDirection : normalDirection;
+        normalDirection = normalize(normalDirection);
+        #if !(LIL_SRP_VERSION_GREATER_EQUAL(12, 1)) || defined(_GBUFFER_NORMALS_OCT)
+            return float4(PackNormalOctRectEncode(normalDirection), 0.0, 0.0);
+        #else
+            return float4(normalDirection, 0.0);
+        #endif
     #else
         return 0;
     #endif

@@ -7,92 +7,99 @@
 // The version of SRP is automatically determined, but an error may occur in a specific version.
 // In that case, define the version.
 // Example: HDRP 4.8.0
-// #define SHADER_LIBRARY_VERSION_MAJOR 4
-// #define SHADER_LIBRARY_VERSION_MINOR 8
+// #define LIL_SRP_VERSION_MAJOR 4
+// #define LIL_SRP_VERSION_MINOR 8
 
 // Transparent mode on subpass (Default : 0)
 // 0 : Cutout
 // 1 : Dither
 #define LIL_SUBPASS_TRANSPARENT_MODE 0
 
-// Premultiply on ForwardAdd (Default : 1)
-// 0 : Off
-// 1 : On (for BlendOp Max)
-#define LIL_PREMULTIPLY_FA 1
-
-// Light direction mode (Default : 1)
-// 0 : Directional light Only
-// 1 : Blend SH light
-#define LIL_LIGHT_DIRECTION_MODE 1
-
 // Refraction blur
 #define LIL_REFRACTION_SAMPNUM 8
 #define LIL_REFRACTION_GAUSDIST(i) exp(-(float)i*(float)i/(LIL_REFRACTION_SAMPNUM*LIL_REFRACTION_SAMPNUM/2.0))
-
-// MatCap mode (Default : 1)
-// 0 : Simple
-// 1 : Fix Z-Rotation
-#define LIL_MATCAP_MODE 1
 
 // Antialias mode (Default : 1)
 // 0 : Off
 // 1 : On
 #define LIL_ANTIALIAS_MODE 1
 
-// Light Probe Proxy Volumes
+// Light Probe Proxy Volumes (Default : 0)
 #define LIL_LPPV_MODE 0
 // 0 : Off
 // 1 : On
 
-// Additional Lights Mode
-#define LIL_ADDITIONAL_LIGHT_MODE 1
+// Additional Lights Mode (Default : 3 or 4)
 // 0 : Off
 // 1 : In Vertex Shader
 // 2 : In Fragment Shader
+// 3 : Add to main light
+// 4 : Add to main light with direction
+// 5 : Add to main light with direction in Fragment Shader
+#if defined(LIL_BRP)
+    #define LIL_ADDITIONAL_LIGHT_MODE 3
+    #define LIL_ADDITIONAL_LIGHT_STRENGTH _VertexLightStrength
+#elif defined(LIL_HDRP)
+    #define LIL_ADDITIONAL_LIGHT_MODE 5
+    #define LIL_ADDITIONAL_LIGHT_STRENGTH 1
+#elif defined(USE_CLUSTERED_LIGHTING) && USE_CLUSTERED_LIGHTING || defined(USE_FORWARD_PLUS) && USE_FORWARD_PLUS
+    #define LIL_ADDITIONAL_LIGHT_MODE 5
+    #define LIL_ADDITIONAL_LIGHT_STRENGTH 1
+#else
+    #define LIL_ADDITIONAL_LIGHT_MODE 4
+    #define LIL_ADDITIONAL_LIGHT_STRENGTH 1
+#endif
+
+// Near clip threshold for clipping canceller (Default : 0.1)
+#define LIL_NEARCLIP_THRESHOLD 0.1
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Version
-#if !defined(SHADER_LIBRARY_VERSION_MAJOR)
-    #if UNITY_VERSION < 201820
-        #define SHADER_LIBRARY_VERSION_MAJOR 1
+#if !defined(LIL_SRP_VERSION_MAJOR)
+    #if UNITY_VERSION < 201810
+        #define LIL_SRP_VERSION_MAJOR 0
+    #elif UNITY_VERSION < 201820
+        #define LIL_SRP_VERSION_MAJOR 1
     #elif UNITY_VERSION < 201830
-        #define SHADER_LIBRARY_VERSION_MAJOR 2
+        #define LIL_SRP_VERSION_MAJOR 2
     #elif UNITY_VERSION < 201840
-        #define SHADER_LIBRARY_VERSION_MAJOR 3
+        #define LIL_SRP_VERSION_MAJOR 3
     #elif UNITY_VERSION < 201910
-        #define SHADER_LIBRARY_VERSION_MAJOR 4
+        #define LIL_SRP_VERSION_MAJOR 4
     #elif UNITY_VERSION < 201920
-        #define SHADER_LIBRARY_VERSION_MAJOR 5
+        #define LIL_SRP_VERSION_MAJOR 5
     #elif UNITY_VERSION < 201930
-        #define SHADER_LIBRARY_VERSION_MAJOR 6
+        #define LIL_SRP_VERSION_MAJOR 6
     #elif UNITY_VERSION < 201940
-        #define SHADER_LIBRARY_VERSION_MAJOR 7
+        #define LIL_SRP_VERSION_MAJOR 7
     #elif UNITY_VERSION < 202010
-        #define SHADER_LIBRARY_VERSION_MAJOR 8
+        #define LIL_SRP_VERSION_MAJOR 8
     #elif UNITY_VERSION < 202020
-        #define SHADER_LIBRARY_VERSION_MAJOR 9
+        #define LIL_SRP_VERSION_MAJOR 9
     #elif UNITY_VERSION < 202030
-        #define SHADER_LIBRARY_VERSION_MAJOR 10
+        #define LIL_SRP_VERSION_MAJOR 10
     #elif UNITY_VERSION < 202110
-        #define SHADER_LIBRARY_VERSION_MAJOR 11
+        #define LIL_SRP_VERSION_MAJOR 11
     #elif UNITY_VERSION < 202120
-        #define SHADER_LIBRARY_VERSION_MAJOR 12
+        #define LIL_SRP_VERSION_MAJOR 12
+    #elif UNITY_VERSION < 202210
+        #define LIL_SRP_VERSION_MAJOR 13
     #else
-        #define SHADER_LIBRARY_VERSION_MAJOR 0
+        #define LIL_SRP_VERSION_MAJOR 14
     #endif
 #endif
-#if !defined(SHADER_LIBRARY_VERSION_MINOR)
-    #define SHADER_LIBRARY_VERSION_MINOR 99
+#if !defined(LIL_SRP_VERSION_MINOR)
+    #define LIL_SRP_VERSION_MINOR 99
 #endif
-#if !defined(VERSION_GREATER_EQUAL)
-    #define VERSION_GREATER_EQUAL(major, minor) ((SHADER_LIBRARY_VERSION_MAJOR > major) || ((SHADER_LIBRARY_VERSION_MAJOR == major) && (SHADER_LIBRARY_VERSION_MINOR >= minor)))
-    #define VERSION_LOWER(major, minor) ((SHADER_LIBRARY_VERSION_MAJOR < major) || ((SHADER_LIBRARY_VERSION_MAJOR == major) && (SHADER_LIBRARY_VERSION_MINOR < minor)))
-    #define VERSION_EQUAL(major, minor) ((SHADER_LIBRARY_VERSION_MAJOR == major) && (SHADER_LIBRARY_VERSION_MINOR == minor))
+#if !defined(LIL_SRP_VERSION_GREATER_EQUAL)
+    #define LIL_SRP_VERSION_GREATER_EQUAL(major, minor) ((LIL_SRP_VERSION_MAJOR > major) || ((LIL_SRP_VERSION_MAJOR == major) && (LIL_SRP_VERSION_MINOR >= minor)))
+    #define LIL_SRP_VERSION_LOWER(major, minor) ((LIL_SRP_VERSION_MAJOR < major) || ((LIL_SRP_VERSION_MAJOR == major) && (LIL_SRP_VERSION_MINOR < minor)))
+    #define LIL_SRP_VERSION_EQUAL(major, minor) ((LIL_SRP_VERSION_MAJOR == major) && (LIL_SRP_VERSION_MINOR == minor))
 #endif
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Replace Macro
-#define LIL_BRANCH                                  UNITY_BRANCH
+#define LIL_BRANCH
 #define LIL_VERTEX_INPUT_INSTANCE_ID                UNITY_VERTEX_INPUT_INSTANCE_ID
 #define LIL_VERTEX_OUTPUT_STEREO                    UNITY_VERTEX_OUTPUT_STEREO
 #define LIL_SETUP_INSTANCE_ID(i)                    UNITY_SETUP_INSTANCE_ID(i)
@@ -104,6 +111,9 @@
 // Gamma
 #if defined(UNITY_COLORSPACE_GAMMA)
     #define LIL_COLORSPACE_GAMMA
+    float lilLuminance(float3 rgb) { return dot(rgb, float3(0.22, 0.707, 0.071)); }
+#else
+    float lilLuminance(float3 rgb) { return dot(rgb, float3(0.0396819152, 0.458021790, 0.00609653955)); }
 #endif
 
 // Initialize struct
@@ -116,18 +126,24 @@
 // Additional Light
 #if (!defined(LIL_PASS_FORWARDADD) && defined(UNITY_SHOULD_SAMPLE_SH)) || defined(_ADDITIONAL_LIGHTS) || defined(_ADDITIONAL_LIGHTS_VERTEX) || defined(LIL_HDRP)
     #define LIL_USE_ADDITIONALLIGHT
-#endif
-#if defined(LIL_USE_ADDITIONALLIGHT) && (LIL_ADDITIONAL_LIGHT_MODE == 1)
-    #define LIL_USE_ADDITIONALLIGHT_VS
-#elif defined(LIL_USE_ADDITIONALLIGHT) && (LIL_ADDITIONAL_LIGHT_MODE == 2)
-    #define LIL_USE_ADDITIONALLIGHT_PS
+    #if LIL_ADDITIONAL_LIGHT_MODE == 1
+        #define LIL_USE_ADDITIONALLIGHT_VS
+    #elif LIL_ADDITIONAL_LIGHT_MODE == 2
+        #define LIL_USE_ADDITIONALLIGHT_PS
+    #elif LIL_ADDITIONAL_LIGHT_MODE == 3
+        #define LIL_USE_ADDITIONALLIGHT_MAIN
+    #elif LIL_ADDITIONAL_LIGHT_MODE == 4
+        #define LIL_USE_ADDITIONALLIGHT_MAINDIR
+    #elif LIL_ADDITIONAL_LIGHT_MODE == 5
+        #define LIL_USE_ADDITIONALLIGHT_MAINDIR_PS
+    #endif
 #endif
 
 // Lightmap
 #if defined(LIGHTMAP_ON)
     #define LIL_USE_LIGHTMAP
 #endif
-#if defined(DYNAMICLIGHTMAP_ON) && !(defined(LIL_URP) && VERSION_LOWER(12, 0))
+#if defined(DYNAMICLIGHTMAP_ON) && !(defined(LIL_URP) && LIL_SRP_VERSION_LOWER(12, 0))
     #define LIL_USE_DYNAMICLIGHTMAP
 #endif
 #if defined(DIRLIGHTMAP_COMBINED)
@@ -165,7 +181,7 @@
 // Optimization Macro
 
 // tangentWS / bitangentWS / normalWS
-#if defined(LIL_FEATURE_NORMAL_1ST) || defined(LIL_FEATURE_NORMAL_2ND) || defined(LIL_FEATURE_ANISOTROPY) || defined(LIL_FEATURE_TEX_MATCAP_NORMALMAP) || defined(LIL_FEATURE_EMISSION_1ST) || defined(LIL_FEATURE_EMISSION_2ND) || defined(LIL_FEATURE_PARALLAX)
+#if defined(LIL_FEATURE_NORMAL_1ST) || defined(LIL_FEATURE_NORMAL_2ND) || defined(LIL_FEATURE_ANISOTROPY) || defined(LIL_FEATURE_MatCapBumpMap) || defined(LIL_FEATURE_MatCap2ndBumpMap) || defined(LIL_FEATURE_EMISSION_1ST) || defined(LIL_FEATURE_EMISSION_2ND) || defined(LIL_FEATURE_PARALLAX)
     #define LIL_SHOULD_TBN
 #endif
 
@@ -180,18 +196,26 @@
 #endif
 
 // positionOS
-#if (defined(LIL_FEATURE_MAIN2ND) || defined(LIL_FEATURE_MAIN3RD)) && defined(LIL_FEATURE_LAYER_DISSOLVE) || defined(LIL_FEATURE_GLITTER) || defined(LIL_FEATURE_DISSOLVE)
+#if (defined(LIL_FEATURE_MAIN2ND) || defined(LIL_FEATURE_MAIN3RD)) && defined(LIL_FEATURE_LAYER_DISSOLVE) || defined(LIL_FEATURE_GLITTER) || defined(LIL_FEATURE_DISSOLVE) || defined(LIL_FEATURE_AUDIOLINK)
     #define LIL_SHOULD_POSITION_OS
 #endif
 
 // positionWS
-#if defined(LIL_PASS_FORWARDADD) || defined(LIL_FEATURE_MAIN2ND) || defined(LIL_FEATURE_MAIN3RD) || defined(LIL_FEATURE_ANISOTROPY) || defined(LIL_FEATURE_RECEIVE_SHADOW) || defined(LIL_FEATURE_REFLECTION) || defined(LIL_FEATURE_MATCAP) || defined(LIL_FEATURE_MATCAP_2ND) || defined(LIL_FEATURE_RIMLIGHT) || defined(LIL_FEATURE_GLITTER) || defined(LIL_FEATURE_BACKLIGHT) || defined(LIL_FEATURE_EMISSION_1ST) || defined(LIL_FEATURE_EMISSION_2ND) || defined(LIL_FEATURE_PARALLAX) || defined(LIL_FEATURE_DISTANCE_FADE) || defined(LIL_REFRACTION) || !defined(LIL_BRP) || defined(LIL_USE_LPPV)
+#if defined(SHADOWS_SCREEN) || defined(LIL_PASS_FORWARDADD) || defined(LIL_FEATURE_MAIN2ND) || defined(LIL_FEATURE_MAIN3RD) || defined(LIL_FEATURE_ANISOTROPY) || defined(LIL_FEATURE_RECEIVE_SHADOW) || defined(LIL_FEATURE_REFLECTION) || defined(LIL_FEATURE_MATCAP) || defined(LIL_FEATURE_MATCAP_2ND) || defined(LIL_FEATURE_RIMLIGHT) || defined(LIL_FEATURE_GLITTER) || defined(LIL_FEATURE_BACKLIGHT) || defined(LIL_FEATURE_EMISSION_1ST) || defined(LIL_FEATURE_EMISSION_2ND) || defined(LIL_FEATURE_PARALLAX) || defined(LIL_FEATURE_DISTANCE_FADE) || defined(LIL_REFRACTION) || !defined(LIL_BRP) || defined(LIL_USE_LPPV)
     #define LIL_SHOULD_POSITION_WS
 #endif
 
 // uv1
 #if defined(LIL_FEATURE_MATCAP) || defined(LIL_FEATURE_MATCAP_2ND) || defined(LIL_FEATURE_GLITTER)
     #define LIL_SHOULD_UV1
+#endif
+
+//------------------------------------------------------------------------------------------------------------------------------
+// Screen params
+#if defined(LIL_URP)
+    #define LIL_SCREENPARAMS    _ScaledScreenParams
+#else
+    #define LIL_SCREENPARAMS    _ScreenParams
 #endif
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -202,83 +226,209 @@
 #if defined(TEXTURE2D_FLOAT)
     #undef TEXTURE2D_FLOAT
 #endif
+#if defined(TEXTURE2D_ARRAY)
+    #undef TEXTURE2D_ARRAY
+#endif
 #if defined(TEXTURE3D)
     #undef TEXTURE3D
+#endif
+#if defined(TEXTURECUBE)
+    #undef TEXTURECUBE
 #endif
 #if defined(SAMPLER)
     #undef SAMPLER
 #endif
 
-#if defined(SHADER_API_VULKAN) && UNITY_VERSION < 201800 && defined(LIL_TESSELLATION)
-    #if defined(POSITION)
-        #undef POSITION
-    #endif
-    #define POSITION gl_Position
-#endif
-
-#if defined(SHADER_API_D3D11_9X) || (UNITY_VERSION < 201800 && defined(SHADER_API_GLES))
+#if defined(SHADER_API_D3D11_9X)
     #define LIL_NOPERSPECTIVE
+    #define LIL_CENTROID
 #else
     #define LIL_NOPERSPECTIVE noperspective
+    #define LIL_CENTROID centroid
 #endif
+#define LIL_VECTOR_INTERPOLATION
 
 #if defined(SHADER_API_D3D9)
     #undef LIL_ANTIALIAS_MODE
     #define LIL_ANTIALIAS_MODE 0
-    #undef LIL_BRANCH
-    #define LIL_BRANCH
 #endif
 
 #if defined(SHADER_API_D3D11_9X)
     #define LIL_VFACE(facing)
     #define LIL_COPY_VFACE(o)
     #undef LIL_USE_LIGHTMAP
-    #undef LIL_BRANCH
-    #define LIL_BRANCH
-#else
+#elif defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES) || defined(SHADER_API_D3D9)
     #define LIL_VFACE(facing) , float facing : VFACE
     #define LIL_COPY_VFACE(o) o = facing
+#else
+    #define LIL_VFACE(facing) , bool isFrontFace : SV_IsFrontFace
+    #define LIL_COPY_VFACE(o) o = isFrontFace ? 1 : -1
 #endif
 
-#if defined(SHADER_API_D3D9) || (UNITY_VERSION < 201800 && defined(SHADER_API_GLES)) || (defined(SHADER_TARGET_SURFACE_ANALYSIS) && defined(SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER)) || defined(SHADER_TARGET_SURFACE_ANALYSIS)
-    #define LIL_SAMPLE_1D(tex,samp,uv)              tex2D(tex,float2(uv,0.5))
-    #define LIL_SAMPLE_1D_LOD(tex,samp,uv,lod)      tex2Dlod(tex,float4(uv,0.5,0,lod))
-    #define LIL_SAMPLE_2D(tex,samp,uv)              tex2D(tex,uv)
-    #define LIL_SAMPLE_2D_ST(tex,samp,uv)           tex2D(tex,uv*tex##_ST.xy+tex##_ST.zw)
-    #define LIL_SAMPLE_2D_LOD(tex,samp,uv,lod)      tex2Dlod(tex,float4(uv,0,lod))
-    #define LIL_SAMPLE_2D_BIAS(tex,samp,uv,bias)    tex2Dbias(tex,float4(uv,0,bias))
-    #define LIL_SAMPLE_2D_GRAD(tex,samp,uv,dx,dy)   tex2Dgrad(tex,float4(uv,dx,dy))
-    #define LIL_SAMPLE_2D_ARRAY(tex,samp,uv,index)  tex2DArray(tex,float3(uv,index))
-    #define LIL_SAMPLE_3D(tex,samp,uv)              tex3D(tex,uv)
-    #define TEXTURE2D(tex)                          sampler2D tex
-    #define TEXTURE2D_FLOAT(tex)                    sampler2D tex
-    #define TEXTURE3D(tex)                          sampler3D tex
+#if defined(SHADER_API_MOBILE) || defined(SHADER_API_GLES)
+    #define LIL_NOT_SUPPORT_VERTEXID
+#endif
+
+#if defined(SHADER_API_D3D9) || (defined(SHADER_TARGET_SURFACE_ANALYSIS) && defined(SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER)) || defined(SHADER_TARGET_SURFACE_ANALYSIS)
+    #define LIL_SAMPLE_1D(tex,samp,uv)                      tex2D(tex,float2(uv,0.5))
+    #define LIL_SAMPLE_1D_LOD(tex,samp,uv,lod)              tex2Dlod(tex,float4(uv,0.5,0,lod))
+    #define LIL_SAMPLE_2D(tex,samp,uv)                      tex2D(tex,uv)
+    #define LIL_SAMPLE_2D_CS(tex,uv)                        tex2D(tex,uv/LIL_SCREENPARAMS.xy)
+    #define LIL_SAMPLE_2D_ST(tex,samp,uv)                   tex2D(tex,uv*tex##_ST.xy+tex##_ST.zw)
+    #define LIL_SAMPLE_2D_LOD(tex,samp,uv,lod)              tex2Dlod(tex,float4(uv,0,lod))
+    #define LIL_SAMPLE_2D_BIAS(tex,samp,uv,bias)            tex2Dbias(tex,float4(uv,0,bias))
+    #define LIL_SAMPLE_2D_GRAD(tex,samp,uv,dx,dy)           tex2Dgrad(tex,uv,dx,dy)
+    #define LIL_SAMPLE_2D_ARRAY(tex,samp,uv,index)          tex2DArray(tex,float3(uv,index))
+    #define LIL_SAMPLE_2D_ARRAY_CS(tex,uv,index)            tex2DArray(tex,float3(uv/LIL_SCREENPARAMS.xy,index))
+    #define LIL_SAMPLE_2D_ARRAY_LOD(tex,samp,uv,index,lod)  tex2DArraylod(tex,float4(uv,index,lod))
+    #define LIL_SAMPLE_3D(tex,samp,uv)                      tex3D(tex,uv)
+    #define LIL_SAMPLE_CUBE_LOD(tex,samp,uv,lod)            texCUBElod(tex,float4(uv,0,lod))
+    #define TEXTURE2D(tex)                                  sampler2D tex
+    #define TEXTURE2D_FLOAT(tex)                            sampler2D tex
+    #define TEXTURE2D_ARRAY(tex)                            sampler2DArray tex
+    #define TEXTURE3D(tex)                                  sampler3D tex
+    #define TEXTURECUBE(tex)                                samplerCUBE tex
     #define SAMPLER(samp)
     #define LIL_SAMP_IN_FUNC(samp)
     #define LIL_SAMP_IN(samp)
     #define LIL_LWTEX
+
+    bool IsEmpty(TEXTURECUBE(tex))
+    {
+        return false;
+    }
+
+    bool IsEmpty(TEXTURE2D(tex))
+    {
+        return false;
+    }
+
+    bool IsEmpty(TEXTURE2D_ARRAY(tex))
+    {
+        return false;
+    }
+
+    bool IsScreenTex(TEXTURE2D(tex))
+    {
+        return false;
+    }
+
+    bool IsScreenTex(TEXTURE2D_ARRAY(tex))
+    {
+        return false;
+    }
+
+    float lilSampleDither(TEXTURE3D(tex), float2 positionCS, float alpha)
+    {
+        return tex3D(tex, float3(positionCS*0.25,alpha*0.9375)).a;
+    }
+
+    float2 lilGetWidthAndHeight(TEXTURE2D(tex))
+    {
+        return float2(0, 0);
+    }
+
+    float2 lilGetWidthAndHeight(TEXTURE2D_ARRAY(tex))
+    {
+        return float2(0, 0);
+    }
 #else
-    #define LIL_SAMPLE_1D(tex,samp,uv)              tex.Sample(samp,uv)
-    #define LIL_SAMPLE_1D_LOD(tex,samp,uv,lod)      tex.SampleLevel(samp,uv,lod)
-    #define LIL_SAMPLE_2D(tex,samp,uv)              tex.Sample(samp,uv)
-    #define LIL_SAMPLE_2D_ST(tex,samp,uv)           tex.Sample(samp,uv*tex##_ST.xy+tex##_ST.zw)
-    #define LIL_SAMPLE_2D_LOD(tex,samp,uv,lod)      tex.SampleLevel(samp,uv,lod)
-    #define LIL_SAMPLE_2D_BIAS(tex,samp,uv,bias)    tex.SampleBias(samp,uv,bias)
-    #define LIL_SAMPLE_2D_GRAD(tex,samp,uv,dx,dy)   tex.SampleGrad(samp,uv,dx,dy)
-    #define LIL_SAMPLE_2D_ARRAY(tex,samp,uv,index)  tex.Sample(samp,float3(uv,index))
-    #define LIL_SAMPLE_3D(tex,samp,coord)           tex.Sample(samp,coord)
-    #define TEXTURE2D(tex)                          Texture2D tex
-    #define TEXTURE2D_FLOAT(tex)                    Texture2D<float4> tex
-    #define TEXTURE3D(tex)                          Texture3D tex
-    #define SAMPLER(samp)                           SamplerState samp
-    #define LIL_SAMP_IN_FUNC(samp)                  , SamplerState samp
-    #define LIL_SAMP_IN(samp)                       , samp
+    #define LIL_SAMPLE_1D(tex,samp,uv)                      tex.Sample(samp,uv)
+    #define LIL_SAMPLE_1D_LOD(tex,samp,uv,lod)              tex.SampleLevel(samp,uv,lod)
+    #define LIL_SAMPLE_2D(tex,samp,uv)                      tex.Sample(samp,uv)
+    #define LIL_SAMPLE_2D_CS(tex,uv)                        tex[uint2(uv)]
+    #define LIL_SAMPLE_2D_ST(tex,samp,uv)                   tex.Sample(samp,uv*tex##_ST.xy+tex##_ST.zw)
+    #define LIL_SAMPLE_2D_LOD(tex,samp,uv,lod)              tex.SampleLevel(samp,uv,lod)
+    #define LIL_SAMPLE_2D_BIAS(tex,samp,uv,bias)            tex.SampleBias(samp,uv,bias)
+    #define LIL_SAMPLE_2D_GRAD(tex,samp,uv,dx,dy)           tex.SampleGrad(samp,uv,dx,dy)
+    #define LIL_SAMPLE_2D_ARRAY(tex,samp,uv,index)          tex.Sample(samp,float3(uv,index))
+    #define LIL_SAMPLE_2D_ARRAY_CS(tex,uv,index)            tex[uint3(uv,index)]
+    #define LIL_SAMPLE_2D_ARRAY_LOD(tex,samp,uv,index,lod)  tex.SampleLevel(samp,float3(uv,index),lod)
+    #define LIL_SAMPLE_3D(tex,samp,coord)                   tex.Sample(samp,coord)
+    #define LIL_SAMPLE_CUBE_LOD(tex,samp,uv,lod)            tex.SampleLevel(samp,uv,lod)
+    #define TEXTURE2D(tex)                                  Texture2D tex
+    #define TEXTURE2D_FLOAT(tex)                            Texture2D<float4> tex
+    #define TEXTURE2D_ARRAY(tex)                            Texture2DArray tex
+    #define TEXTURE3D(tex)                                  Texture3D tex
+    #define TEXTURECUBE(tex)                                TextureCube tex
+    #define SAMPLER(samp)                                   SamplerState samp
+    #define LIL_SAMP_IN_FUNC(samp)                          , SamplerState samp
+    #define LIL_SAMP_IN(samp)                               , samp
+
+    bool IsEmpty(TEXTURECUBE(tex))
+    {
+        uint width, height, levels;
+        tex.GetDimensions(0, width, height, levels);
+        return width < 15;
+    }
+
+    bool IsEmpty(TEXTURE2D(tex))
+    {
+        uint width, height;
+        tex.GetDimensions(width, height);
+        return width < 15;
+    }
+
+    bool IsEmpty(TEXTURE2D_ARRAY(tex))
+    {
+        uint width, height, element;
+        tex.GetDimensions(width, height, element);
+        return width < 15;
+    }
+
+    bool IsScreenTex(TEXTURE2D(tex))
+    {
+        uint width, height;
+        tex.GetDimensions(width, height);
+        return (abs(width - LIL_SCREENPARAMS.x) + abs(height - LIL_SCREENPARAMS.y)) < 1;
+    }
+
+    bool IsScreenTex(TEXTURE2D_ARRAY(tex))
+    {
+        uint width, height, element;
+        tex.GetDimensions(width, height, element);
+        return (abs(width - LIL_SCREENPARAMS.x) + abs(height - LIL_SCREENPARAMS.y)) < 1;
+    }
+
+    float lilSampleDither(TEXTURE3D(tex), float2 positionCS, float alpha)
+    {
+        uint3 uv = uint3(positionCS, alpha*0.9375*16);
+        uv.xy = uv.xy % 4;
+        return tex[uv].a;
+    }
+
+    float2 lilGetWidthAndHeight(TEXTURE2D(tex))
+    {
+        uint width, height;
+        tex.GetDimensions(width, height);
+        return float2(width, height);
+    }
+
+    float2 lilGetWidthAndHeight(TEXTURE2D_ARRAY(tex))
+    {
+        uint width, height, element;
+        tex.GetDimensions(width, height, element);
+        return float2(width, height);
+    }
 #endif
 
 #if defined(LIL_FEATURE_PARALLAX) && defined(LIL_FEATURE_POM)
     #define LIL_SAMPLE_2D_POM(tex,samp,uv,dx,dy)    LIL_SAMPLE_2D_GRAD(tex,samp,uv,dx,dy)
 #else
     #define LIL_SAMPLE_2D_POM(tex,samp,uv,dx,dy)    LIL_SAMPLE_2D(tex,samp,uv)
+#endif
+
+#if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
+    #define TEXTURE2D_SCREEN(tex)                   TEXTURE2D_ARRAY(tex)
+    #define LIL_SAMPLE_SCREEN(tex,samp,uv)          LIL_SAMPLE_2D_ARRAY(tex,samp,uv,(float)unity_StereoEyeIndex)
+    #define LIL_SAMPLE_SCREEN_LOD(tex,samp,uv,lod)  LIL_SAMPLE_2D_ARRAY_LOD(tex,samp,uv,(float)unity_StereoEyeIndex,lod)
+    #define LIL_SAMPLE_SCREEN_CS(tex,uv)            LIL_SAMPLE_2D_ARRAY_CS(tex,uv,unity_StereoEyeIndex)
+
+#else
+    #define TEXTURE2D_SCREEN(tex)                   TEXTURE2D(tex)
+    #define LIL_SAMPLE_SCREEN(tex,samp,uv)          LIL_SAMPLE_2D(tex,samp,uv)
+    #define LIL_SAMPLE_SCREEN_LOD(tex,samp,uv,lod)  LIL_SAMPLE_2D_LOD(tex,samp,uv,lod)
+    #define LIL_SAMPLE_SCREEN_CS(tex,uv)            LIL_SAMPLE_2D_CS(tex,uv)
 #endif
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -300,7 +450,7 @@
 
     float3 lilTransformOStoWS(float3 positionOS)
     {
-        return mul(LIL_MATRIX_M, float4(positionOS,1.0)).xyz;
+        return mul(LIL_MATRIX_M, float4(positionOS, 1.0)).xyz;
     }
 
     float3 lilTransformWStoOS(float3 positionWS)
@@ -331,7 +481,7 @@
     float4 lilTransformCStoSSFrag(float4 positionCS)
     {
         float4 positionSS = float4(positionCS.xyz * positionCS.w, positionCS.w);
-        positionSS.xy = positionSS.xy / _ScreenParams.xy;
+        positionSS.xy = positionSS.xy / LIL_SCREENPARAMS.xy;
         return positionSS;
     }
 #else
@@ -354,7 +504,7 @@
 
     float3 lilTransformOStoWS(float3 positionOS)
     {
-        return mul(LIL_MATRIX_M, float4(positionOS,1.0)).xyz;
+        return mul(LIL_MATRIX_M, float4(positionOS, 1.0)).xyz;
     }
 
     float3 lilTransformWStoOS(float3 positionWS)
@@ -388,17 +538,40 @@
     float4 lilTransformCStoSSFrag(float4 positionCS)
     {
         float4 positionSS = float4(positionCS.xyz * positionCS.w, positionCS.w);
-        positionSS.xy = positionSS.xy / _ScreenParams.xy;
+        positionSS.xy = positionSS.xy / LIL_SCREENPARAMS.xy;
         return positionSS;
     }
 #endif
 
+// Stereo
+#if defined(LIL_HDRP)
+    #if LIL_SRP_VERSION_GREATER_EQUAL(7, 1)
+        #define LIL_STEREO_MATRIX_V(i)     _XRViewMatrix[i]
+        #define LIL_STEREO_CAMERA_POS(i)   _XRWorldSpaceCameraPos[i]
+    #else
+        #define LIL_STEREO_MATRIX_V(i)     _XRViewConstants[i].viewMatrix
+        #define LIL_STEREO_CAMERA_POS(i)   _XRViewConstants[i].worldSpaceCameraPos
+    #endif
+#else
+    #define LIL_STEREO_MATRIX_V(i)     unity_StereoMatrixV[i]
+    #define LIL_STEREO_CAMERA_POS(i)   unity_StereoWorldSpaceCameraPos[i]
+#endif
+
 float3 lilToAbsolutePositionWS(float3 positionRWS)
 {
-    #if defined(LIL_HDRP)
-        return GetAbsolutePositionWS(positionRWS);
+    #if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+        return positionRWS + _WorldSpaceCameraPos.xyz;
     #else
         return positionRWS;
+    #endif
+}
+
+float3 lilToRelativePositionWS(float3 positionWS)
+{
+    #if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+        return positionWS - _WorldSpaceCameraPos.xyz;
+    #else
+        return positionWS;
     #endif
 }
 
@@ -424,6 +597,15 @@ float3 lilTransformNormalOStoWS(float3 normalOS, bool doNormalize)
     #endif
 }
 
+bool lilIsPerspective()
+{
+    #if defined(LIL_HDRP) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_SHADOWS)
+        return LIL_MATRIX_P._m33 == 0;
+    #else
+        return unity_OrthoParams.w == 0;
+    #endif
+}
+
 float3 lilViewDirection(float3 positionWS)
 {
     return _WorldSpaceCameraPos.xyz - positionWS;
@@ -432,10 +614,119 @@ float3 lilViewDirection(float3 positionWS)
 float3 lilHeadDirection(float3 positionWS)
 {
     #if defined(USING_STEREO_MATRICES)
-        return (unity_StereoWorldSpaceCameraPos[0] + unity_StereoWorldSpaceCameraPos[1]) * 0.5 - positionWS;
+        return (LIL_STEREO_CAMERA_POS(0).xyz + LIL_STEREO_CAMERA_POS(1).xyz) * 0.5 - positionWS;
     #else
         return lilViewDirection(positionWS);
     #endif
+}
+
+float3 lilCameraDirection()
+{
+    #if defined(USING_STEREO_MATRICES)
+        return normalize(LIL_STEREO_MATRIX_V(0)._m20_m21_m22 + LIL_STEREO_MATRIX_V(1)._m20_m21_m22);
+    #else
+        return LIL_MATRIX_V._m20_m21_m22;
+    #endif
+}
+
+float3 lilCameraUp()
+{
+    return LIL_MATRIX_V._m10_m11_m12;
+}
+
+float3 lilCameraRight()
+{
+    #if defined(USING_STEREO_MATRICES)
+        return cross(lilCameraDirection(), lilCameraUp());
+    #else
+        return LIL_MATRIX_V._m00_m01_m02;
+    #endif
+}
+
+float3 lilViewDirectionOS(float3 positionOS)
+{
+    #if defined(LIL_HDRP)
+        return lilTransformWStoOS(lilToRelativePositionWS(_WorldSpaceCameraPos.xyz)) - positionOS;
+    #else
+        return lilTransformWStoOS(_WorldSpaceCameraPos.xyz) - positionOS;
+    #endif
+}
+
+float3 lilHeadDirectionOS(float3 positionOS)
+{
+    #if defined(USING_STEREO_MATRICES)
+        return lilTransformWStoOS((LIL_STEREO_CAMERA_POS(0).xyz + LIL_STEREO_CAMERA_POS(1).xyz) * 0.5) - positionOS;
+    #else
+        return lilViewDirectionOS(positionOS);
+    #endif
+}
+
+float2 lilCStoGrabUV(float4 positionCS)
+{
+    float2 uvScn = positionCS.xy / LIL_SCREENPARAMS.xy;
+    #if defined(UNITY_SINGLE_PASS_STEREO)
+        uvScn.xy = TransformStereoScreenSpaceTex(uvScn.xy, 1.0);
+    #endif
+    return uvScn;
+}
+
+float3 lilTransformDirWStoVSCenter(float3 directionWS, bool doNormalize)
+{
+    #if defined(USING_STEREO_MATRICES)
+        if(doNormalize) return normalize(mul((float3x3)LIL_STEREO_MATRIX_V(0), directionWS) + mul((float3x3)LIL_STEREO_MATRIX_V(1), directionWS));
+        else            return mul((float3x3)LIL_STEREO_MATRIX_V(0), directionWS) + mul((float3x3)LIL_STEREO_MATRIX_V(1), directionWS);
+    #else
+        if(doNormalize) return normalize(mul((float3x3)LIL_MATRIX_V, directionWS));
+        else            return mul((float3x3)LIL_MATRIX_V, directionWS);
+    #endif
+}
+
+float3 lilTransformDirWStoVSCenter(float3 directionWS)
+{
+    return lilTransformDirWStoVSCenter(directionWS, false);
+}
+
+float3 lilBlendVRParallax(float3 a, float3 b, float c)
+{
+    #if defined(USING_STEREO_MATRICES)
+        return lerp(a, b, c);
+    #else
+        return b;
+    #endif
+}
+
+float lilLinearEyeDepth(float z)
+{
+    //return LIL_MATRIX_P._m23 / (z - LIL_MATRIX_P._m22 / LIL_MATRIX_P._m32);
+    return LIL_MATRIX_P._m23 / (z + LIL_MATRIX_P._m22);
+}
+
+float lilLinearEyeDepth(float z, float2 positionCS)
+{
+    float2 pos = positionCS / LIL_SCREENPARAMS.xy * 2.0 - 1.0;
+    #if UNITY_UV_STARTS_AT_TOP
+        pos.y = -pos.y;
+    #endif
+    return LIL_MATRIX_P._m23 / (z + LIL_MATRIX_P._m22
+        - LIL_MATRIX_P._m20 / LIL_MATRIX_P._m00 * (pos.x +LIL_MATRIX_P._m02)
+        - LIL_MATRIX_P._m21 / LIL_MATRIX_P._m11 * (pos.y +LIL_MATRIX_P._m12)
+    );
+}
+
+float2 lilCameraDepthTexel(float2 positionCS)
+{
+    float2 uv = positionCS.xy;
+    #if UNITY_UV_STARTS_AT_TOP
+        if(_ProjectionParams.x > 0) uv.y = LIL_SCREENPARAMS.y - uv.y;
+    #else
+        if(_ProjectionParams.x < 0) uv.y = LIL_SCREENPARAMS.y - uv.y;
+    #endif
+    return uv;
+}
+
+float3 lilGetObjectPosition()
+{
+    return lilTransformOStoWS(float3(0,0,0));
 }
 
 /*
@@ -489,7 +780,10 @@ float3 lilHeadDirection(float3 positionWS)
     #if defined(LIL_USE_SHADOW) && !defined(LIL_PASS_FORWARDADD)
         #define LIL_SHADOW_COORDS(idx)                  UNITY_SHADOW_COORDS(idx)
         #define LIL_TRANSFER_SHADOW(vi,uv,o) \
+            DummyStructure v; \
+            v.vertex = input.positionOS; \
             BRPShadowCoords brpShadowCoords; \
+            LIL_INITIALIZE_STRUCT(BRPShadowCoords, brpShadowCoords); \
             brpShadowCoords.pos = vi.positionCS; \
             UNITY_TRANSFER_LIGHTING(brpShadowCoords, uv) \
             o._ShadowCoord = brpShadowCoords._ShadowCoord
@@ -499,16 +793,39 @@ float3 lilHeadDirection(float3 positionWS)
             brpShadowCoords._ShadowCoord = i._ShadowCoord; \
             UNITY_LIGHT_ATTENUATION(attenuationOrig, brpShadowCoords, i.positionWS); \
             atten = attenuationOrig
-    #elif !defined(LIL_PASS_FORWARDADD)
+    #elif (UNITY_VERSION < 201820) && !defined(UNITY_HALF_PRECISION_FRAGMENT_SHADER_REGISTERS) || !defined(LIL_PASS_FORWARDADD)
         #define LIL_SHADOW_COORDS(idx)
         #define LIL_TRANSFER_SHADOW(vi,uv,o)
         #define LIL_LIGHT_ATTENUATION(atten,i)
     #else
-        #define LIL_SHADOW_COORDS(idx)
-        #define LIL_TRANSFER_SHADOW(vi,uv,o)
+        #if defined(POINT)
+            #define LIL_CALC_LIGHT_COORDS(o,i) o._LightCoord = mul(unity_WorldToLight, float4(i.positionWS, 1.0)).xyz;
+        #elif defined(SPOT)
+            #define LIL_CALC_LIGHT_COORDS(o,i) o._LightCoord = mul(unity_WorldToLight, float4(i.positionWS, 1.0));
+        #elif defined(POINT_COOKIE)
+            #define LIL_CALC_LIGHT_COORDS(o,i) o._LightCoord = mul(unity_WorldToLight, float4(i.positionWS, 1.0)).xyz;
+        #elif defined(DIRECTIONAL_COOKIE)
+            #define LIL_CALC_LIGHT_COORDS(o,i) o._LightCoord = mul(unity_WorldToLight, float4(i.positionWS, 1.0)).xy;
+        #else
+            #define LIL_CALC_LIGHT_COORDS(o,i)
+        #endif
+
+        #define LIL_SHADOW_COORDS(idx) UNITY_SHADOW_COORDS(idx)
+        #if defined(SHADOWS_DEPTH) && defined(SPOT) || defined(SHADOWS_SCREEN) && defined(UNITY_NO_SCREENSPACE_SHADOWS)
+            #define LIL_TRANSFER_SHADOW(vi,uv,o) o._ShadowCoord = mul(unity_WorldToShadow[0], float4(vi.positionWS.xyz, 1));
+        #elif defined(SHADOWS_CUBE)
+            #define LIL_TRANSFER_SHADOW(vi,uv,o) o._ShadowCoord.xyz = fd.positionWS.xyz - _LightPositionRange.xyz;
+        #elif defined(SHADOWS_SCREEN)
+            #define LIL_TRANSFER_SHADOW(vi,uv,o) o._ShadowCoord = float4(vi.positionCS.xy / LIL_SCREENPARAMS.xy, 1, 1);
+        #else
+            #define LIL_TRANSFER_SHADOW(vi,uv,o)
+        #endif
+
         #define LIL_LIGHT_ATTENUATION(atten,i) \
             BRPShadowCoords brpShadowCoords; \
             brpShadowCoords.pos = i.positionCS; \
+            LIL_CALC_LIGHT_COORDS(brpShadowCoords,i) \
+            LIL_TRANSFER_SHADOW(fd,fd.uv1,brpShadowCoords) \
             UNITY_LIGHT_ATTENUATION(attenuationOrig, brpShadowCoords, i.positionWS); \
             atten = attenuationOrig
     #endif
@@ -516,7 +833,23 @@ float3 lilHeadDirection(float3 positionWS)
     {
         float4 pos;
         LIL_SHADOW_COORDS(0)
+        #if defined(DECLARE_LIGHT_COORDS)
+            DECLARE_LIGHT_COORDS(1)
+        #elif defined(POINT)
+            unityShadowCoord3 _LightCoord : TEXCOORD1;
+        #elif defined(SPOT)
+            unityShadowCoord4 _LightCoord : TEXCOORD1;
+        #elif defined(POINT_COOKIE)
+            unityShadowCoord3 _LightCoord : TEXCOORD1;
+        #elif defined(DIRECTIONAL_COOKIE)
+            unityShadowCoord2 _LightCoord : TEXCOORD1;
+        #endif
     };
+    struct DummyStructure
+    {
+        float4 vertex;
+    };
+
 
     // Shadow caster
     #define LIL_V2F_SHADOW_CASTER_OUTPUT            V2F_SHADOW_CASTER_NOPOS float4 positionCS : SV_POSITION;
@@ -525,15 +858,37 @@ float3 lilHeadDirection(float3 positionWS)
             o.vec = mul(unity_ObjectToWorld, v.positionOS).xyz - _LightPositionRange.xyz; \
             o.positionCS = UnityObjectToClipPos(v.positionOS)
     #else
+        float4 lilClipSpaceShadowCasterPos(float4 positionOS, float3 normalOS, float bias)
+        {
+            #if defined(SHADOWS_DEPTH)
+                if(LIL_MATRIX_P._m33 == 0.0) bias = 0;
+            #endif
+            float4 positionWS = mul(unity_ObjectToWorld, float4(positionOS.xyz, 1));
+            float3 L = normalize(UnityWorldSpaceLightDir(positionWS.xyz));
+            positionWS.xyz -= L * bias;
+
+            if(unity_LightShadowBias.z != 0.0)
+            {
+                float3 normalWS = UnityObjectToWorldNormal(normalOS);
+                float shadowCos = dot(normalWS, L);
+                float shadowSine = sqrt(1-shadowCos*shadowCos);
+                float normalBias = unity_LightShadowBias.z * shadowSine;
+
+                positionWS.xyz -= normalWS * normalBias;
+            }
+
+            return mul(UNITY_MATRIX_VP, positionWS);
+        }
         #define LIL_TRANSFER_SHADOW_CASTER(v,o) \
-            o.positionCS = UnityClipSpaceShadowCasterPos(v.positionOS, v.normalOS); \
+            o.positionCS = lilClipSpaceShadowCasterPos(v.positionOS, v.normalOS, _lilShadowCasterBias); \
             o.positionCS = UnityApplyLinearShadowBias(o.positionCS)
     #endif
     #define LIL_SHADOW_CASTER_FRAGMENT(i)           SHADOW_CASTER_FRAGMENT(i)
 
     // Additional Light
-    float3 lilGetAdditionalLights(float3 positionWS)
+    void lilGetAdditionalLights(float3 positionWS, float4 positionCS, float strength, inout float3 lightColor, inout float3 lightDirection)
     {
+        #if defined(LIGHTPROBE_SH) && defined(VERTEXLIGHT_ON)
         float4 toLightX = unity_4LightPosX0 - positionWS.x;
         float4 toLightY = unity_4LightPosY0 - positionWS.y;
         float4 toLightZ = unity_4LightPosZ0 - positionWS.z;
@@ -543,15 +898,26 @@ float3 lilHeadDirection(float3 positionWS)
         lengthSq += toLightZ * toLightZ;
 
         //float4 atten = 1.0 / (1.0 + lengthSq * unity_4LightAtten0);
-        float4 atten = saturate(saturate((25.0 - lengthSq * unity_4LightAtten0) * 0.111375) / (0.987725 + lengthSq * unity_4LightAtten0));
+        float4 atten = saturate(saturate((25.0 - lengthSq * unity_4LightAtten0) * 0.111375) / (0.987725 + lengthSq * unity_4LightAtten0)) * strength;
 
-        float3 additionalLightColor;
-        additionalLightColor =                                 unity_LightColor[0].rgb * atten.x;
-        additionalLightColor =          additionalLightColor + unity_LightColor[1].rgb * atten.y;
-        additionalLightColor =          additionalLightColor + unity_LightColor[2].rgb * atten.z;
-        additionalLightColor = saturate(additionalLightColor + unity_LightColor[3].rgb * atten.w);
+        lightColor += unity_LightColor[0].rgb * atten.x;
+        lightColor += unity_LightColor[1].rgb * atten.y;
+        lightColor += unity_LightColor[2].rgb * atten.z;
+        lightColor += unity_LightColor[3].rgb * atten.w;
 
-        return additionalLightColor;
+        lightDirection += lilLuminance(unity_LightColor[0].rgb) * atten.x / sqrt(lengthSq.x) * float3(toLightX.x, toLightY.x, toLightZ.x);
+        lightDirection += lilLuminance(unity_LightColor[1].rgb) * atten.y / sqrt(lengthSq.y) * float3(toLightX.y, toLightY.y, toLightZ.y);
+        lightDirection += lilLuminance(unity_LightColor[2].rgb) * atten.z / sqrt(lengthSq.z) * float3(toLightX.z, toLightY.z, toLightZ.z);
+        lightDirection += lilLuminance(unity_LightColor[3].rgb) * atten.w / sqrt(lengthSq.w) * float3(toLightX.w, toLightY.w, toLightZ.w);
+        #endif
+    }
+
+    float3 lilGetAdditionalLights(float3 positionWS, float4 positionCS, float strength)
+    {
+        float3 lightColor = 0.0;
+        float3 lightDirection = 0.0;
+        lilGetAdditionalLights(positionWS, positionCS, strength, lightColor, lightDirection);
+        return saturate(lightColor);
     }
 
     // Lightmap
@@ -592,11 +958,23 @@ float3 lilHeadDirection(float3 positionWS)
         return UnityGI_IndirectSpecular(data, 1.0, glossIn);
     }
     #define LIL_GET_ENVIRONMENT_REFLECTION(viewDirection,normalDirection,perceptualRoughness,positionWS) \
-        lilGetEnvReflection(viewDirection,normalDirection,perceptualRoughness,positionWS)
+        ((IsEmpty(unity_SpecCube0) || unity_SpecCube0_HDR.x == 0 || _ReflectionCubeOverride) ? \
+        lilCustomReflection(_ReflectionCubeTex, _ReflectionCubeTex_HDR, viewDirection, normalDirection, perceptualRoughness) * _ReflectionCubeColor.rgb * lerp(1.0, fd.lightColor, _ReflectionCubeEnableLighting) : \
+        lilGetEnvReflection(viewDirection,normalDirection,perceptualRoughness,positionWS))
 
     // Fog
-    #define LIL_APPLY_FOG_BASE(col,fogCoord)                 UNITY_FOG_LERP_COLOR(col,unity_FogColor,fogCoord)
-    #define LIL_APPLY_FOG_COLOR_BASE(col,fogCoord,fogColor)  UNITY_FOG_LERP_COLOR(col,fogColor,fogCoord)
+    #if defined(LIL_PASS_FORWARDADD)
+        #define LIL_FOG_COLOR   float4(0,0,0,0)
+    #else
+        #define LIL_FOG_COLOR   unity_FogColor
+    #endif
+    #if LIL_RENDER == 2
+        #define LIL_APPLY_FOG_BASE(col,fogCoord)                 UNITY_FOG_LERP_COLOR(col,LIL_FOG_COLOR*col.a,fogCoord)
+        #define LIL_APPLY_FOG_COLOR_BASE(col,fogCoord,fogColor)  UNITY_FOG_LERP_COLOR(col,fogColor*col.a,fogCoord)
+    #else
+        #define LIL_APPLY_FOG_BASE(col,fogCoord)                 UNITY_FOG_LERP_COLOR(col,LIL_FOG_COLOR,fogCoord)
+        #define LIL_APPLY_FOG_COLOR_BASE(col,fogCoord,fogColor)  UNITY_FOG_LERP_COLOR(col,fogColor,fogCoord)
+    #endif
     float lilCalcFogFactor(float depth)
     {
         #if defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2)
@@ -608,7 +986,6 @@ float3 lilHeadDirection(float3 positionWS)
     }
 
     // Meta
-    #define UnpackNormalScale(normal,scale)         UnpackScaleNormal(normal,scale)
     #define MetaInput                               UnityMetaInput
     #define MetaFragment(input)                     UnityMetaFragment(input)
     #define MetaVertexPosition(pos,uv1,uv2,l,d)     UnityMetaVertexPosition(pos,uv1,uv2,l,d)
@@ -616,7 +993,7 @@ float3 lilHeadDirection(float3 positionWS)
     #define LIGHT_SIMULATE_HQ
 
     // Support for old version
-    #if VERSION_LOWER(4, 1)
+    #if LIL_SRP_VERSION_LOWER(4, 1)
         #define LIL_HDRP_IGNORE_LIGHTDIMMER
         float4 EvaluateAtmosphericScattering(PositionInputs posInput, float3 viewDirection, float4 col)
         {
@@ -624,33 +1001,33 @@ float3 lilHeadDirection(float3 positionWS)
         }
     #endif
 
-    #if VERSION_LOWER(4, 2)
+    #if LIL_SRP_VERSION_LOWER(4, 2)
         float GetDirectionalShadowAttenuation(HDShadowContext shadowContext, float2 positionSS, float3 positionWS, float3 normalWS, int shadowIndex, float3 L)
         {
             return GetDirectionalShadowAttenuation(shadowContext, positionWS, normalWS, shadowIndex, L, positionSS);
         }
     #endif
 
-    #if VERSION_LOWER(5, 3)
+    #if LIL_SRP_VERSION_LOWER(5, 3)
         float GetCurrentExposureMultiplier()
         {
             return 1.0;
         }
     #endif
 
-    #if VERSION_LOWER(6, 6)
+    #if LIL_SRP_VERSION_LOWER(6, 6)
         float3 SampleCameraColor(float2 uv, float lod)
         {
             return LIL_SAMPLE_2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, uv, lod).rgb;
         }
     #endif
 
-    #if VERSION_LOWER(6, 8)
+    #if LIL_SRP_VERSION_LOWER(6, 8)
         float4 EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs posInput, DirectionalLightData light)
         {
-            float4 color = float4(light.color, 1.0);
+            float4 color = float4(light.color.rgb, 1.0);
 
-            #if VERSION_GREATER_EQUAL(4, 1)
+            #if LIL_SRP_VERSION_GREATER_EQUAL(4, 1)
                 float cosZenithAngle = -light.forward.y;
                 float fragmentHeight = posInput.positionWS.y;
                 color.a = TransmittanceHeightFog(_HeightFogBaseExtinction, _HeightFogBaseHeight, _HeightFogExponents, cosZenithAngle, fragmentHeight);
@@ -673,18 +1050,7 @@ float3 lilHeadDirection(float3 positionWS)
         }
     #endif
 
-    #if VERSION_LOWER(7, 0)
-        real3 UnpackNormalScale(real4 packedNormal, real bumpScale)
-        {
-            #if defined(UNITY_NO_DXT5nm)
-                return UnpackNormalRGB(packedNormal, bumpScale);
-            #else
-                return UnpackNormalmapRGorAG(packedNormal, bumpScale);
-            #endif
-        }
-    #endif
-
-    #if VERSION_LOWER(7, 1)
+    #if LIL_SRP_VERSION_LOWER(7, 1)
         float3 TransformPreviousObjectToWorld(float3 positionOS)
         {
             float4x4 previousModelMatrix = ApplyCameraTranslationToMatrix(unity_MatrixPreviousM);
@@ -692,7 +1058,7 @@ float3 lilHeadDirection(float3 positionWS)
         }
     #endif
 
-    #if VERSION_LOWER(11, 0)
+    #if LIL_SRP_VERSION_LOWER(11, 0)
         #define LIL_HDRP_DEEXPOSURE(col)
         #define LIL_HDRP_INVDEEXPOSURE(col)
     #else
@@ -702,9 +1068,9 @@ float3 lilHeadDirection(float3 positionWS)
 
     float4 SampleEnv(LightLoopContext lightLoopContext, PositionInputs posInput, EnvLightData lightData, float3 reflUVW, float lod)
     {
-        #if VERSION_GREATER_EQUAL(10, 1)
+        #if LIL_SRP_VERSION_GREATER_EQUAL(10, 1)
             float4 reflectionCol = SampleEnv(lightLoopContext, lightData.envIndex, reflUVW, lod * lightData.roughReflections, lightData.rangeCompressionFactorCompensation, posInput.positionNDC);
-        #elif VERSION_GREATER_EQUAL(7, 1)
+        #elif LIL_SRP_VERSION_GREATER_EQUAL(7, 1)
             float4 reflectionCol = SampleEnv(lightLoopContext, lightData.envIndex, reflUVW, lod, lightData.rangeCompressionFactorCompensation);
         #else
             float4 reflectionCol = SampleEnv(lightLoopContext, lightData.envIndex, reflUVW, lod);
@@ -737,6 +1103,15 @@ float3 lilHeadDirection(float3 positionWS)
         lightLoopContext.shadowValue      = 1;
         lightLoopContext.sampleReflection = 0;
         lightLoopContext.contactShadow    = 0;
+        #if LIL_SRP_VERSION_GREATER_EQUAL(6, 7)
+            real contactShadowFade;
+        #endif
+        #if LIL_SRP_VERSION_GREATER_EQUAL(12, 1)
+            real splineVisibility;
+        #endif
+        #if defined(APPLY_FOG_ON_SKY_REFLECTIONS)
+            lightLoopContext.positionWS = 0;
+        #endif
         return lightLoopContext;
     }
 
@@ -786,7 +1161,7 @@ float3 lilHeadDirection(float3 positionWS)
         dst.direction += src.direction * Luminance(src.color);
     }
 
-    float lilGetDirectionalShadow(PositionInputs posInput, float3 normalWS, uint featureFlags)
+    float lilGetDirectionalShadow(PositionInputs posInput, float3 normalWS, uint featureFlags, float bias)
     {
         float attenuation = 1.0;
         if(featureFlags & LIGHTFEATUREFLAGS_DIRECTIONAL)
@@ -808,7 +1183,8 @@ float3 lilHeadDirection(float3 positionWS)
                     if((light.lightDimmer > 0) && (light.shadowDimmer > 0))
                     #endif
                     {
-                        attenuation = GetDirectionalShadowAttenuation(shadowContext, posInput.positionSS, posInput.positionWS, normalWS, light.shadowIndex, L);
+                        float3 positionWS = posInput.positionWS + L * bias;
+                        attenuation = GetDirectionalShadowAttenuation(shadowContext, posInput.positionSS, positionWS, normalWS, light.shadowIndex, L);
                     }
                 }
             }
@@ -816,11 +1192,16 @@ float3 lilHeadDirection(float3 positionWS)
         return attenuation;
     }
 
+    float lilGetDirectionalShadow(PositionInputs posInput, float3 normalWS, uint featureFlags)
+    {
+        return lilGetDirectionalShadow(posInput, normalWS, featureFlags, 0.0);
+    }
+
     lilNPRLightingData lilGetDirectionalLightSum(PositionInputs posInput, uint renderingLayers, uint featureFlags)
     {
         lilNPRLightingData lightingData;
         lightingData.color = 0.0;
-        lightingData.direction = float3(0.0, 0.001, 0.0);
+        lightingData.direction = 0.0;
         if(featureFlags & LIGHTFEATUREFLAGS_DIRECTIONAL)
         {
             for(uint i = 0; i < _DirectionalLightCount; ++i)
@@ -833,7 +1214,7 @@ float3 lilHeadDirection(float3 positionWS)
             }
         }
 
-        lightingData.direction = normalize(lightingData.direction);
+        lightingData.direction = dot(lightingData.direction,lightingData.direction) < 0.000001 ? 0 : normalize(lightingData.direction);
 
         #ifdef LIGHT_SIMULATE_HQ
             lightingData.color = 0.0;
@@ -867,17 +1248,17 @@ float3 lilHeadDirection(float3 positionWS)
     // Punctual Light (Point / Spot)
     float4 EvaluateLight_Punctual(LightLoopContext lightLoopContext, float3 positionWS, LightData light, float3 L, float4 distances)
     {
-        float4 color = float4(light.color, 1.0);
+        float4 color = float4(light.color.rgb, 1.0);
         color.a *= PunctualLightAttenuation(distances, light.rangeAttenuationScale, light.rangeAttenuationBias, light.angleScale, light.angleOffset);
 
-        #if !defined(LIGHT_EVALUATION_NO_HEIGHT_FOG) && VERSION_GREATER_EQUAL(4, 1)
+        #if !defined(LIGHT_EVALUATION_NO_HEIGHT_FOG) && LIL_SRP_VERSION_GREATER_EQUAL(4, 1)
             float cosZenithAngle = L.y;
             float distToLight = (light.lightType == GPULIGHTTYPE_PROJECTOR_BOX) ? distances.w : distances.x;
             float fragmentHeight = positionWS.y;
             color.a *= TransmittanceHeightFog(_HeightFogBaseExtinction, _HeightFogBaseHeight, _HeightFogExponents, cosZenithAngle, fragmentHeight, distToLight);
         #endif
 
-        #if VERSION_LOWER(7, 2)
+        #if LIL_SRP_VERSION_LOWER(7, 2)
             if(light.cookieIndex >= 0)
         #else
             if(light.cookieMode != COOKIEMODE_NONE)
@@ -919,9 +1300,8 @@ float3 lilHeadDirection(float3 positionWS)
         return lighting;
     }
 
-    float3 lilGetPunctualLightColor(float3 positionWS, uint renderingLayers, uint featureFlags)
+    void lilGetPunctualLightColor(inout lilNPRLightingData dst, float3 positionWS, uint renderingLayers, uint featureFlags)
     {
-        float3 lightColor = 0.0;
         if(featureFlags & LIGHTFEATUREFLAGS_PUNCTUAL)
         {
             uint lightStart = 0;
@@ -950,36 +1330,42 @@ float3 lilHeadDirection(float3 positionWS)
                     lightListOffset++;
                     if((lightData.lightLayers & renderingLayers) != 0)
                     {
-                        lilNPRLightingData lighting = lilGetNPRPunctualLight(positionWS, lightData);
-                        lightColor += lighting.color;
+                        lilNPRLightingData src = lilGetNPRPunctualLight(positionWS, lightData);
+                        lilBlendlilNPRLightingData(dst, src);
                     }
                 }
             }
         }
-
-        return lightColor;
     }
 
     //------------------------------------------------------------------------------------------------------------------------------
     // Area Light (Line / Rectangle)
-    float3 lilGetLineLightColor(float3 positionWS, LightData lightData)
+    lilNPRLightingData lilGetLineLightColor(float3 positionWS, LightData lightData)
     {
-        float3 lightColor = 0.0;
+        lilNPRLightingData lighting = (lilNPRLightingData)0;
+        float3 unL = lightData.positionRWS - positionWS;
         float intensity = EllipsoidalDistanceAttenuation(
-            lightData.positionRWS - positionWS,
+            unL,
             lightData.right,
-            saturate(lightData.range / (lightData.range + (0.5 * lightData.size.x))),
+            saturate(lightData.range / (lightData.range + 0.5 * lightData.size.x)),
             lightData.rangeAttenuationScale,
             lightData.rangeAttenuationBias);
             #if !defined(LIL_HDRP_IGNORE_LIGHTDIMMER)
                 intensity *= lightData.diffuseDimmer;
             #endif
-        lightColor = lightData.color * intensity;
-        return lightColor;
+        lighting.color = lightData.color * intensity;
+
+        float halfLength = 0.5 * lightData.size.x;
+        //float3 nearestPoint = lightData.positionRWS - lightData.right * clamp(dot(unL, lightData.right), -halfLength, halfLength);
+        float3 nearestPoint = lightData.positionRWS - lightData.right * clamp(dot(unL, lightData.right), -halfLength, halfLength) * 0.75;
+        lighting.direction = normalize(nearestPoint - positionWS);
+
+        return lighting;
     }
 
-    float3 lilGetRectLightColor(float3 positionWS, LightData lightData)
+    lilNPRLightingData lilGetRectLightColor(float3 positionWS, LightData lightData)
     {
+        lilNPRLightingData lighting = (lilNPRLightingData)0;
         float3 lightColor = 0.0;
         #if SHADEROPTIONS_BARN_DOOR
             RectangularLightApplyBarnDoor(lightData, positionWS);
@@ -988,26 +1374,32 @@ float3 lilHeadDirection(float3 positionWS)
         if(dot(lightData.forward, unL) < FLT_EPS)
         {
             float3x3 lightToWorld = float3x3(lightData.right, lightData.up, -lightData.forward);
-            unL = mul(unL, transpose(lightToWorld));
+            float3 unL2 = mul(unL, transpose(lightToWorld));
             float halfWidth  = lightData.size.x * 0.5;
             float halfHeight = lightData.size.y * 0.5;
+
             float3 invHalfDim = rcp(float3(lightData.range + halfWidth, lightData.range + halfHeight, lightData.range));
             #ifdef ELLIPSOIDAL_ATTENUATION
-                float intensity = EllipsoidalDistanceAttenuation(unL, invHalfDim, lightData.rangeAttenuationScale, lightData.rangeAttenuationBias);
+                float intensity = EllipsoidalDistanceAttenuation(unL2, invHalfDim, lightData.rangeAttenuationScale, lightData.rangeAttenuationBias);
             #else
-                float intensity = BoxDistanceAttenuation(unL, invHalfDim, lightData.rangeAttenuationScale, lightData.rangeAttenuationBias);
+                float intensity = BoxDistanceAttenuation(unL2, invHalfDim, lightData.rangeAttenuationScale, lightData.rangeAttenuationBias);
             #endif
             #if !defined(LIL_HDRP_IGNORE_LIGHTDIMMER)
                 intensity *= lightData.diffuseDimmer;
             #endif
-            lightColor = lightData.color * intensity;
+            lighting.color = lightData.color * intensity;
+
+            float2 halfLength = 0.5 * lightData.size.xy;
+            float3 nearestPoint = lightData.positionRWS
+                - lightData.right * clamp(dot(unL, lightData.right), -halfLength.x, halfLength.x) * 0.75
+                - lightData.up * clamp(dot(unL, lightData.up), -halfLength.y, halfLength.y) * 0.75;
+            lighting.direction = normalize(nearestPoint - positionWS);
         }
-        return lightColor;
+        return lighting;
     }
 
-    float3 lilGetAreaLightColor(float3 positionWS, uint renderingLayers, uint featureFlags)
+    void lilGetAreaLightColor(inout lilNPRLightingData dst, float3 positionWS, uint renderingLayers, uint featureFlags)
     {
-        float3 lightColor = 0.0;
         #if SHADEROPTIONS_AREA_LIGHTS
             if(featureFlags & LIGHTFEATUREFLAGS_AREA)
             {
@@ -1025,7 +1417,8 @@ float3 lilHeadDirection(float3 positionWS)
                         #endif
                         if((lightData.lightLayers & renderingLayers) != 0)
                         {
-                            lightColor += lilGetLineLightColor(positionWS, lightData);
+                            lilNPRLightingData lighting = lilGetLineLightColor(positionWS, lightData);
+                            lilBlendlilNPRLightingData(dst, lighting);
                         }
                         lightData = FetchLight(_PunctualLightCount, min(++i, last));
                     }
@@ -1035,14 +1428,14 @@ float3 lilHeadDirection(float3 positionWS)
                         lightData.lightType = GPULIGHTTYPE_RECTANGLE;
                         if((lightData.lightLayers & renderingLayers) != 0)
                         {
-                            lightColor += lilGetRectLightColor(positionWS, lightData);
+                            lilNPRLightingData lighting = lilGetRectLightColor(positionWS, lightData);
+                            lilBlendlilNPRLightingData(dst, lighting);
                         }
                         lightData = FetchLight(_PunctualLightCount, min(++i, last));
                     }
                 }
             }
         #endif
-        return lightColor;
     }
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -1132,7 +1525,7 @@ float3 lilHeadDirection(float3 positionWS)
     #define LIL_SHADOW_COORDS(idx)
     #define LIL_TRANSFER_SHADOW(vi,uv,o)
     #if defined(LIL_USE_SHADOW)
-        #define LIL_LIGHT_ATTENUATION(atten,i)      atten = lilGetDirectionalShadow(posInput, i.normalWS, fd.featureFlags)
+        #define LIL_LIGHT_ATTENUATION(atten,i)      atten = lilGetDirectionalShadow(posInput, i.normalWS, fd.featureFlags, _lilShadowCasterBias)
     #else
         #define LIL_LIGHT_ATTENUATION(atten,i)
     #endif
@@ -1143,17 +1536,25 @@ float3 lilHeadDirection(float3 positionWS)
     #define LIL_SHADOW_CASTER_FRAGMENT(i)
 
     // Additional Light
-    float3 lilGetAdditionalLights(float3 positionWS)
+    void lilGetAdditionalLights(float3 positionWS, float4 positionCS, float strength, inout float3 lightColor, inout float3 lightDirection)
     {
         uint renderingLayers = lilGetRenderingLayer();
         uint featureFlags = LIGHT_FEATURE_MASK_FLAGS_OPAQUE;
 
-        float3 additionalLightColor = 0.0;
-        additionalLightColor += lilGetPunctualLightColor(positionWS, renderingLayers, featureFlags);
-        additionalLightColor += lilGetAreaLightColor(positionWS, renderingLayers, featureFlags);
-        additionalLightColor *= 0.75 * GetCurrentExposureMultiplier();
+        lilNPRLightingData lighting;
+        LIL_INITIALIZE_STRUCT(lilNPRLightingData, lighting);
+        lilGetPunctualLightColor(lighting, positionWS, renderingLayers, featureFlags);
+        lilGetAreaLightColor(lighting, positionWS, renderingLayers, featureFlags);
+        lightColor += lighting.color * 0.75 * GetCurrentExposureMultiplier() * strength;
+        lightDirection += lighting.direction * 0.75 * strength;
+    }
 
-        return additionalLightColor;
+    float3 lilGetAdditionalLights(float3 positionWS, float4 positionCS, float strength)
+    {
+        float3 lightColor = 0.0;
+        float3 lightDirection = 0.0;
+        lilGetAdditionalLights(positionWS, positionCS, strength, lightColor, lightDirection);
+        return lightColor;
     }
 
     // Lightmap
@@ -1162,7 +1563,9 @@ float3 lilHeadDirection(float3 positionWS)
 
     // Environment reflection
     #define LIL_GET_ENVIRONMENT_REFLECTION(viewDirection,normalDirection,perceptualRoughness,positionWS) \
-        lilGetReflectionSum(viewDirection,normalDirection,perceptualRoughness,posInput,fd.renderingLayers,fd.featureFlags)
+        (_ReflectionCubeOverride ? \
+        lilCustomReflection(_ReflectionCubeTex, _ReflectionCubeTex_HDR, viewDirection, normalDirection, perceptualRoughness) * _ReflectionCubeColor.rgb * lerp(1.0, fd.lightColor, _ReflectionCubeEnableLighting) : \
+        lilGetReflectionSum(viewDirection,normalDirection,perceptualRoughness,posInput,fd.renderingLayers,fd.featureFlags))
 
     // Fog
     #define LIL_APPLY_FOG_BASE(col,fogCoord)                 col = EvaluateAtmosphericScattering(posInput, fd.V, col)
@@ -1174,7 +1577,12 @@ float3 lilHeadDirection(float3 positionWS)
 #else
     // Support for old version
     // HDRP Data
-    #if VERSION_GREATER_EQUAL(12, 0)
+    #if LIL_SRP_VERSION_GREATER_EQUAL(14, 0)
+        uint lilGetRenderingLayer()
+        {
+            return asuint(unity_RenderingLayer.x);
+        }
+    #elif LIL_SRP_VERSION_GREATER_EQUAL(12, 0)
         uint lilGetRenderingLayer()
         {
             #if defined(_LIGHT_LAYERS)
@@ -1194,7 +1602,7 @@ float3 lilHeadDirection(float3 positionWS)
     #define LIL_HDRP_INVDEEXPOSURE(col)
 
     // Main light
-    #if VERSION_GREATER_EQUAL(12, 0) && defined(_LIGHT_LAYERS)
+    #if LIL_SRP_VERSION_GREATER_EQUAL(12, 0) && defined(_LIGHT_LAYERS)
         #define LIL_MAINLIGHT_COLOR                         ((_MainLightLayerMask & lilGetRenderingLayer()) != 0 ? _MainLightColor.rgb : 0.0)
     #else
         #define LIL_MAINLIGHT_COLOR                         _MainLightColor.rgb
@@ -1202,23 +1610,27 @@ float3 lilHeadDirection(float3 positionWS)
     #define LIL_MAINLIGHT_DIRECTION                     _MainLightPosition.xyz
 
     // Shadow
+    float4 GetShadowCoord(float3 positionWS, float4 positionCS)
+    {
+        VertexPositionInputs vertexInput = (VertexPositionInputs)0;
+        vertexInput.positionWS = positionWS;
+        vertexInput.positionCS = positionCS;
+        return GetShadowCoord(vertexInput);
+    }
+
     #if defined(LIL_USE_SHADOW)
         #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
             #define LIL_SHADOW_COORDS(idx)              float4 shadowCoord : TEXCOORD##idx;
-            #define LIL_TRANSFER_SHADOW(vi,uv,o)        o.shadowCoord = ComputeScreenPos(vi.positionCS);
-            #define LIL_LIGHT_ATTENUATION(atten,i) \
-                atten = MainLightRealtimeShadow(i.shadowCoord)
-        #elif defined(_MAIN_LIGHT_SHADOWS)
-            #define LIL_SHADOW_COORDS(idx)              float4 shadowCoord : TEXCOORD##idx;
-            #define LIL_TRANSFER_SHADOW(vi,uv,o)        o.shadowCoord = TransformWorldToShadowCoord(vi.positionWS);
-            #define LIL_LIGHT_ATTENUATION(atten,i) \
-                atten = MainLightRealtimeShadow(i.shadowCoord)
-        #else
+            #define LIL_TRANSFER_SHADOW(vi,uv,o)        o.shadowCoord = GetShadowCoord(vi.positionWS, vi.positionCS);
+            #define LIL_LIGHT_ATTENUATION(atten,i)      atten = MainLightRealtimeShadow(i.shadowCoord)
+        #elif defined(_MAIN_LIGHT_SHADOWS_CASCADE) && !defined(_MAIN_LIGHT_SHADOWS)
             #define LIL_SHADOW_COORDS(idx)
             #define LIL_TRANSFER_SHADOW(vi,uv,o)
-            #define LIL_LIGHT_ATTENUATION(atten,i) \
-                float4 shadowCoord = TransformWorldToShadowCoord(i.positionWS); \
-                atten = MainLightRealtimeShadow(shadowCoord)
+            #define LIL_LIGHT_ATTENUATION(atten,i)      atten = MainLightRealtimeShadow(TransformWorldToShadowCoord(i.positionWS))
+        #else
+            #define LIL_SHADOW_COORDS(idx)              float4 shadowCoord : TEXCOORD##idx;
+            #define LIL_TRANSFER_SHADOW(vi,uv,o)        o.shadowCoord = GetShadowCoord(vi.positionWS, vi.positionCS);
+            #define LIL_LIGHT_ATTENUATION(atten,i)      atten = MainLightRealtimeShadow(i.shadowCoord)
         #endif
     #else
         #define LIL_SHADOW_COORDS(idx)
@@ -1229,7 +1641,7 @@ float3 lilHeadDirection(float3 positionWS)
     // Shadow caster
     float3 _LightDirection;
     float3 _LightPosition;
-    float4 URPShadowPos(float4 positionOS, float3 normalOS)
+    float4 URPShadowPos(float4 positionOS, float3 normalOS, float bias)
     {
         float3 positionWS = TransformObjectToWorld(positionOS.xyz);
         float3 normalWS = TransformObjectToWorldNormal(normalOS);
@@ -1240,7 +1652,9 @@ float3 lilHeadDirection(float3 positionWS)
             float3 lightDirectionWS = _LightDirection;
         #endif
 
-        #if VERSION_GREATER_EQUAL(5, 1)
+        positionWS -= lightDirectionWS * bias;
+
+        #if LIL_SRP_VERSION_GREATER_EQUAL(5, 1)
             float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS));
         #else
             float4 positionCS = TransformWorldToHClip(positionWS);
@@ -1255,57 +1669,66 @@ float3 lilHeadDirection(float3 positionWS)
         return positionCS;
     }
     #define LIL_V2F_SHADOW_CASTER_OUTPUT        float4 positionCS : SV_POSITION;
-    #define LIL_TRANSFER_SHADOW_CASTER(v,o)     o.positionCS = URPShadowPos(v.positionOS, v.normalOS)
+    #define LIL_TRANSFER_SHADOW_CASTER(v,o)     o.positionCS = URPShadowPos(v.positionOS, v.normalOS, _lilShadowCasterBias)
     #define LIL_SHADOW_CASTER_FRAGMENT(i)       return 0
 
     // Additional Light
-    float3 lilGetAdditionalLights(float3 positionWS)
+    void lilGetAdditionalLights(float3 positionWS, float4 positionCS, float strength, inout float3 lightColor, inout float3 lightDirection)
     {
-        float3 additionalLightColor = 0.0;
         uint renderingLayers = lilGetRenderingLayer();
+        float3 objPositionWS = lilGetObjectPosition();
 
         #if defined(_ADDITIONAL_LIGHTS) || defined(_ADDITIONAL_LIGHTS_VERTEX)
             uint lightsCount = GetAdditionalLightsCount();
-            #if defined(USE_CLUSTERED_LIGHTING) && USE_CLUSTERED_LIGHTING
-                ClusteredLightLoop cll = ClusteredLightLoopInit(positionSS, positionWS);
-                while(ClusteredLightLoopNextWord(cll))
-                {
-                    while(ClusteredLightLoopNextLight(cll))
-                    {
-                        uint lightIndex = ClusteredLightLoopGetLightIndex(cll);
-            #elif defined(_USE_WEBGL1_LIGHTS) && _USE_WEBGL1_LIGHTS
-                for(uint lightIndex = 0; lightIndex < _WEBGL1_MAX_LIGHTS; lightIndex++)
-                {
-                    if(lightIndex >= lightsCount) break;
+            #if defined(LIGHT_LOOP_BEGIN)
+                InputData inputData = (InputData)0;
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(positionCS);
+                inputData.positionWS = positionWS;
+                LIGHT_LOOP_BEGIN(lightsCount)
             #else
                 for(uint lightIndex = 0; lightIndex < lightsCount; lightIndex++)
                 {
             #endif
 
                 Light light = GetAdditionalLight(lightIndex, positionWS);
-                #if VERSION_GREATER_EQUAL(12, 0)
+                #if LIL_SRP_VERSION_GREATER_EQUAL(12, 0) && defined(_LIGHT_LAYERS)
                     if((light.layerMask & renderingLayers) != 0)
                 #endif
-                additionalLightColor += light.color * light.distanceAttenuation;
-            }
+                {
+                    lightColor += light.color.rgb * light.distanceAttenuation * strength;
+                    lightDirection += dot(light.color.rgb, float3(1.0/3.0, 1.0/3.0, 1.0/3.0)) * light.distanceAttenuation * strength * light.direction;
+                }
 
-            #if defined(USE_CLUSTERED_LIGHTING) && USE_CLUSTERED_LIGHTING
+            #if defined(LIGHT_LOOP_END)
+                LIGHT_LOOP_END
+            #else
                 }
             #endif
         #endif
 
-        #if defined(_ADDITIONAL_LIGHTS) && defined(USE_CLUSTERED_LIGHTING) && USE_CLUSTERED_LIGHTING
-            for(uint lightIndex = 0; lightIndex < min(_AdditionalLightsDirectionalCount, MAX_VISIBLE_LIGHTS); lightIndex++)
+        #if defined(_ADDITIONAL_LIGHTS) && (defined(USE_CLUSTERED_LIGHTING) && USE_CLUSTERED_LIGHTING || defined(USE_FORWARD_PLUS) && USE_FORWARD_PLUS)
+            #if defined(URP_FP_DIRECTIONAL_LIGHTS_COUNT)
+                for(uint lightIndex = 0; lightIndex < min(URP_FP_DIRECTIONAL_LIGHTS_COUNT, MAX_VISIBLE_LIGHTS); lightIndex++)
+            #else
+                for(uint lightIndex = 0; lightIndex < min(_AdditionalLightsDirectionalCount, MAX_VISIBLE_LIGHTS); lightIndex++)
+            #endif
             {
-                Light light = GetAdditionalLight(lightIndex, inputData, shadowMask, aoFactor);
-                #if VERSION_GREATER_EQUAL(12, 0)
+                Light light = GetAdditionalLight(lightIndex, positionWS);
+                #if LIL_SRP_VERSION_GREATER_EQUAL(12, 0) && defined(_LIGHT_LAYERS)
                     if((light.layerMask & renderingLayers) != 0)
                 #endif
-                additionalLightColor += light.color * light.distanceAttenuation;
+                lightColor += light.color.rgb * light.distanceAttenuation * strength;
+                lightDirection += dot(light.color.rgb, float3(1.0/3.0, 1.0/3.0, 1.0/3.0)) * light.distanceAttenuation * strength * light.direction;
             }
         #endif
+    }
 
-        return additionalLightColor;
+    float3 lilGetAdditionalLights(float3 positionWS, float4 positionCS, float strength)
+    {
+        float3 lightColor = 0.0;
+        float3 lightDirection = 0.0;
+        lilGetAdditionalLights(positionWS, positionCS, strength, lightColor, lightDirection);
+        return lightColor;
     }
 
     // Lightmap
@@ -1314,19 +1737,50 @@ float3 lilHeadDirection(float3 positionWS)
 
     // Environment reflection
     #define LIL_GET_ENVIRONMENT_REFLECTION(viewDirection,normalDirection,perceptualRoughness,positionWS) \
-        GlossyEnvironmentReflection(reflect(-viewDirection,normalDirection), perceptualRoughness, 1.0)
+        ((IsEmpty(unity_SpecCube0) || unity_SpecCube0_HDR.x == 0 || _ReflectionCubeOverride) ? \
+        lilCustomReflection(_ReflectionCubeTex, _ReflectionCubeTex_HDR, viewDirection, normalDirection, perceptualRoughness) * _ReflectionCubeColor.rgb * lerp(1.0, fd.lightColor, _ReflectionCubeEnableLighting) : \
+        GlossyEnvironmentReflection(reflect(-viewDirection,normalDirection), perceptualRoughness, 1.0))
 
     // Fog
-    #define LIL_APPLY_FOG_BASE(col,fogCoord)                 col.rgb = MixFog(col.rgb,fogCoord)
-    #define LIL_APPLY_FOG_COLOR_BASE(col,fogCoord,fogColor)  col.rgb = MixFogColor(col.rgb,fogColor.rgb,fogCoord)
-    float lilCalcFogFactor(float depth)
-    {
-        return ComputeFogFactor(depth);
-    }
+    #if LIL_RENDER == 2
+        #define LIL_APPLY_FOG_BASE(col,fogCoord)                 col.rgb = lerp(unity_FogColor.rgb*col.a,col.rgb,fogCoord)
+        #define LIL_APPLY_FOG_COLOR_BASE(col,fogCoord,fogColor)  col.rgb = lerp(fogColor.rgb*col.a,col.rgb,fogCoord)
+    #else
+        #define LIL_APPLY_FOG_BASE(col,fogCoord)                 col.rgb = lerp(unity_FogColor.rgb,col.rgb,fogCoord)
+        #define LIL_APPLY_FOG_COLOR_BASE(col,fogCoord,fogColor)  col.rgb = lerp(fogColor.rgb,col.rgb,fogCoord)
+    #endif
+    #if LIL_SRP_VERSION_GREATER_EQUAL(7, 1)
+        float lilCalcFogFactor(float depth)
+        {
+            #if defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2)
+                return ComputeFogIntensity(ComputeFogFactor(depth));
+            #else
+                return 1.0;
+            #endif
+        }
+    #else
+        float lilCalcFogFactor(float depth)
+        {
+            #if defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2)
+                float factor = ComputeFogFactor(depth);
+                #if defined(FOG_EXP)
+                    return saturate(exp2(-factor));
+                #elif defined(FOG_EXP2)
+                    return saturate(exp2(-factor*factor));
+                #elif defined(FOG_LINEAR)
+                    return factor;
+                #else
+                    return 0.0;
+                #endif
+            #else
+                return 1.0;
+            #endif
+        }
+    #endif
 #endif
 
 // Meta
-#if !defined(LIL_BRP) && (VERSION_LOWER(5, 14))
+#if !defined(LIL_BRP) && (LIL_SRP_VERSION_LOWER(5, 14))
     #define LIL_TRANSFER_METAPASS(input,output) \
         output.positionCS = MetaVertexPosition(input.positionOS, input.uv1, input.uv2, unity_LightmapST)
 #else
@@ -1338,7 +1792,7 @@ float3 lilHeadDirection(float3 positionWS)
     #define LIL_IS_MIRROR           false
     #define LIL_LIGHTDIRECTION_ORIG lightDirection
 #else
-    #define LIL_IS_MIRROR           unity_CameraProjection._m20 != 0.0 || unity_CameraProjection._m21 != 0.0
+    #define LIL_IS_MIRROR           (dot(cross(LIL_MATRIX_V[0].xyz, LIL_MATRIX_V[1].xyz), LIL_MATRIX_V[2].xyz) > 0)
     #define LIL_LIGHTDIRECTION_ORIG LIL_MAINLIGHT_DIRECTION
 #endif
 
@@ -1368,7 +1822,7 @@ float3 lilHeadDirection(float3 positionWS)
 #endif
 
 // Do not apply shadow
-#if (defined(LIL_LITE) || defined(LIL_OUTLINE) || defined(LIL_FUR) || defined(LIL_GEM)) && !defined(LIL_PASS_FORWARDADD)
+#if (defined(LIL_LITE) || defined(LIL_FUR) || defined(LIL_GEM)) && !defined(LIL_PASS_FORWARDADD)
     #undef LIL_SHADOW_COORDS
     #undef LIL_TRANSFER_SHADOW
     #undef LIL_LIGHT_ATTENUATION
@@ -1439,21 +1893,23 @@ float3 lilGetLightMapDirection(float2 uv)
     #define LIL_LIGHTCOLOR_COORDS(idx)
     #define LIL_LIGHTDIRECTION_COORDS(idx)
 #else
-    #define LIL_LIGHTCOLOR_COORDS(idx)      LIL_NOPERSPECTIVE float3 lightColor : TEXCOORD##idx;
-    #define LIL_LIGHTDIRECTION_COORDS(idx)  LIL_NOPERSPECTIVE float3 lightDirection : TEXCOORD##idx;
+    #define LIL_LIGHTCOLOR_COORDS(idx)      float3 lightColor : TEXCOORD##idx;
+    #define LIL_LIGHTDIRECTION_COORDS(idx)  float3 lightDirection : TEXCOORD##idx;
 #endif
 
 #if !defined(LIL_PASS_FORWARDADD) && (defined(LIL_FEATURE_SHADOW) || defined(LIL_LITE))
-    #define LIL_INDLIGHTCOLOR_COORDS(idx)   LIL_NOPERSPECTIVE float3 indLightColor : TEXCOORD##idx;
+    #define LIL_INDLIGHTCOLOR_COORDS(idx)   float3 indLightColor : TEXCOORD##idx;
+    #define LIL_GET_INDLIGHTCOLOR(i,o)      o.indLightColor = i.indLightColor
 #else
     #define LIL_INDLIGHTCOLOR_COORDS(idx)
+    #define LIL_GET_INDLIGHTCOLOR(i,o)
 #endif
 
 // Dir light & indir light
 #if defined(LIL_USE_LPPV) && (defined(LIL_FEATURE_SHADOW) || defined(LIL_LITE))
-    #define LIL_CALC_TWOLIGHT(i,o) lilGetLightColorDouble(o.lightDirection, i.positionWS, o.lightColor, o.indLightColor)
+    #define LIL_CALC_TWOLIGHT(i,o) lilGetLightColorDouble(i.positionWS, o.lightColor, o.indLightColor)
 #elif defined(LIL_FEATURE_SHADOW) || defined(LIL_LITE)
-    #define LIL_CALC_TWOLIGHT(i,o) lilGetLightColorDouble(o.lightDirection, o.lightColor, o.indLightColor)
+    #define LIL_CALC_TWOLIGHT(i,o) lilGetLightColorDouble(o.lightColor, o.indLightColor)
 #elif defined(LIL_USE_LPPV)
     #define LIL_CALC_TWOLIGHT(i,o) o.lightColor = lilGetLightColor(i.positionWS)
 #else
@@ -1470,7 +1926,24 @@ struct lilLightData
 
 
 // Main Light in VS
-#if defined(LIL_USE_LIGHTMAP)
+#if defined(LIL_USE_ADDITIONALLIGHT_MAIN)
+    #define LIL_APPLY_ADDITIONALLIGHT_TO_MAIN(i,o) \
+        float3 additionalLightDirection = 0.0; \
+        lilGetAdditionalLights(i.positionWS, i.positionCS/float4(i.positionCS.www,1.0)*float4(LIL_SCREENPARAMS.xy,1.0,1.0), LIL_ADDITIONAL_LIGHT_STRENGTH, o.lightColor, additionalLightDirection)
+    #define LIL_CORRECT_LIGHTDIRECTION_PS(lightDirection) lightDirection = normalize(lightDirection)
+#elif defined(LIL_USE_ADDITIONALLIGHT_MAINDIR)
+    #define LIL_APPLY_ADDITIONALLIGHT_TO_MAIN(i,o) \
+        lilGetAdditionalLights(i.positionWS, i.positionCS/float4(i.positionCS.www,1.0)*float4(LIL_SCREENPARAMS.xy,1.0,1.0), LIL_ADDITIONAL_LIGHT_STRENGTH, o.lightColor, o.lightDirection)
+    #define LIL_CORRECT_LIGHTDIRECTION_PS(lightDirection) lightDirection = normalize(lightDirection)
+#elif defined(LIL_USE_ADDITIONALLIGHT_MAINDIR_PS)
+    #define LIL_APPLY_ADDITIONALLIGHT_TO_MAIN(i,o)
+    #define LIL_CORRECT_LIGHTDIRECTION_PS(lightDirection) lightDirection = normalize(lightDirection)
+#else
+    #define LIL_APPLY_ADDITIONALLIGHT_TO_MAIN(i,o)
+    #define LIL_CORRECT_LIGHTDIRECTION_PS(lightDirection)
+#endif
+
+#if defined(LIL_USE_LIGHTMAP) || defined(LIL_USE_ADDITIONALLIGHT_MAINDIR_PS)
     #define LIL_CORRECT_LIGHTCOLOR_VS(lightColor)
     #define LIL_CORRECT_LIGHTCOLOR_PS(lightColor) \
         lightColor = clamp(lightColor, _LightMinLimit, _LightMaxLimit); \
@@ -1492,19 +1965,33 @@ struct lilLightData
         lilGetLightDirectionAndColor(o.lightDirection, o.lightColor, posInput); \
         o.lightColor *= _lilDirectionalLightStrength; \
         float3 lightDirectionCopy = o.lightDirection; \
-        o.lightDirection = normalize(o.lightDirection * Luminance(o.lightColor) + unity_SHAr.xyz * 0.333333 + unity_SHAg.xyz * 0.333333 + unity_SHAb.xyz * 0.333333 + _LightDirectionOverride.xyz); \
-        float3 shLightColor = lilShadeSH9(float4(o.lightDirection * 0.666666, 1.0)); \
-        o.lightColor += shLightColor; \
-        o.indLightColor = lilShadeSH9(float4(-o.lightDirection * 0.666666, 1.0)); \
+        o.lightDirection = o.lightDirection * Luminance(o.lightColor) + unity_SHAr.xyz * 0.333333 + unity_SHAg.xyz * 0.333333 + unity_SHAb.xyz * 0.333333; \
+        float3 lightDirectionSH = dot(o.lightDirection,o.lightDirection) < 0.000001 ? 0 : normalize(o.lightDirection); \
+        o.lightDirection += lilGetCustomLightDirection(_LightDirectionOverride); \
+        o.lightColor += lilShadeSH9(float4(lightDirectionSH * 0.666666, 1.0)); \
+        o.indLightColor = lilShadeSH9(float4(-lightDirectionSH * 0.666666, 1.0)); \
         o.indLightColor = saturate(o.indLightColor / Luminance(o.lightColor)); \
         o.lightColor = min(o.lightColor, _BeforeExposureLimit); \
         o.lightColor *= GetCurrentExposureMultiplier(); \
+        LIL_APPLY_ADDITIONALLIGHT_TO_MAIN(i,o); \
+        LIL_CORRECT_LIGHTCOLOR_VS(o.lightColor)
+#elif defined(LIL_BRP)
+    #define LIL_CALC_MAINLIGHT(i,o) \
+        OpenLitLightDatas lightDatas; \
+        ComputeLights(lightDatas, _LightDirectionOverride); \
+        lilLightData o; \
+        o.lightDirection    = lightDatas.lightDirection; \
+        o.lightColor        = lightDatas.directLight; \
+        o.indLightColor     = lightDatas.indirectLight; \
+        LIL_APPLY_ADDITIONALLIGHT_TO_MAIN(i,o); \
         LIL_CORRECT_LIGHTCOLOR_VS(o.lightColor)
 #else
     #define LIL_CALC_MAINLIGHT(i,o) \
         lilLightData o; \
-        o.lightDirection = lilGetLightDirection(_LightDirectionOverride); \
+        o.lightDirection = normalize(LIL_MAINLIGHT_DIRECTION * lilLuminance(LIL_MAINLIGHT_COLOR) + unity_SHAr.xyz * 0.333333 + unity_SHAg.xyz * 0.333333 + unity_SHAb.xyz * 0.333333); \
         LIL_CALC_TWOLIGHT(i,o); \
+        o.lightDirection = lilGetFixedLightDirection(_LightDirectionOverride, false); \
+        LIL_APPLY_ADDITIONALLIGHT_TO_MAIN(i,o); \
         LIL_CORRECT_LIGHTCOLOR_VS(o.lightColor)
 #endif
 
@@ -1512,38 +1999,37 @@ struct lilLightData
 #if defined(LIL_PASS_FORWARDADD)
     // Point Light & Spot Light (ForwardAdd)
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
         ld = lilGetLightDirection(input.positionWS); \
-        lc = saturate(LIL_MAINLIGHT_COLOR * atten); \
+        lc = min(LIL_MAINLIGHT_COLOR * atten, _LightMaxLimit); \
         lc = lerp(lc, lilGray(lc), _MonochromeLighting); \
         lc = lerp(lc, 0.0, _AsUnlit)
 #elif defined(LIL_HDRP) && defined(LIL_USE_LIGHTMAP)
     // HDRP with lightmap
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
         lc = input.lightColor; \
         float3 lightmapColor = lilGetLightMapColor(fd.uv1,fd.uv2); \
         lc += lightmapColor * GetCurrentExposureMultiplier(); \
-        LIL_CORRECT_LIGHTCOLOR_PS(lc)
+        LIL_CORRECT_LIGHTCOLOR_PS(lc); \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld)
 #elif defined(LIL_USE_LIGHTMAP) && defined(LIL_LIGHTMODE_SHADOWMASK)
     // Mixed Lightmap (Shadowmask)
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
         lc = input.lightColor; \
         float3 lightmapColor = lilGetLightMapColor(fd.uv1,fd.uv2); \
         lc = max(lc, lightmapColor); \
         LIL_CORRECT_LIGHTCOLOR_PS(lc); \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld); \
         atten = min(atten, LIL_SAMPLE_LIGHTMAP(LIL_SHADOWMAP_TEX,LIL_LIGHTMAP_SAMP,fd.uv1).r)
 #elif defined(LIL_USE_LIGHTMAP) && defined(LIL_LIGHTMODE_SUBTRACTIVE) && defined(LIL_USE_DYNAMICLIGHTMAP)
     // Mixed Lightmap (Subtractive)
     // Use Lightmap as Shadowmask
     #undef LIL_USE_DYNAMICLIGHTMAP
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
         lc = input.lightColor; \
         float3 lightmapColor = lilGetLightMapColor(fd.uv1,fd.uv2); \
         lc = max(lc, lightmapColor); \
         LIL_CORRECT_LIGHTCOLOR_PS(lc); \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld); \
         float3 lightmapShadowThreshold = LIL_MAINLIGHT_COLOR*0.5; \
         float3 lightmapS = (lightmapColor - lightmapShadowThreshold) / (LIL_MAINLIGHT_COLOR - lightmapShadowThreshold); \
         float lightmapAttenuation = saturate((lightmapS.r+lightmapS.g+lightmapS.b)/3.0); \
@@ -1552,54 +2038,66 @@ struct lilLightData
     // Mixed Lightmap (Subtractive)
     // Use Lightmap as Shadowmask
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
         lc = input.lightColor; \
         float3 lightmapColor = lilGetLightMapColor(fd.uv1,fd.uv2); \
         lc = max(lc, lightmapColor); \
         LIL_CORRECT_LIGHTCOLOR_PS(lc); \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld); \
         float3 lightmapS = (lightmapColor - lilShadeSH9(input.normalWS)) / LIL_MAINLIGHT_COLOR; \
         float lightmapAttenuation = saturate((lightmapS.r+lightmapS.g+lightmapS.b)/3.0); \
         atten = min(atten, lightmapAttenuation)
 #elif defined(LIL_USE_LIGHTMAP) && defined(LIL_USE_DIRLIGHTMAP)
     // Lightmap (Directional)
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
         lc = input.lightColor; \
         float3 lightmapColor = lilGetLightMapColor(fd.uv1,fd.uv2); \
         float3 lightmapDirection = lilGetLightMapDirection(input.uv1); \
         lc = saturate(lc + lightmapColor); \
         LIL_CORRECT_LIGHTCOLOR_PS(lc); \
-        ld = normalize(ld + lightmapDirection * lilLuminance(lightmapColor))
+        ld = normalize(ld + lightmapDirection * lilLuminance(lightmapColor)); \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld)
 #elif defined(LIL_USE_LIGHTMAP) && defined(LIL_USE_SHADOW)
     // Mixed Lightmap (Baked Indirect) with shadow
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
         lc = LIL_MAINLIGHT_COLOR; \
         float3 lightmapColor = lilGetLightMapColor(fd.uv1,fd.uv2); \
-        lc = saturate(lc + max(lightmapColor,lilGetSHToon(_LightDirectionOverride))); \
-        LIL_CORRECT_LIGHTCOLOR_PS(lc)
+        lc = saturate(lc + max(lightmapColor,lilGetSHToon())); \
+        LIL_CORRECT_LIGHTCOLOR_PS(lc); \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld)
 #elif defined(LIL_USE_LIGHTMAP) && defined(LIL_USE_DYNAMICLIGHTMAP)
     // Mixed Lightmap (Baked Indirect) or Lightmap (Non-Directional)
     #undef LIL_USE_DYNAMICLIGHTMAP
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
         lc = input.lightColor; \
         float3 lightmapColor = lilGetLightMapColor(fd.uv1,fd.uv2); \
         lc = saturate(lc + lightmapColor); \
-        LIL_CORRECT_LIGHTCOLOR_PS(lc)
+        LIL_CORRECT_LIGHTCOLOR_PS(lc); \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld)
 #elif defined(LIL_USE_LIGHTMAP)
     // Mixed Lightmap (Baked Indirect) or Lightmap (Non-Directional)
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
         lc = LIL_MAINLIGHT_COLOR; \
         float3 lightmapColor = lilGetLightMapColor(fd.uv1,fd.uv2); \
         lc = saturate(lc + lightmapColor); \
-        LIL_CORRECT_LIGHTCOLOR_PS(lc)
+        LIL_CORRECT_LIGHTCOLOR_PS(lc); \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld)
+#elif defined(LIL_USE_ADDITIONALLIGHT_MAINDIR_PS)
+    // Realtime
+    #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
+        lc = input.lightColor; \
+        lilGetAdditionalLights(input.positionWS, input.positionCS, LIL_ADDITIONAL_LIGHT_STRENGTH, lc, ld); \
+        LIL_CORRECT_LIGHTCOLOR_PS(lc); \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld)
+#elif defined(LIL_USE_ADDITIONALLIGHT_MAINDIR)
+    // Realtime
+    #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
+        lc = input.lightColor; \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld)
 #else
     // Realtime
     #define LIL_GET_MAINLIGHT(input,lc,ld,atten) \
-        LIL_LIGHT_ATTENUATION(atten, input); \
-        lc = input.lightColor;
+        lc = input.lightColor; \
+        LIL_CORRECT_LIGHTDIRECTION_PS(ld)
 #endif
 
 // Additional Light VS and Fog
@@ -1625,10 +2123,12 @@ struct lilLightData
 
 #if defined(LIL_USE_ADDITIONALLIGHT_VS) && (defined(VERTEXLIGHT_ON) || !defined(LIL_BRP))
     #define LIL_CALC_VERTEXLIGHT(i,o) \
-        o.vlf.rgb = lilGetAdditionalLights(i.positionWS); \
+        o.vlf.rgb = lilGetAdditionalLights(i.positionWS, i.positionCS/float4(i.positionCS.www,1.0)*float4(LIL_SCREENPARAMS.xy,1.0,1.0), LIL_ADDITIONAL_LIGHT_STRENGTH); \
         o.vlf.rgb = lerp(o.vlf.rgb, lilGray(o.vlf.rgb), _MonochromeLighting); \
         o.vlf.rgb = lerp(o.vlf.rgb, 0.0, _AsUnlit)
 #elif defined(LIL_USE_ADDITIONALLIGHT_VS)
+    #define LIL_CALC_VERTEXLIGHT(i,o)
+#elif defined(LIL_USE_ADDITIONALLIGHT_MAIN)
     #define LIL_CALC_VERTEXLIGHT(i,o)
 #else
     #define LIL_CALC_VERTEXLIGHT(i,o)
@@ -1637,12 +2137,15 @@ struct lilLightData
 // Additional Light PS
 #if defined(LIL_USE_ADDITIONALLIGHT_PS)
     #define LIL_GET_ADDITIONALLIGHT(i,o) \
-        o = lilGetAdditionalLights(i.positionWS); \
+        o = lilGetAdditionalLights(i.positionWS, i.positionCS, LIL_ADDITIONAL_LIGHT_STRENGTH); \
         o = lerp(o, lilGray(o), _MonochromeLighting); \
         o = lerp(o, 0.0, _AsUnlit)
 #elif defined(LIL_USE_ADDITIONALLIGHT_VS)
     #define LIL_GET_ADDITIONALLIGHT(i,o) \
         o = i.vlf.rgb
+#elif defined(LIL_USE_ADDITIONALLIGHT_MAIN)
+    #define LIL_GET_ADDITIONALLIGHT(i,o) \
+        o = 0
 #else
     #define LIL_GET_ADDITIONALLIGHT(i,o) \
         o = 0
@@ -1672,17 +2175,20 @@ struct lilLightData
 
 // Main Color & Emission
 #if defined(LIL_BAKER)
-    #define LIL_GET_SUBTEX(tex,uv)  lilGetSubTexWithoutAnimation(Exists##tex, tex, tex##_ST, tex##Angle, uv, 1, tex##IsDecal, tex##IsLeftOnly, tex##IsRightOnly, tex##ShouldCopy, tex##ShouldFlipMirror, tex##ShouldFlipCopy, tex##IsMSDF, isRightHand LIL_SAMP_IN(sampler##tex))
+    #define LIL_GET_SUBTEX(tex,uv)  lilGetSubTexWithoutAnimation(tex, tex##_ST, tex##_ScrollRotate, tex##Angle, uv, 1, tex##IsDecal, tex##IsLeftOnly, tex##IsRightOnly, tex##ShouldCopy, tex##ShouldFlipMirror, tex##ShouldFlipCopy, tex##IsMSDF, isRightHand LIL_SAMP_IN(sampler##tex))
     #define LIL_GET_EMITEX(tex,uv)  LIL_SAMPLE_2D(tex, sampler##tex, lilCalcUVWithoutAnimation(uv, tex##_ST, tex##_ScrollRotate))
     #define LIL_GET_EMIMASK(tex,uv) LIL_SAMPLE_2D(tex, sampler_MainTex, lilCalcUVWithoutAnimation(uv, tex##_ST, tex##_ScrollRotate))
 #elif defined(LIL_WITHOUT_ANIMATION)
-    #define LIL_GET_SUBTEX(tex,uv)  lilGetSubTexWithoutAnimation(Exists##tex, tex, tex##_ST, tex##Angle, uv, 1, tex##IsDecal, tex##IsLeftOnly, tex##IsRightOnly, tex##ShouldCopy, tex##ShouldFlipMirror, tex##ShouldFlipCopy, tex##IsMSDF, fd.isRightHand LIL_SAMP_IN(sampler##tex))
+    #define LIL_GET_SUBTEX(tex,uv)  lilGetSubTexWithoutAnimation(tex, tex##_ST, tex##_ScrollRotate, tex##Angle, uv, 1, tex##IsDecal, tex##IsLeftOnly, tex##IsRightOnly, tex##ShouldCopy, tex##ShouldFlipMirror, tex##ShouldFlipCopy, tex##IsMSDF, fd.isRightHand LIL_SAMP_IN(sampler##tex))
     #define LIL_GET_EMITEX(tex,uv)  LIL_SAMPLE_2D(tex, sampler##tex, lilCalcUVWithoutAnimation(uv, tex##_ST, tex##_ScrollRotate))
     #define LIL_GET_EMIMASK(tex,uv) LIL_SAMPLE_2D(tex, sampler_MainTex, lilCalcUVWithoutAnimation(uv, tex##_ST, tex##_ScrollRotate))
 #else
-    #define LIL_GET_SUBTEX(tex,uv)  lilGetSubTex(Exists##tex, tex, tex##_ST, tex##Angle, uv, fd.nv, tex##IsDecal, tex##IsLeftOnly, tex##IsRightOnly, tex##ShouldCopy, tex##ShouldFlipMirror, tex##ShouldFlipCopy, tex##IsMSDF, fd.isRightHand, tex##DecalAnimation, tex##DecalSubParam LIL_SAMP_IN(sampler##tex))
+    #define LIL_GET_SUBTEX(tex,uv)  lilGetSubTex(tex, tex##_ST, tex##_ScrollRotate, tex##Angle, uv, fd.nv, tex##IsDecal, tex##IsLeftOnly, tex##IsRightOnly, tex##ShouldCopy, tex##ShouldFlipMirror, tex##ShouldFlipCopy, tex##IsMSDF, fd.isRightHand, tex##DecalAnimation, tex##DecalSubParam LIL_SAMP_IN(sampler##tex))
     #define LIL_GET_EMITEX(tex,uv)  LIL_SAMPLE_2D(tex, sampler##tex, lilCalcUV(uv, tex##_ST, tex##_ScrollRotate))
     #define LIL_GET_EMIMASK(tex,uv) LIL_SAMPLE_2D(tex, sampler_MainTex, lilCalcUV(uv, tex##_ST, tex##_ScrollRotate))
 #endif
+
+// Fallback
+#define UnpackNormalScale(normal,scale) lilUnpackNormalScale(normal,scale)
 
 #endif

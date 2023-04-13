@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 2969790275
+CRC: 155925305
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 4e3a15c3cd6198ae0271d98dc9fbf61a
+    Hash: 2efd80fe5f04811794a6efa70a3fa5b8
   TypeTreeHash:
     serializedVersion: 2
     Hash: 55d48f4ad9c3b13330b9eb5ee5686477
@@ -40,6 +40,7 @@ Assets:
 - Assets/MaterialChange/Shaders/ArxCharacterShaders/Shaders/EmissiveFreak_StencilWriter_Cutout.shader
 - Assets/MaterialChange/Shaders/Unlit_WF_ShaderSuite/Shaders/Unlit_WF_FakeFur_Mix.shader
 - Assets/MaterialChange/Shaders/arktoon Shaders/Shaders/Fade.shader
+- Assets/MaterialChange/Shaders/MToon3.8/BS_MToon.shader
 - Assets/MaterialChange/Shaders/UTS/Shader/Toon_DoubleShadeWithFeather_Clipping_StencilMask.shader
 - Assets/MaterialChange/Shaders/ArxCharacterShaders/Shaders/Outline_Opaque.shader
 - Assets/Reflex Shader 2/Reflex Shader 2.shader

@@ -25,6 +25,8 @@
     #define LIL_CUSTOM_VERT_COPY
 #endif
 
+//------------------------------------------------------------------------------------------------------------------------------
+// Insert a process for a custom shader
 void lilCustomVertexOS(inout appdata input, inout float2 uvMain, inout float4 positionOS)
 {
     #if defined(LIL_CUSTOM_VERTEX_OS)
@@ -61,15 +63,22 @@ LIL_V2F_TYPE vert(appdata input)
 
     //------------------------------------------------------------------------------------------------------------------------------
     // Invisible
-    #if defined(LIL_TESSELLATION)
-        LIL_BRANCH
-        if(!_Invisible)
+    #if defined(LIL_OUTLINE) && !defined(LIL_LITE) && defined(USING_STEREO_MATRICES)
+        #define LIL_VERTEX_CONDITION (_Invisible || _OutlineDisableInVR)
+    #elif defined(LIL_OUTLINE) && !defined(LIL_LITE)
+        #define LIL_VERTEX_CONDITION (_Invisible || _OutlineDisableInVR && (abs(UNITY_MATRIX_P._m02) > 0.000001))
+    #else
+        #define LIL_VERTEX_CONDITION (_Invisible)
+    #endif
+
+    #if defined(LIL_TESSELLATION) || defined(LIL_CUSTOM_SAFEVERT)
+        if(!LIL_VERTEX_CONDITION)
         {
     #else
-        // In the tessellation shader this gives a warning
-        LIL_BRANCH
-        if(_Invisible) return LIL_V2F_OUT;
+        if(LIL_VERTEX_CONDITION) return LIL_V2F_OUT;
     #endif
+
+    #undef LIL_VERTEX_CONDITION
 
     //------------------------------------------------------------------------------------------------------------------------------
     // Single Pass Instanced rendering
@@ -80,18 +89,29 @@ LIL_V2F_TYPE vert(appdata input)
     //------------------------------------------------------------------------------------------------------------------------------
     // UV
     float2 uvMain = lilCalcUV(input.uv0, _MainTex_ST);
+    float2 uvs[4] = {uvMain,input.uv1,input.uv2,input.uv3};
 
     //------------------------------------------------------------------------------------------------------------------------------
-    // Vertex Modification
-    #include "Includes/lil_vert_encryption.hlsl"
-    lilCustomVertexOS(input, uvMain, input.positionOS);
-    #include "Includes/lil_vert_audiolink.hlsl"
-    #if !defined(LIL_ONEPASS_OUTLINE)
-        #include "Includes/lil_vert_outline.hlsl"
+    // Object space direction
+    #if defined(LIL_APP_NORMAL) && defined(LIL_APP_TANGENT)
+        float3 bitangentOS = normalize(cross(input.normalOS, input.tangentOS.xyz)) * (input.tangentOS.w * length(input.normalOS));
+        float3x3 tbnOS = float3x3(input.tangentOS.xyz, bitangentOS, input.normalOS);
+    #else
+        float3 bitangentOS = 0.0;
+        float3x3 tbnOS = 0.0;
     #endif
 
     //------------------------------------------------------------------------------------------------------------------------------
-    // Previous Position
+    // Vertex Modification
+    #include "lil_vert_encryption.hlsl"
+    lilCustomVertexOS(input, uvMain, input.positionOS);
+    #include "lil_vert_audiolink.hlsl"
+    #if !defined(LIL_ONEPASS_OUTLINE)
+        #include "lil_vert_outline.hlsl"
+    #endif
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    // Previous Position (for HDRP)
     #if defined(LIL_PASS_MOTIONVECTOR_INCLUDED)
         input.previousPositionOS = unity_MotionVectorsParams.x > 0.0 ? input.previousPositionOS : input.positionOS.xyz;
         #if defined(_ADD_PRECOMPUTED_VELOCITY)
@@ -101,9 +121,9 @@ LIL_V2F_TYPE vert(appdata input)
         //------------------------------------------------------------------------------------------------------------------------------
         // Vertex Modification
         #define LIL_MODIFY_PREVPOS
-        #include "Includes/lil_vert_encryption.hlsl"
+        #include "lil_vert_encryption.hlsl"
         lilCustomVertexOS(input, uvMain, input.previousPositionOS);
-        #include "Includes/lil_vert_audiolink.hlsl"
+        #include "lil_vert_audiolink.hlsl"
         #undef LIL_MODIFY_PREVPOS
 
         //------------------------------------------------------------------------------------------------------------------------------
@@ -122,7 +142,7 @@ LIL_V2F_TYPE vert(appdata input)
 
         #if defined(LIL_ONEPASS_OUTLINE)
             #define LIL_MODIFY_PREVPOS
-            #include "Includes/lil_vert_outline.hlsl"
+            #include "lil_vert_outline.hlsl"
             #undef LIL_MODIFY_PREVPOS
             LIL_VERTEX_POSITION_INPUTS(input.previousPositionOS, previousOLVertexInput);
             previousOLVertexInput.positionWS = TransformPreviousObjectToWorld(input.previousPositionOS);
@@ -147,8 +167,8 @@ LIL_V2F_TYPE vert(appdata input)
     #if defined(LIL_CUSTOM_VERTEX_WS)
         LIL_RE_VERTEX_POSITION_INPUTS(vertexInput);
     #endif
-    float3 viewDirection = normalize(lilViewDirection(vertexInput.positionWS));
-    float3 headDirection = normalize(lilHeadDirection(vertexInput.positionWS));
+    float3 viewDirection = normalize(lilViewDirection(lilToAbsolutePositionWS(vertexInput.positionWS)));
+    float3 headDirection = normalize(lilHeadDirection(lilToAbsolutePositionWS(vertexInput.positionWS)));
 
     //------------------------------------------------------------------------------------------------------------------------------
     // Copy
@@ -211,7 +231,7 @@ LIL_V2F_TYPE vert(appdata input)
             else if (unity_VisualizationMode == EDITORVIZ_SHOWLIGHTMASK)
             {
                 LIL_V2F_OUT_BASE.vizUV = input.uv1 * unity_LightmapST.xy + unity_LightmapST.zw;
-                LIL_V2F_OUT_BASE.lightCoord = mul(unity_EditorViz_WorldToLight, LIL_TRANSFORM_POS_OS_TO_WS(input.positionOS.xyz));
+                LIL_V2F_OUT_BASE.lightCoord = mul(unity_EditorViz_WorldToLight, float4(lilTransformOStoWS(input.positionOS.xyz), 1.0));
             }
         #endif
     #endif
@@ -220,7 +240,7 @@ LIL_V2F_TYPE vert(appdata input)
     // Fog & Lighting
     lilFragData fd = lilInitFragData();
     LIL_GET_HDRPDATA(vertexInput,fd);
-    #if defined(LIL_V2F_LIGHTCOLOR) || defined(LIL_V2F_LIGHTDIRECTION) || defined(LIL_V2F_INDLIGHTCOLOR)
+    #if defined(LIL_V2F_LIGHTCOLOR) || defined(LIL_V2F_LIGHTDIRECTION) || defined(LIL_V2F_INDLIGHTCOLOR) || defined(LIL_V2F_NDOTL)
         LIL_CALC_MAINLIGHT(vertexInput, lightdataInput);
     #endif
     #if defined(LIL_V2F_LIGHTCOLOR)
@@ -231,6 +251,15 @@ LIL_V2F_TYPE vert(appdata input)
     #endif
     #if defined(LIL_V2F_INDLIGHTCOLOR)
         LIL_V2F_OUT_BASE.indLightColor  = lightdataInput.indLightColor * _ShadowEnvStrength;
+    #endif
+    #if defined(LIL_V2F_NDOTL)
+        float2 outlineNormalVS = normalize(lilTransformDirWStoVSCenter(vertexNormalInput.normalWS).xy);
+        #if defined(LIL_PASS_FORWARDADD)
+            float2 outlineLightVS = normalize(lilTransformDirWStoVSCenter(normalize(_WorldSpaceLightPos0.xyz - vertexInput.positionWS * _WorldSpaceLightPos0.w)).xy);
+        #else
+            float2 outlineLightVS = normalize(lilTransformDirWStoVSCenter(lightdataInput.lightDirection).xy);
+        #endif
+        LIL_V2F_OUT_BASE.NdotL          = dot(outlineNormalVS, outlineLightVS) * 0.5 + 0.5;
     #endif
     #if defined(LIL_V2F_SHADOW)
         LIL_TRANSFER_SHADOW(vertexInput, input.uv1, LIL_V2F_OUT_BASE);
@@ -248,13 +277,13 @@ LIL_V2F_TYPE vert(appdata input)
     #if defined(LIL_V2F_POSITION_CS) && defined(LIL_FEATURE_CLIPPING_CANCELLER) && !defined(LIL_LITE) && !defined(LIL_PASS_SHADOWCASTER_INCLUDED) && !defined(LIL_PASS_META_INCLUDED)
         #if defined(UNITY_REVERSED_Z)
             // DirectX
-            if(LIL_V2F_OUT_BASE.positionCS.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT_BASE.positionCS.w > 0)
+            if(LIL_V2F_OUT_BASE.positionCS.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT_BASE.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
             {
                 LIL_V2F_OUT_BASE.positionCS.z = LIL_V2F_OUT_BASE.positionCS.z * 0.0001 + LIL_V2F_OUT_BASE.positionCS.w * 0.999;
             }
         #else
             // OpenGL
-            if(LIL_V2F_OUT_BASE.positionCS.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT_BASE.positionCS.w > 0)
+            if(LIL_V2F_OUT_BASE.positionCS.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT_BASE.positionCS.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
             {
                 LIL_V2F_OUT_BASE.positionCS.z = LIL_V2F_OUT_BASE.positionCS.z * 0.0001 - LIL_V2F_OUT_BASE.positionCS.w * 0.999;
             }
@@ -262,9 +291,9 @@ LIL_V2F_TYPE vert(appdata input)
     #endif
 
     //------------------------------------------------------------------------------------------------------------------------------
-    // One Pass Outline
-    #if defined(LIL_ONEPASS_OUTLINE) && (!defined(LIL_MULTI) || defined(LIL_MULTI) && defined(LIL_MULTI_OUTLINE))
-        #include "Includes/lil_vert_outline.hlsl"
+    // One Pass Outline (for HDRP)
+    #if defined(LIL_ONEPASS_OUTLINE)
+        #include "lil_vert_outline.hlsl"
         vertexInput = lilGetVertexPositionInputs(input.positionOS);
         lilCustomVertexWS(input, uvMain, vertexInput, vertexNormalInput);
         #if defined(LIL_CUSTOM_VERTEX_WS)
@@ -277,13 +306,13 @@ LIL_V2F_TYPE vert(appdata input)
         #if defined(LIL_FEATURE_CLIPPING_CANCELLER) && !defined(LIL_LITE) && !defined(LIL_PASS_SHADOWCASTER_INCLUDED) && !defined(LIL_PASS_META_INCLUDED)
             #if defined(UNITY_REVERSED_Z)
                 // DirectX
-                if(LIL_V2F_OUT.positionCSOL.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT.positionCSOL.w > 0)
+                if(LIL_V2F_OUT.positionCSOL.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT.positionCSOL.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
                 {
                     LIL_V2F_OUT.positionCSOL.z = LIL_V2F_OUT.positionCSOL.z * 0.0001 + LIL_V2F_OUT.positionCSOL.w * 0.999;
                 }
             #else
                 // OpenGL
-                if(LIL_V2F_OUT.positionCSOL.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT.positionCSOL.w > 0)
+                if(LIL_V2F_OUT.positionCSOL.w < _ProjectionParams.y * 1.01 && LIL_V2F_OUT.positionCSOL.w > 0 && _ProjectionParams.y < LIL_NEARCLIP_THRESHOLD LIL_MULTI_SHOULD_CLIPPING)
                 {
                     LIL_V2F_OUT.positionCSOL.z = LIL_V2F_OUT.positionCSOL.z * 0.0001 - LIL_V2F_OUT.positionCSOL.w * 0.999;
                 }
@@ -301,20 +330,43 @@ LIL_V2F_TYPE vert(appdata input)
         #endif
     #endif
 
-    #if defined(LIL_TESSELLATION)
+    //------------------------------------------------------------------------------------------------------------------------------
+    // Offset z for Less ZTest
+    #if defined(SHADERPASS) && SHADERPASS == SHADERPASS_DEPTH_ONLY && defined(LIL_OUTLINE)
+        #if defined(UNITY_REVERSED_Z)
+            // DirectX
+            LIL_V2F_OUT.positionCS.z -= 0.0001;
+        #else
+            // OpenGL
+            LIL_V2F_OUT.positionCS.z += 0.0001;
+        #endif
+    #endif
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    // Remove Outline
+    #if defined(LIL_ONEPASS_OUTLINE)
+        float width = lilGetOutlineWidth(uvMain, input.color, _OutlineWidth, _OutlineWidthMask, _OutlineVertexR2Width LIL_SAMP_IN(lil_sampler_linear_repeat));
+        if(width > -0.000001 && width < 0.000001 && _OutlineDeleteMesh) LIL_V2F_OUT.positionCSOL = 0.0/0.0;
+    #elif defined(LIL_OUTLINE)
+        float width = lilGetOutlineWidth(uvMain, input.color, _OutlineWidth, _OutlineWidthMask, _OutlineVertexR2Width LIL_SAMP_IN(lil_sampler_linear_repeat));
+        if(width > -0.000001 && width < 0.000001 && _OutlineDeleteMesh) LIL_V2F_OUT.positionCS = 0.0/0.0;
+    #endif
+
+    #if defined(LIL_TESSELLATION) || defined(LIL_CUSTOM_SAFEVERT)
         }
     #endif
 
     return LIL_V2F_OUT;
 }
 
+//------------------------------------------------------------------------------------------------------------------------------
+// Geometry shader (for HDRP)
 #if defined(LIL_ONEPASS_OUTLINE)
     [maxvertexcount(12)]
     void geom(triangle v2g input[3], inout TriangleStream<v2f> outStream)
     {
         //------------------------------------------------------------------------------------------------------------------------------
         // Invisible
-        LIL_BRANCH
         if(_Invisible) return;
 
         v2f output[3];
@@ -322,16 +374,17 @@ LIL_V2F_TYPE vert(appdata input)
         LIL_INITIALIZE_STRUCT(v2f, output[1]);
         LIL_INITIALIZE_STRUCT(v2f, output[2]);
 
+        LIL_SETUP_INSTANCE_ID(input[0].base);
+        LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input[0].base);
+
         //------------------------------------------------------------------------------------------------------------------------------
         // Copy
         for(uint i = 0; i < 3; i++)
         {
             output[i] = input[i].base;
         }
-        LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input[0].base);
 
         // Front
-        LIL_BRANCH
         if(_Cull != 1)
         {
             outStream.Append(output[0]);
@@ -341,7 +394,6 @@ LIL_V2F_TYPE vert(appdata input)
         }
 
         // Back
-        LIL_BRANCH
         if(_Cull != 2)
         {
             outStream.Append(output[2]);
@@ -352,35 +404,31 @@ LIL_V2F_TYPE vert(appdata input)
 
         //------------------------------------------------------------------------------------------------------------------------------
         // Outline
-        #if !defined(LIL_MULTI) || defined(LIL_MULTI) && defined(LIL_MULTI_OUTLINE)
-            for(uint j = 0; j < 3; j++)
-            {
-                output[j].positionCS = input[j].positionCSOL;
-                #if defined(LIL_PASS_MOTIONVECTOR_INCLUDED)
-                    output[j].previousPositionCS = input[j].previousPositionCSOL;
-                #endif
-            }
+        for(uint j = 0; j < 3; j++)
+        {
+            output[j].positionCS = input[j].positionCSOL;
+            #if defined(LIL_PASS_MOTIONVECTOR_INCLUDED)
+                output[j].previousPositionCS = input[j].previousPositionCSOL;
+            #endif
+        }
 
-            // Front
-            LIL_BRANCH
-            if(_OutlineCull != 1)
-            {
-                outStream.Append(output[0]);
-                outStream.Append(output[1]);
-                outStream.Append(output[2]);
-                outStream.RestartStrip();
-            }
+        // Front
+        if(_OutlineCull != 1)
+        {
+            outStream.Append(output[0]);
+            outStream.Append(output[1]);
+            outStream.Append(output[2]);
+            outStream.RestartStrip();
+        }
 
-            // Back
-            LIL_BRANCH
-            if(_OutlineCull != 2)
-            {
-                outStream.Append(output[2]);
-                outStream.Append(output[1]);
-                outStream.Append(output[0]);
-                outStream.RestartStrip();
-            }
-        #endif
+        // Back
+        if(_OutlineCull != 2)
+        {
+            outStream.Append(output[2]);
+            outStream.Append(output[1]);
+            outStream.Append(output[0]);
+            outStream.RestartStrip();
+        }
     }
 #endif
 

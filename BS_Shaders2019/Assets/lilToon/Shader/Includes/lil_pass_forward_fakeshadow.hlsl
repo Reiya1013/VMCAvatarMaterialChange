@@ -1,8 +1,8 @@
 #ifndef LIL_PASS_FORWARD_FAKESHADOW_INCLUDED
 #define LIL_PASS_FORWARD_FAKESHADOW_INCLUDED
 
-#include "Includes/lil_pipeline.hlsl"
-#include "Includes/lil_common_appdata.hlsl"
+#include "lil_common.hlsl"
+#include "lil_common_appdata.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Structure
@@ -25,14 +25,11 @@ struct v2f
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
-float4 _FakeShadowVector;
-
 v2f vert(appdata input)
 {
     v2f output;
     LIL_INITIALIZE_STRUCT(v2f, output);
 
-    LIL_BRANCH
     if(_Invisible) return output;
 
     LIL_SETUP_INSTANCE_ID(input);
@@ -41,9 +38,7 @@ v2f vert(appdata input)
 
     //------------------------------------------------------------------------------------------------------------------------------
     // Encryption
-    #if defined(LIL_FEATURE_ENCRYPTION)
-        input.positionOS = vertexDecode(input.positionOS, input.normalOS, input.uv6, input.uv7);
-    #endif
+    #include "lil_vert_encryption.hlsl"
 
     LIL_VERTEX_POSITION_INPUTS(input.positionOS, vertexInput);
     #if defined(LIL_HDRP)
@@ -56,7 +51,7 @@ v2f vert(appdata input)
         lightDirection = normalize(lightDirection * Luminance(lightColor) + unity_SHAr.xyz * 0.333333 + unity_SHAg.xyz * 0.333333 + unity_SHAb.xyz * 0.333333 + float3(0.0,0.001,0.0));
         output.positionWS = vertexInput.positionWS;
     #else
-        float3 lightDirection = normalize(lilGetLightDirection() + _FakeShadowVector.xyz);
+        float3 lightDirection = normalize(lilGetLightDirection() + length(_FakeShadowVector.xyz) * normalize(mul((float3x3)LIL_MATRIX_M, _FakeShadowVector.xyz)));
     #endif
     float2 lightShift = mul((float3x3)LIL_MATRIX_VP, lightDirection * _FakeShadowVector.w).xy;
     output.positionCS = vertexInput.positionCS;
@@ -69,14 +64,14 @@ v2f vert(appdata input)
 
 float4 frag(v2f input) : SV_Target
 {
+    LIL_SETUP_INSTANCE_ID(input);
+    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     lilFragData fd = lilInitFragData();
 
     fd.uv0 = input.uv0;
     #if defined(LIL_HDRP) || defined(LIL_V2F_FORCE_POSITION_WS)
         fd.positionWS = input.positionWS;
     #endif
-    LIL_SETUP_INSTANCE_ID(input);
-    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     LIL_GET_HDRPDATA(input,fd);
     #if defined(LIL_HDRP)
         fd.V = normalize(lilViewDirection(fd.positionWS));

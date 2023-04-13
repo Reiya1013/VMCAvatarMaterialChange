@@ -1,14 +1,17 @@
 #ifndef LIL_PASS_MOTIONVECTOR_INCLUDED
 #define LIL_PASS_MOTIONVECTOR_INCLUDED
 
-#include "Includes/lil_pipeline.hlsl"
-#include "Includes/lil_common_appdata.hlsl"
+#include "lil_common.hlsl"
+#include "lil_common_appdata.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Motion Vector
 float2 lilCalculateMotionVector(float4 positionCS, float4 previousPositionCS)
 {
-    positionCS.xy = positionCS.xy / positionCS.w;
+    positionCS.xy = positionCS.xy / LIL_SCREENPARAMS.xy * 2.0 - 1.0;
+    #if UNITY_UV_STARTS_AT_TOP
+        positionCS.y = -positionCS.y;
+    #endif
     previousPositionCS.xy = previousPositionCS.xy / previousPositionCS.w;
     float2 motionVec = (positionCS.xy - previousPositionCS.xy);
 
@@ -35,7 +38,7 @@ float2 lilCalculateMotionVector(float4 positionCS, float4 previousPositionCS)
 #if defined(LIL_V2F_FORCE_TEXCOORD0) || (LIL_RENDER > 0)
     #define LIL_V2F_TEXCOORD0
 #endif
-#if defined(LIL_V2F_FORCE_POSITION_OS) || ((LIL_RENDER > 0) && !defined(LIL_LITE) && !defined(LIL_FUR) && defined(LIL_FEATURE_DISSOLVE))
+#if defined(LIL_V2F_FORCE_POSITION_OS) || ((LIL_RENDER > 0) && !defined(LIL_LITE) && defined(LIL_FEATURE_DISSOLVE))
     #define LIL_V2F_POSITION_OS
 #endif
 #if defined(LIL_V2F_FORCE_NORMAL) || defined(WRITE_NORMAL_BUFFER)
@@ -73,6 +76,7 @@ struct v2f
         #define LIL_V2G_NORMAL_WS
     #endif
     #define LIL_V2G_FURVECTOR
+    #define LIL_V2G_VERTEXID
     #define LIL_V2G_PREV_POSITION_WS
 
     struct v2g
@@ -80,10 +84,11 @@ struct v2f
         float3 positionWS   : TEXCOORD0;
         float2 uv0          : TEXCOORD1;
         float3 furVector    : TEXCOORD2;
+        uint vertexID       : TEXCOORD3;
         #if defined(LIL_V2G_NORMAL_WS)
-            float3 normalWS     : TEXCOORD3;
+            float3 normalWS     : TEXCOORD4;
         #endif
-        float3 previousPositionWS : TEXCOORD4;
+        float3 previousPositionWS : TEXCOORD5;
         LIL_VERTEX_INPUT_INSTANCE_ID
         LIL_VERTEX_OUTPUT_STEREO
     };
@@ -99,11 +104,11 @@ struct v2f
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
 #if defined(LIL_FUR)
-    #include "Includes/lil_common_vert_fur.hlsl"
+    #include "lil_common_vert_fur.hlsl"
 #else
-    #include "Includes/lil_common_vert.hlsl"
+    #include "lil_common_vert.hlsl"
 #endif
-#include "Includes/lil_common_frag.hlsl"
+#include "lil_common_frag.hlsl"
 
 #if defined(WRITE_MSAA_DEPTH)
 #define SV_TARGET_NORMAL SV_Target2
@@ -125,15 +130,15 @@ void frag(v2f input
     #endif
 )
 {
+    LIL_SETUP_INSTANCE_ID(input);
+    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     lilFragData fd = lilInitFragData();
 
     BEFORE_UNPACK_V2F
     OVERRIDE_UNPACK_V2F
     LIL_COPY_VFACE(fd.facing);
-    LIL_SETUP_INSTANCE_ID(input);
-    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-    #include "Includes/lil_common_frag_alpha.hlsl"
+    #include "lil_common_frag_alpha.hlsl"
 
     float2 motionVector = lilCalculateMotionVector(input.positionCS, input.previousPositionCS);
     outMotionVector = float4(motionVector * 0.5, 0.0, 0.0);
@@ -154,7 +159,7 @@ void frag(v2f input
 
     #if defined(WRITE_NORMAL_BUFFER)
         fd.N = normalize(input.normalWS);
-        fd.N = facing < (_FlipNormal-1.0) ? -fd.N : fd.N;
+        fd.N = fd.facing < (_FlipNormal-1.0) ? -fd.N : fd.N;
 
         const float seamThreshold = 1.0 / 1024.0;
         fd.N.z = CopySign(max(seamThreshold, abs(fd.N.z)), fd.N.z);
@@ -165,7 +170,7 @@ void frag(v2f input
 }
 
 #if defined(LIL_TESSELLATION)
-    #include "Includes/lil_tessellation.hlsl"
+    #include "lil_tessellation.hlsl"
 #endif
 
 #endif

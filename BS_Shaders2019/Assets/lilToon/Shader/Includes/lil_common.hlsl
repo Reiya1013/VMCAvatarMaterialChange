@@ -12,17 +12,17 @@
 //#pragma warning(default: 4700 4701 4702 4703 4704 4705 4706 4707 4708 4710 4711 4712 4713 4714 4715 4716 4717)
 //#pragma warning(disable: 3571)
 
-// Ignore unknown pragma (for old Unity version)
+// Ignore warning
+#pragma warning(disable: 3033 4001 4008 4009 4010 4116 4117)
 #pragma warning(disable: 3568)
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Common
-
-#if !defined(LIL_CUSTOM_SHADER) && !defined(LIL_LITE) && !defined(LIL_MULTI) && !defined(LIL_IGNORE_SHADERSETTING)
-#include "../../../lilToonSetting/lil_setting.hlsl"
+#if defined(LIL_LITE) || defined(LIL_MULTI) || defined(LIL_IGNORE_SHADERSETTING)
+    #define LIL_OPTIMIZE_APPLY_SHADOW_FA
 #endif
-#include "Includes/lil_common_macro.hlsl"
-#include "Includes/lil_common_input.hlsl"
+#include "lil_common_macro.hlsl"
+#include "lil_common_input.hlsl"
 
 // Omission of if statement
 // lilToonMulti branches using shader keywords
@@ -44,11 +44,12 @@
     #define _UseParallax true
     #define _UseAudioLink true
     #define _AudioLinkAsLocal true
-    #undef LIL_BRANCH
-    #define LIL_BRANCH
+    #define LIL_MULTI_SHOULD_CLIPPING && _UseClippingCanceller
+#else
+    #define LIL_MULTI_SHOULD_CLIPPING
 #endif
 
-#include "Includes/lil_common_functions.hlsl"
+#include "lil_common_functions.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Structure for fragment shader
@@ -76,6 +77,8 @@ struct lilFragData
     float2 uvRim;
     float2 uvPanorama;
     float2 uvScn;
+    float2 ddxMain;
+    float2 ddyMain;
     bool isRightHand;
 
     // Position
@@ -86,12 +89,17 @@ struct lilFragData
     float depth;
 
     // Vector
+    float3 cameraFront;
+    float3 cameraUp;
+    float3 cameraRight;
+    float3x3 cameraMatrix;
     float3x3 TBN;
     float3 T;
     float3 B;
     float3 N;
     float3 V;
     float3 L;
+    float3 origN;
     float3 origL;
     float3 headV;
     float3 reflectionN;
@@ -146,6 +154,8 @@ lilFragData lilInitFragData()
     fd.uvRim = 0.0;
     fd.uvPanorama = 0.0;
     fd.uvScn = 0.0;
+    fd.ddxMain = 0.0;
+    fd.ddyMain = 0.0;
     fd.isRightHand = true;
 
     fd.positionOS = 0.0;
@@ -154,6 +164,10 @@ lilFragData lilInitFragData()
     fd.positionSS = 0.0;
     fd.depth = 0.0;
 
+    fd.cameraFront = lilCameraDirection();
+    fd.cameraUp = lilCameraUp();
+    fd.cameraRight = lilCameraRight();
+    fd.cameraMatrix = float3x3(fd.cameraRight, fd.cameraUp, fd.cameraFront);
     fd.TBN = float3x3(
         1.0,0.0,0.0,
         0.0,1.0,0.0,
@@ -163,6 +177,7 @@ lilFragData lilInitFragData()
     fd.N = 0.0;
     fd.V = 0.0;
     fd.L = float3(0.0, 1.0, 0.0);
+    fd.origN = 0.0;
     fd.origL = float3(0.0, 1.0, 0.0);
     fd.headV = 0.0;
     fd.reflectionN = 0.0;

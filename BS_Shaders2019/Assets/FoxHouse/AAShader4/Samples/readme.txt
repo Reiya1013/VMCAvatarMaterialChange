@@ -1,0 +1,2 @@
+こちらのフォルダはShaderFes2021でのAAShader展示のマテリアルのサンプルとなります。
+マテリアルのみとなりますのでモデルをShaderFes2021サイト(https://sites.google.com/view/shaderfes)のダウンロードより展示用アセットをダウンロードして使用してください。

@@ -2,8 +2,8 @@
 #ifndef LIL_PASS_FORWARD_REFLACTION_BLUR_INCLUDED
 #define LIL_PASS_FORWARD_REFLACTION_BLUR_INCLUDED
 
-#include "Includes/lil_pipeline.hlsl"
-#include "Includes/lil_common_appdata.hlsl"
+#include "lil_common.hlsl"
+#include "lil_common_appdata.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Structure
@@ -25,40 +25,43 @@ struct v2f
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
-#include "Includes/lil_common_vert.hlsl"
-#include "Includes/lil_common_frag.hlsl"
+#include "lil_common_vert.hlsl"
+#include "lil_common_frag.hlsl"
 
 float4 frag(v2f input LIL_VFACE(facing)) : SV_Target
 {
+    LIL_SETUP_INSTANCE_ID(input);
+    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     lilFragData fd = lilInitFragData();
 
     BEFORE_UNPACK_V2F
     OVERRIDE_UNPACK_V2F
     LIL_COPY_VFACE(fd.facing);
-    LIL_SETUP_INSTANCE_ID(input);
-    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-    #if defined(LIL_FEATURE_REFLECTION)
-        BEFORE_ANIMATE_MAIN_UV
-        OVERRIDE_ANIMATE_MAIN_UV
-        float3 refractCol = 0;
-        float sum = 0;
-        fd.smoothness = _Smoothness;
-        if(Exists_SmoothnessTex) fd.smoothness *= LIL_SAMPLE_2D(_SmoothnessTex, sampler_linear_repeat, fd.uvMain).r;
-        float perceptualRoughness = 1.0 - fd.smoothness;
-        float roughness = perceptualRoughness * perceptualRoughness;
-        float blurOffset = perceptualRoughness / fd.positionSS.z * _lilBackgroundTexture_TexelSize.x / _lilBackgroundTexture_TexelSize.y * (0.0005 / LIL_REFRACTION_SAMPNUM);
-        for(int j = -LIL_REFRACTION_SAMPNUM; j <= LIL_REFRACTION_SAMPNUM; j++)
-        {
-            refractCol += LIL_SAMPLE_2D(_lilBackgroundTexture, sampler_lilBackgroundTexture, fd.uvScn + float2(j*blurOffset,0)).rgb * LIL_REFRACTION_GAUSDIST(j);
-            sum += LIL_REFRACTION_GAUSDIST(j);
-        }
-        refractCol /= sum;
-        return float4(refractCol,1.0);
-    #else
-        float3 refractCol = LIL_SAMPLE_2D(_lilBackgroundTexture, sampler_lilBackgroundTexture, fd.uvScn).rgb;
-        return float4(refractCol,1.0);
+    BEFORE_ANIMATE_MAIN_UV
+    OVERRIDE_ANIMATE_MAIN_UV
+    float3 refractCol = 0;
+    float sum = 0;
+    fd.smoothness = _Smoothness;
+    #if defined(LIL_FEATURE_SmoothnessTex)
+        fd.smoothness *= LIL_SAMPLE_2D_ST(_SmoothnessTex, lil_sampler_linear_repeat, fd.uvMain).r;
     #endif
+    float perceptualRoughness = 1.0 - fd.smoothness;
+    float roughness = perceptualRoughness * perceptualRoughness;
+    #if !defined(LIL_LWTEX)
+        float2 bgRes = lilGetWidthAndHeight(_lilBackgroundTexture);
+        float aspect = bgRes.y / bgRes.x;
+    #else
+        float aspect = _lilBackgroundTexture_TexelSize.x * _lilBackgroundTexture_TexelSize.w;
+    #endif
+    float blurOffset = perceptualRoughness / sqrt(fd.positionSS.w) * aspect * (0.03 / LIL_REFRACTION_SAMPNUM) * LIL_MATRIX_P._m11;
+    for(int j = -LIL_REFRACTION_SAMPNUM; j <= LIL_REFRACTION_SAMPNUM; j++)
+    {
+        refractCol += LIL_GET_BG_TEX(fd.uvScn + float2(j*blurOffset,0), 0).rgb * LIL_REFRACTION_GAUSDIST(j);
+        sum += LIL_REFRACTION_GAUSDIST(j);
+    }
+    refractCol /= sum;
+    return float4(refractCol,1.0);
 }
 
 #endif

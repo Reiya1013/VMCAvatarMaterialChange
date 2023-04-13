@@ -4,13 +4,272 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.7] - 2023-01-17
+### Added
+- Support for `VRChat Package Manager`
+- `Blending Mode` to rim light and emission
+- Support for `SLZURP`
+- `Anti-aliasing shading` property
+
+### Fixed
+- Fixed error in fakeshadow
+- Fixed AO in cutout fur
+- Fixed refraction blur strength depending on FOV
+- Fixed value after optimization
+- Fixed an error in Forward+ of URP 14.0.4
+
+## [1.3.6] - 2022-09-10
+### Fixed
+- Fixed shader property stringification bug
+- Fixed UV for reflection shader
+- Fixed missing localization
+
+## [1.3.5] - 2022-09-06
+### Added
+- LightMode override
+- `Tiling & Offset` and `Blend Mode (Add / Subtract)` for alpha mask
+- `LUT` for shadow color
+- Support for `Forward+` (URP)
+- Added option to reflect light emission in lightbake
+- Lock for `Shader Setting`
+- Bug report generator (`GameObject/lilToon/[Debug] Generate bug report`)
+
+### Fixed
+- Fixed error in VRChat World SDK
+- Fixed `Vertex Light Strength` being ignored
+- Fixed custom shaders not being scanned during optimization
+- Fixed light layers in URP
+- Fixed UV calculation when resolution is changed with `ScalableBufferManager.ResizeBuffers()`
+
+## [1.3.4] - 2022-07-30
+### Added
+- Warning when using variants with GrabPass or geometry shader in project for cluster
+- ChilloutVR avatar build optimization
+
+### Fixed
+- Fixed an issue that could cause script errors
+- Fixed color value after optimization
+- Fixed ForwardAdd lighting
+- Fixed an issue where additional lights would not work after build on URP
+
+## [1.3.3] - 2022-07-27
+### Added
+- `UV Mode` for glitter mask
+
+### Fixed
+- Fixed that the main color 2nd and 3rd dissolve may not work properly after optimization
+- Fixed an issue where shaders might not work well after optimization under some conditions
+- Fixed ambient lighting in URP
+- Fixed an issue with mixed line feed codes on Mac
+- Fixed an error in lilToonMulti
+- Fixed shader rewriting at startup not working properly in OpenGL
+
+## [1.3.2] - 2022-07-20
+### Added
+- `UV Mode` for normal map 2nd
+- `Cull Mode` for main color 2nd / 3rd
+- `Receive Shadow` to outline highlight
+- Extended 2 pass transparent shader
+- Function to make variables constant in VRChat avatar builds
+- Dialog if old package is imported
+
+### Changed
+- Changed the sampler of the normal map 2nd to `Repeat`
+- Changed to move the calculation of point light, spot light and area light to the pixel shader in HDRP and also calculate the light direction
+- Adjusted GUI a little
+- Optimized build time
+- Formatted `lilToonSetting.json`
+- Changed to use ForwardAdd pass in 2 pass transparent shader
+- Unified file names for texture baking
+
+### Fixed
+- Fixed a error in gem shader's GUI
+- Fixed to use RGB channel in matcap 2nd mask
+- Fixed toolchips
+- Fixed the material not being fixed in `Fix Lighting`
+- Fixed dissolve sometimes being removed during shader optimization
+
+## [1.3.1] - 2022-06-28
+### Added
+- Option to not optimize during VRChat avatar test build
+
+### Fixed
+- Fixed a problem that drawing cannot be done correctly when the texture import setting is Clamp in the main color 2nd and 3rd.
+- Fixed an issue where the maximum number of textures was exceeded when using `OpenGLES2`,` OpenGLES3`, and `OpenGLCore` for the API on the editor.
+
+## [1.3.0] - 2022-06-25
+### Added
+- `Receive Shadow` to 2nd / 3rd shadows
+- `Flat` to shadow mask type
+- `Z Bias`, `Highlight`, `Remove 0 width vertices` and `Disable in VR` to outline
+- `Shadow Caster Bias` to rendering settings
+- Fur mesh division type
+- `GSAA` and `Blending Mode` to reflection
+- `LOD` to strength / blur / AO mask of shadows
+- `Main Color Power` to backlight, MatCaps, rim light, emissions
+- `Mask` for shape and `Randomize` for particle size to glitter
+- The function to fill the backface with a single color
+- Metal MatCap and preset
+- Circular tangent map
+- Shape textures for glitter
+- Avoid errors when overwriting with an older version
+- Extension of custom shader function
+- URP and HDRP compatible 2 pass fur shader
+
+### Changed
+- Improved alpha mask GUI
+- Changed the `Fix width by distance` of the outline to be adjustable steplessly
+- Adjusted the initial value of `Light Direction Override`
+- Changed to set shader settings automatically
+- Split `Contrast` into `Density` and `Sensitivity`
+- Changed POM to parameter
+- Expanded preset
+- Changed to save `Setup from FBX` presets in shader settings
+- Changed to preserve `Light Direction Override` property in `Fix lighting`
+- Retune fur preset
+- Improved lighting with Spot Light and Point Light in URP
+
+### Fixed
+- Fixed an issue where fog wasn't working well in URP
+- Fixed baking process when using other than PNG / JPG format for texture
+- Added `[MainTexture]` to the `_MainTex` property
+- Fixed an issue where `Light Direction Override` was affecting ShadeSH9 calculations
+- Fixed an issue where lilToonMulti shader variants were being reduced too much at build
+- Fixed outline mask not working well in lilToonLite
+
+### Removed
+- Support for Unity 2017
+
+## [1.2.12] - 2022-03-31
+### Fixed
+- Fixed an issue where custom shaders would give an error in `Unity 2019.4.10f1` and earlier
+- Fixed an issue where the ForwardAdd path did not work well in custom shaders
+
+## [1.2.11] - 2022-03-28
+### Added
+- `Ignore border properties` property for AO Map (blend AO Map after toon processing)
+- `Post Contrast` property for glitter
+- `UV Mode` property for main color 2nd / 3rd
+- An option to determine the normal direction using vertex color for outline
+- New format for custom shaders
+
+### Changed
+- Migrated the contents of developer documentation to online
+- Removed template for legacy custom shaders
+
+### Fixed
+- Fixed shadows not being applied in the ForwardAdd pass of lilToonMulti
+- Fixed the `Normal Map Strength` of rim light and MatCap not working well in gem
+- Fixed the appearance of fur in ForwardAdd
+- Fixed Z-fighting for 2 pass fur
+- Fixed an issue where polygons might disappear at the edge of the field of view in the tessellation shader
+- Fixed behavior in VR (URP / HDRP)
+- Changed the method of`Remove unused properties` to via SerializedObject
+
+## [1.2.10] - 2022-03-06
+### Added
+- Added an editor (`Window/_lil/[Beta] lilToon Multi-Editor`) that allows editing multiple shader variants at the same time
+
+### Changed
+- Disable the `Distance Clipping Canceller` when the near clip value is large
+- Replace `UnpackNormalScale()` to `lilUnpackNormalScale()`
+- Changed to correct the SH light direction
+
+### Fixed
+- Fixed an issue where the normal map scale was not applied in the fur shader
+- Fixed the multi-editing of some properties
+- Fixed an issue where RenderQueue changed in lilToonMulti would revert back when restarting UnityEditor
+- Fixed an issue where `Custom Safety Fallback` settings were not copied in `Remove Unused Properties`
+- Fixed `VRCFallback` tag not being saved in some cases
+
+## [1.2.9] - 2022-02-04
+### Added
+- Added cubemap fallback / override
+- Added preset button to MatCap UV settings
+
+### Changed
+- Moved shader settings to tab
+
+### Fixed
+- Fixed an issue where `Fix lighting` wasn't showing up in the right-click menu
+- Fixed refraction shader getting too bright in ForwardAdd
+
+## [1.2.8] - 2022-01-30
+### Added
+- 3rd shadow
+- `Randomize` property for fur
+- Add the same properties to the fur as a normal shader
+- `Optimize for submission to the event` button and the function to automatically optimize shader settings before build (only available when VRCSDK for world is imported)
+- Reduce the build size of shaders that use shader keywords
+- 2 pass (cutout & transparent) fur shader
+- Default settings for material parameters applied by`[lilToon] Fix Lighting`
+- Added shader settings to reduce build size
+- Added `Object following` to light direction override
+
+### Changed
+- Changed to use G channel of shadow blur map as strength of 2nd shadow blur
+- Changed distance clipping canceller of lilToonMulti to parameter
+- Changed to apply spotlight shape even with transparent fur shader
+- Changed to apply the ForwardAdd pass to the outline
+- Changed the default value of `Vertex Light Strength` to 0
+- Changed the default value of `Lower brightness limit` to 0.05
+- Changed the name of the lighting preset from `Stable` to `Semi-monochrome`
+- Changed to apply shadow even in ForwardAdd pass
+- Adjusted GUI a little
+- Changed to apply shader settings automatically when the shader settings menu is closed
+- Changed the cutout value range from -0.001 to 1.001
+- Organized the right-click menu
+- Changed the outline so that it is not blurred by DOF
+
+### Fixed
+- Fixed the `Upper brightness limit` not being able to be changed in ForwardAdd pass
+- Fixed an issue where the refraction shader blur strength had changed with the Clipping distance
+
+## [1.2.7] - 2021-12-13
+### Added
+- Normal map for adjusting the direction of pushing out the outline
+- Outline / Fur only shader
+- Property to adjust the strength of parallax during VR to rim light
+
+### Changed
+- Show render queue in base settings as well
+- Disable stencil in HDRP
+- Changed so that fur shadows appear stronger in HDRP
+
+### Fixed
+- Fixed refraction shader behavior in Single Pass Instanced
+- Fixed render queue for transparent shaders in HDRP
+- Fixed motion vector in HDRP
+
+## [1.2.6] - 2021-12-01
+### Added
+- Custom UV for some textures
+- `Normal Map Strength` to each function
+- `Blur` properties for MatCap
+- Adjustment properties to alpha mask and AO mask
+- Properties for non-AudioLink compatible worlds
+- Spectrum display for AudioLink
+- A feature to customize shader safety fallback in VRChat
+
+### Changed
+- Changed to use G channel of AO map as range of 2nd shadow color
+- Changed to use each RGB channel of a MatCap mask
+- Changed to remove custom UVs that had little impact on performance from shader settings and always enable them
+- Changed sampler to trilinear
+
+### Fixed
+- Fixed an issue where the ForwardAdd path did not reflect the transparency of the refraction shader
+- Fixed refraction / gem shader rendering
+- Fixed an issue where the tessellation shader wasn't handling fogs well
+- Fixed an issue where MatCap uv calculation of lite version wasn't working well in HDRP
+
 ## [1.2.5] - 2021-11-21
 ### Fixed
 - Fixed an issue where the fur shader wasn't handling fogs well
 
 ## [1.2.4] - 2021-11-20
 ### Added
-- `Border` and` Blur` properties for toon specular
+- `Border` and `Blur` properties for toon specular
 - UV Mode in Emission
 - `uint vertexID : SV_VertexID` to the input of the appdata structure
 - Support for Light Layers (URP)

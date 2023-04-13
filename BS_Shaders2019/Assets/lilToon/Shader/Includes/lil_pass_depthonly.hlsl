@@ -1,8 +1,8 @@
 #ifndef LIL_PASS_DEPTHONLY_INCLUDED
 #define LIL_PASS_DEPTHONLY_INCLUDED
 
-#include "Includes/lil_pipeline.hlsl"
-#include "Includes/lil_common_appdata.hlsl"
+#include "lil_common.hlsl"
+#include "lil_common_appdata.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Structure
@@ -14,7 +14,7 @@
 #if defined(LIL_V2F_FORCE_TEXCOORD0) || (LIL_RENDER > 0)
     #define LIL_V2F_TEXCOORD0
 #endif
-#if defined(LIL_V2F_FORCE_POSITION_OS) || ((LIL_RENDER > 0) && !defined(LIL_LITE) && !defined(LIL_FUR) && defined(LIL_FEATURE_DISSOLVE))
+#if defined(LIL_V2F_FORCE_POSITION_OS) || ((LIL_RENDER > 0) && !defined(LIL_LITE) && defined(LIL_FEATURE_DISSOLVE))
     #define LIL_V2F_POSITION_OS
 #endif
 #if defined(LIL_V2F_FORCE_NORMAL) || defined(WRITE_NORMAL_BUFFER)
@@ -51,14 +51,16 @@ struct v2f
         #define LIL_V2G_NORMAL_WS
     #endif
     #define LIL_V2G_FURVECTOR
+    #define LIL_V2G_VERTEXID
 
     struct v2g
     {
         float3 positionWS   : TEXCOORD0;
         float2 uv0          : TEXCOORD1;
         float3 furVector    : TEXCOORD2;
+        uint vertexID       : TEXCOORD3;
         #if defined(LIL_V2G_NORMAL_WS)
-            float3 normalWS     : TEXCOORD3;
+            float3 normalWS     : TEXCOORD4;
         #endif
         LIL_VERTEX_INPUT_INSTANCE_ID
         LIL_VERTEX_OUTPUT_STEREO
@@ -74,11 +76,11 @@ struct v2f
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
 #if defined(LIL_FUR) && defined(LIL_HDRP)
-    #include "Includes/lil_common_vert_fur.hlsl"
+    #include "lil_common_vert_fur.hlsl"
 #else
-    #include "Includes/lil_common_vert.hlsl"
+    #include "lil_common_vert.hlsl"
 #endif
-#include "Includes/lil_common_frag.hlsl"
+#include "lil_common_frag.hlsl"
 
 void frag(v2f input
     LIL_VFACE(facing)
@@ -98,15 +100,15 @@ void frag(v2f input
     #endif
 )
 {
+    LIL_SETUP_INSTANCE_ID(input);
+    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     lilFragData fd = lilInitFragData();
 
     BEFORE_UNPACK_V2F
     OVERRIDE_UNPACK_V2F
     LIL_COPY_VFACE(fd.facing);
-    LIL_SETUP_INSTANCE_ID(input);
-    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-    #include "Includes/lil_common_frag_alpha.hlsl"
+    #include "lil_common_frag_alpha.hlsl"
 
     #if !defined(LIL_HDRP)
         outColor = 0;
@@ -128,7 +130,7 @@ void frag(v2f input
 
         #if defined(WRITE_NORMAL_BUFFER)
             float3 normalDirection = normalize(input.normalWS);
-            normalDirection = facing < (_FlipNormal-1.0) ? -normalDirection : normalDirection;
+            normalDirection = fd.facing < (_FlipNormal-1.0) ? -normalDirection : normalDirection;
 
             const float seamThreshold = 1.0 / 1024.0;
             normalDirection.z = CopySign(max(seamThreshold, abs(normalDirection.z)), normalDirection.z);
@@ -140,7 +142,7 @@ void frag(v2f input
 }
 
 #if defined(LIL_TESSELLATION)
-    #include "Includes/lil_tessellation.hlsl"
+    #include "lil_tessellation.hlsl"
 #endif
 
 #endif

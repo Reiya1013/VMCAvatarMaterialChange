@@ -1,0 +1,155 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Sample
+  m_Shader: {fileID: 4800000, guid: 51006932370feaf4b87292f6a89413b0, type: 3}
+  m_ShaderKeywords: Unlit
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DisolveTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PolygonMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RotateMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SubTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VoxelSizeMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _Ambient: 0.1
+    - _BumpScale: 1
+    - _CullMode: 2
+    - _Cutoff: 0.5
+    - _Cutout: 0
+    - _Destruction: 0
+    - _DetailNormalMapScale: 1
+    - _Diffuse: 1
+    - _DisolveEmission: 1
+    - _DisolveEnable: 1
+    - _DisolveThreshold: 0.243
+    - _DisplayUpPosition: 2.9
+    - _DstBlend: 0
+    - _EmissionPower: -5.5
+    - _EnableGeometry: 0
+    - _GlossMapScale: 1
+    - _Glossiness: 0.5
+    - _GlossyReflections: 1
+    - _MainPoly: 0
+    - _Metallic: 0
+    - _Mode: 0
+    - _NormalEx: 0.92
+    - _OcclusionStrength: 1
+    - _Parallax: 0.02
+    - _PolygonEx: 0
+    - _PositionAdd: 1
+    - _PositionFactor: 1
+    - _RimEffect: 4.64
+    - _RotatePower: 0
+    - _RotationFactor: 0
+    - _ScaleFactor: 1
+    - _Shininess: 1
+    - _Size: 0.001
+    - _Slider: 0.3
+    - _SmoothnessTextureChannel: 0
+    - _Spec: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _SubTexP: 0
+    - _TeleportEnable: 1
+    - _UVSec: 0
+    - _Unlit: 1
+    - _ZWrite: 1
+    - _dif: 0.1
+    - _difpow: 1
+    - _dir: 1
+    - _metallic: 0
+    - _noisepower: 1
+    - _particle: 0.001
+    - _sign: 0
+    - _sizepower: 0
+    - _sv1: 0.01
+    - _sv2: 0.5
+    - _sv3: 5
+    - _tess: 100
+    - _texmode: 1
+    - _width: 1
+    m_Colors:
+    - _AmbColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CeilingHight: {r: 1e+10, g: 1e+10, b: 1e+10, a: 0}
+    - _Color: {r: 0, g: 0.28342748, b: 1, a: 1}
+    - _DifColor: {r: 1, g: 1, b: 1, a: 1}
+    - _DisolveEmissionColor: {r: 0, g: 0.29786587, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Emissionuvspeed: {r: 1, g: 0, b: 0, a: 0}
+    - _FloorHight: {r: -1e+10, g: -1e+10, b: -1e+10, a: 0}
+    - _Grabity: {r: 0, g: -1, b: 0, a: 0}
+    - _RimColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Rotateuv: {r: 1, g: 0, b: 0, a: 0}
+    - _RotationAxis: {r: 1, g: 0.5, b: 0, a: 0}
+    - _SpecColor: {r: 1, g: 1, b: 1, a: 1}
+    - _boxscale: {r: 1, g: 1, b: 1, a: 0}
+    - _color: {r: 0, g: 1, b: 1, a: 1}
+    - _fvec: {r: 0, g: 10, b: 0, a: 0}
+    - _poluvspeed: {r: 1, g: 0, b: 0, a: 0}
+    - _sizeuv: {r: 1, g: 1, b: 0, a: 1}
+    - _svec: {r: 3, g: 10, b: 3, a: 0}

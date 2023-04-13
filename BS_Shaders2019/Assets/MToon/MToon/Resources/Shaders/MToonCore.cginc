@@ -32,7 +32,8 @@ half _OutlineWidth;
 half _OutlineScaledMaxDistance;
 fixed4 _OutlineColor;
 half _OutlineLightingMix;
-sampler2D _UvAnimMaskTexture;
+// NOTE: "tex2d() * _Time.y" returns mediump value if sampler is half precision in Android VR platform
+sampler2D_float _UvAnimMaskTexture;
 float _UvAnimScrollX;
 float _UvAnimScrollY;
 float _UvAnimRotation;
@@ -53,13 +54,14 @@ struct v2f
     UNITY_FOG_COORDS(7)
     UNITY_SHADOW_COORDS(8)
     //UNITY_VERTEX_INPUT_INSTANCE_ID // necessary only if any instanced properties are going to be accessed in the fragment Shader.
+    UNITY_VERTEX_OUTPUT_STEREO 
 };
 
 inline v2f InitializeV2F(appdata_full v, float4 projectedVertex, float isOutline)
 {
     v2f o;
     UNITY_INITIALIZE_OUTPUT(v2f, o);
-    UNITY_SETUP_INSTANCE_ID(v);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     //UNITY_TRANSFER_INSTANCE_ID(v, o);
     
     o.pos = projectedVertex;
@@ -114,6 +116,7 @@ float4 frag_forward(v2f i) : SV_TARGET
 #endif
 
     //UNITY_TRANSFER_INSTANCE_ID(v, o);
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
     
     // const
     const float PI_2 = 6.28318530718;

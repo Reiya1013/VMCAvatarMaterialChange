@@ -2,8 +2,8 @@
 #define LIL_PASS_META_INCLUDED
 
 #define LIL_WITHOUT_ANIMATION
-#include "Includes/lil_pipeline.hlsl"
-#include "Includes/lil_common_appdata.hlsl"
+#include "lil_common.hlsl"
+#include "lil_common_appdata.hlsl"
 
 #if defined(LIL_HDRP)
     CBUFFER_START(UnityMetaPass)
@@ -45,14 +45,16 @@ struct v2f
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Shader
-#include "Includes/lil_common_vert.hlsl"
-#include "Includes/lil_common_frag.hlsl"
+#include "lil_common_vert.hlsl"
+#include "lil_common_frag.hlsl"
 
 float4 frag(v2f input) : SV_Target
 {
     float facing = 1.0;
     //------------------------------------------------------------------------------------------------------------------------------
     // Initialize
+    LIL_SETUP_INSTANCE_ID(input);
+    LIL_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     lilFragData fd = lilInitFragData();
 
     BEFORE_UNPACK_V2F
@@ -69,20 +71,18 @@ float4 frag(v2f input) : SV_Target
         fd.triMask = LIL_SAMPLE_2D(_TriMask, sampler_MainTex, fd.uvMain);
     #endif
 
-    #ifndef LIL_FUR
-        BEFORE_EMISSION_1ST
-        #if defined(LIL_FEATURE_EMISSION_1ST) || defined(LIL_LITE)
-            OVERRIDE_EMISSION_1ST
-        #endif
-        #if !defined(LIL_LITE)
-            BEFORE_EMISSION_1ST
-            #if defined(LIL_FEATURE_EMISSION_2ND)
-                OVERRIDE_EMISSION_2ND
-            #endif
-        #endif
-        BEFORE_BLEND_EMISSION
-        OVERRIDE_BLEND_EMISSION
+    BEFORE_EMISSION_1ST
+    #if defined(LIL_FEATURE_EMISSION_1ST) || defined(LIL_LITE)
+        OVERRIDE_EMISSION_1ST
     #endif
+    #if !defined(LIL_LITE)
+        BEFORE_EMISSION_1ST
+        #if defined(LIL_FEATURE_EMISSION_2ND)
+            OVERRIDE_EMISSION_2ND
+        #endif
+    #endif
+    BEFORE_BLEND_EMISSION
+    OVERRIDE_BLEND_EMISSION
 
     #if defined(LIL_HDRP)
         if(!unity_MetaFragmentControl.y) fd.col.rgb = clamp(pow(abs(fd.albedo), saturate(unity_OneOverOutputBoost)), 0, unity_MaxOutputValue);

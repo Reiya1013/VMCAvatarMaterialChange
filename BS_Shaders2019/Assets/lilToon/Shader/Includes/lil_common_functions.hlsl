@@ -1,54 +1,7 @@
 #ifndef LIL_FUNCTIONS_INCLUDED
 #define LIL_FUNCTIONS_INCLUDED
 
-//------------------------------------------------------------------------------------------------------------------------------
-// Optimized inverse trigonometric function
-// https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
-float lilAcos(float x)
-{
-    #if 0
-        float res = sqrt(1.0 - abs(x)) * LIL_HALF_PI;
-        return (x >= 0.0) ? res : LIL_PI - res;
-    #else
-        float ox = abs(x);
-        float res = -0.156583 * ox + LIL_HALF_PI;
-        res *= sqrt(1.0 - ox);
-        return (x >= 0.0) ? res : LIL_PI - res;
-    #endif
-}
-
-float lilAsin(float x)
-{
-    return LIL_HALF_PI - lilAcos(x);
-}
-
-float lilAtanPos(float x)
-{
-    #if 1
-        float t0 = (x < 1.0f) ? x : 1.0f / x;
-        float t1 = (-0.269408 * t0 + 1.05863) * t0;
-        return (x < 1.0f) ? t1 : LIL_HALF_PI - t1;
-    #else
-        float t0 = (x < 1.0) ? x : 1.0 / x;
-        float t1 = t0 * t0;
-        float poly = 0.0872929;
-        poly = -0.301895 + poly * t1;
-        poly = 1.0f + poly * t1;
-        poly = poly * t0;
-        return (x < 1.0) ? poly : LIL_HALF_PI - poly;
-    #endif
-}
-
-float lilAtan(float x)
-{
-    float t0 = lilAtanPos(abs(x));
-    return (x < 0.0) ? -t0 : t0;
-}
-
-float lilAtan(float x, float y)
-{
-    return lilAtan(x/y) + LIL_PI * (y<0) * (x<0?-1:1);
-}
+#include "lil_common_functions_thirdparty.hlsl"
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Math
@@ -65,23 +18,23 @@ float lilAtan(float x, float y)
         return saturate(f) == f;
     }
 
-    float lilTooning(float value, float border)
+    float lilTooningNoSaturateScale(float aascale, float value, float border)
     {
         return step(border, value);
     }
 
-    float lilTooning(float value, float border, float blur)
+    float lilTooningNoSaturateScale(float aascale, float value, float border, float blur)
     {
         float borderMin = saturate(border - blur * 0.5);
         float borderMax = saturate(border + blur * 0.5);
-        return saturate((value - borderMin) / saturate(borderMax - borderMin));
+        return (value - borderMin) / saturate(borderMax - borderMin);
     }
 
-    float lilTooning(float value, float border, float blur, float borderRange)
+    float lilTooningNoSaturateScale(float aascale, float value, float border, float blur, float borderRange)
     {
         float borderMin = saturate(border - blur * 0.5 - borderRange);
         float borderMax = saturate(border + blur * 0.5);
-        return saturate((value - borderMin) / saturate(borderMax - borderMin));
+        return (value - borderMin) / saturate(borderMax - borderMin);
     }
 #else
     float lilIsIn0to1(float f)
@@ -96,25 +49,70 @@ float lilAtan(float x, float y)
         return saturate(value / clamp(fwidth(value), 0.0001, nv));
     }
 
-    float lilTooning(float value, float border)
+    float lilTooningNoSaturateScale(float aascale, float value, float border)
     {
-        return saturate((value - border) / clamp(fwidth(value), 0.0001, 1.0));
+        return (value - border) / clamp(fwidth(value) * aascale, 0.0001, 1.0);
     }
 
-    float lilTooning(float value, float border, float blur)
+    float lilTooningNoSaturateScale(float aascale, float value, float border, float blur)
     {
         float borderMin = saturate(border - blur * 0.5);
         float borderMax = saturate(border + blur * 0.5);
-        return saturate((value - borderMin) / saturate(borderMax - borderMin + fwidth(value)));
+        return (value - borderMin) / saturate(borderMax - borderMin + fwidth(value) * aascale);
     }
 
-    float lilTooning(float value, float border, float blur, float borderRange)
+    float lilTooningNoSaturateScale(float aascale, float value, float border, float blur, float borderRange)
     {
         float borderMin = saturate(border - blur * 0.5 - borderRange);
         float borderMax = saturate(border + blur * 0.5);
-        return saturate((value - borderMin) / saturate(borderMax - borderMin + fwidth(value)));
+        return (value - borderMin) / saturate(borderMax - borderMin + fwidth(value) * aascale);
     }
 #endif
+
+float lilTooningScale(float aascale, float value, float border)
+{
+    return saturate(lilTooningNoSaturateScale(aascale, value, border));
+}
+
+float lilTooningScale(float aascale, float value, float border, float blur)
+{
+    return saturate(lilTooningNoSaturateScale(aascale, value, border, blur));
+}
+
+float lilTooningScale(float aascale, float value, float border, float blur, float borderRange)
+{
+    return saturate(lilTooningNoSaturateScale(aascale, value, border, blur, borderRange));
+}
+
+float lilTooningNoSaturate(float value, float border)
+{
+    return lilTooningNoSaturateScale(1.0, value, border);
+}
+
+float lilTooningNoSaturate(float value, float border, float blur)
+{
+    return lilTooningNoSaturateScale(1.0, value, border, blur);
+}
+
+float lilTooningNoSaturate(float value, float border, float blur, float borderRange)
+{
+    return lilTooningNoSaturateScale(1.0, value, border, blur, borderRange);
+}
+
+float lilTooning(float value, float border)
+{
+    return saturate(lilTooningNoSaturate(value, border));
+}
+
+float lilTooning(float value, float border, float blur)
+{
+    return saturate(lilTooningNoSaturate(value, border, blur));
+}
+
+float lilTooning(float value, float border, float blur, float borderRange)
+{
+    return saturate(lilTooningNoSaturate(value, border, blur, borderRange));
+}
 
 // Optimized matrix calculation
 float4 lilOptMul(float4x4 mat, float3 pos)
@@ -163,6 +161,23 @@ float lilNsqDistance(float2 a, float2 b)
 float3 lilOrthoNormalize(float3 tangent, float3 normal)
 {
     return normalize(tangent - normal * dot(normal, tangent));
+}
+
+float3 lilUnpackNormalScale(float4 normalTex, float scale)
+{
+    float3 normal;
+    #if defined(UNITY_NO_DXT5nm)
+        normal = normalTex.rgb * 2.0 - 1.0;
+        normal.xy *= scale;
+    #else
+        #if !defined(UNITY_ASTC_NORMALMAP_ENCODING)
+            normalTex.a *= normalTex.r;
+        #endif
+        normal.xy = normalTex.ag * 2.0 - 1.0;
+        normal.xy *= scale;
+        normal.z = sqrt(1.0 - saturate(dot(normal.xy, normal.xy)));
+    #endif
+    return normal;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -236,54 +251,59 @@ lilVertexNormalInputs lilGetVertexNormalInputs(float3 normalOS, float4 tangentOS
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Outline
-float lilGetOutlineWidth(float3 positionOS, float2 uv, float4 color, float outlineWidth, TEXTURE2D(outlineWidthMask), lilBool outlineVertexR2Width, lilBool outlineFixWidth LIL_SAMP_IN_FUNC(samp))
+float lilGetOutlineWidth(float2 uv, float4 color, float outlineWidth, TEXTURE2D(outlineWidthMask), uint outlineVertexR2Width LIL_SAMP_IN_FUNC(samp))
 {
     outlineWidth *= 0.01;
-    if(Exists_OutlineWidthMask) outlineWidth *= LIL_SAMPLE_2D_LOD(outlineWidthMask, samp, uv, 0).r;
-    if(outlineVertexR2Width) outlineWidth *= color.r;
-    if(outlineFixWidth) outlineWidth *= saturate(length(lilHeadDirection(lilToAbsolutePositionWS(lilOptMul(LIL_MATRIX_M, positionOS).xyz))));
+    #if defined(LIL_FEATURE_OutlineWidthMask)
+        outlineWidth *= LIL_SAMPLE_2D_LOD(outlineWidthMask, samp, uv, 0).r;
+    #endif
+    if(outlineVertexR2Width == 1) outlineWidth *= color.r;
+    if(outlineVertexR2Width == 2) outlineWidth *= color.a;
     return outlineWidth;
 }
 
-//------------------------------------------------------------------------------------------------------------------------------
-// Encryption (https://github.com/rygo6/GTAvaCrypt)
-#if !defined(LIL_LITE) && !defined(LIL_BAKER) &&  defined(LIL_FEATURE_ENCRYPTION)
-float4 vertexDecode(float4 positionOS, float3 normalOS, float2 uv6, float2 uv7)
+float lilGetOutlineWidth(float3 positionOS, float3 positionWS, float2 uv, float4 color, float outlineWidth, TEXTURE2D(outlineWidthMask), uint outlineVertexR2Width, float outlineFixWidth LIL_SAMP_IN_FUNC(samp))
 {
-    if(_IgnoreEncryption) return positionOS;
-
-    float4 keys = floor(_Keys + 0.5);
-    keys = keys.x == 0 ? float4(0,0,0,0) : floor(keys / 3) * 3 + 1;
-
-    keys.x *= 1;
-    keys.y *= 2;
-    keys.z *= 3;
-    keys.w *= 4;
-
-    positionOS.xyz -= normalOS * uv6.x * (sin((keys.z - keys.y) * 2) * cos(keys.w - keys.x));
-    positionOS.xyz -= normalOS * uv6.y * (sin((keys.w - keys.x) * 3) * cos(keys.z - keys.y));
-    positionOS.xyz -= normalOS * uv7.x * (sin((keys.x - keys.w) * 4) * cos(keys.y - keys.z));
-    positionOS.xyz -= normalOS * uv7.y * (sin((keys.y - keys.z) * 5) * cos(keys.x - keys.w));
-
-    return positionOS;
+    outlineWidth = lilGetOutlineWidth(uv, color, outlineWidth, outlineWidthMask, outlineVertexR2Width LIL_SAMP_IN(samp));
+    outlineWidth *= lerp(1.0, saturate(length(lilHeadDirection(positionWS))), outlineFixWidth);
+    return outlineWidth;
 }
-#endif
+
+float3 lilGetOutlineVector(float3x3 tbnOS, float2 uv, float outlineVectorScale, TEXTURE2D(outlineVectorTex) LIL_SAMP_IN_FUNC(samp))
+{
+    float3 outlineVector = lilUnpackNormalScale(LIL_SAMPLE_2D_LOD(outlineVectorTex, samp, uv, 0), outlineVectorScale);
+    outlineVector = mul(outlineVector, tbnOS);
+    return outlineVector;
+}
+
+void lilCalcOutlinePosition(inout float3 positionOS, float2 uvs[4], float4 color, float3 normalOS, float3x3 tbnOS, float outlineWidth, TEXTURE2D(outlineWidthMask), uint outlineVertexR2Width, float outlineFixWidth, float outlineZBias, float outlineVectorScale, uint outlineVectorUVMode, TEXTURE2D(outlineVectorTex) LIL_SAMP_IN_FUNC(samp))
+{
+    float3 positionWS = lilToAbsolutePositionWS(lilOptMul(LIL_MATRIX_M, positionOS).xyz);
+    float width = lilGetOutlineWidth(positionOS, positionWS, uvs[0], color, outlineWidth, outlineWidthMask, outlineVertexR2Width, outlineFixWidth LIL_SAMP_IN(samp));
+    float3 outlineN = normalOS;
+    #if defined(LIL_FEATURE_OutlineVectorTex)
+        outlineN = lilGetOutlineVector(tbnOS, uvs[outlineVectorUVMode], outlineVectorScale, outlineVectorTex LIL_SAMP_IN(samp));
+    #endif
+    if(outlineVertexR2Width == 2) outlineN = mul(color.rgb * 2.0 - 1.0, tbnOS);
+    positionOS += outlineN * width;
+    float3 V = lilIsPerspective() ? lilViewDirectionOS(positionOS) : mul((float3x3)LIL_MATRIX_I_M, LIL_MATRIX_V._m20_m21_m22);
+    positionOS -= normalize(V) * outlineZBias;
+}
+
+void lilCalcOutlinePositionLite(inout float3 positionOS, float2 uv, float4 color, float3 normalOS, float3x3 tbnOS, float outlineWidth, TEXTURE2D(outlineWidthMask), uint outlineVertexR2Width, float outlineFixWidth, float outlineZBias LIL_SAMP_IN_FUNC(samp))
+{
+    float3 positionWS = lilToAbsolutePositionWS(lilOptMul(LIL_MATRIX_M, positionOS).xyz);
+    float width = lilGetOutlineWidth(positionOS, positionWS, uv, color, outlineWidth, outlineWidthMask, outlineVertexR2Width, outlineFixWidth LIL_SAMP_IN(samp));
+    float3 outlineN = normalOS;
+    if(outlineVertexR2Width == 2) outlineN = mul(color.rgb * 2.0 - 1.0, tbnOS);
+    positionOS += outlineN * width;
+    float3 V = lilIsPerspective() ? lilViewDirectionOS(positionOS) : mul((float3x3)LIL_MATRIX_I_M, LIL_MATRIX_V._m20_m21_m22);
+    positionOS -= normalize(V) * outlineZBias;
+}
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Color
-
-// http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html?m=1
-float3 lilLinearToSRGB(float3 col)
-{
-    return saturate(1.055 * pow(abs(col), 0.416666667) - 0.055);
-}
-
-float3 lilSRGBToLinear(float3 col)
-{
-    return col * (col * (col * 0.305306011 + 0.682171111) + 0.012522878);
-}
-
-float3 lilBlendColor(float3 dstCol, float3 srcCol, float srcA, uint blendMode)
+float3 lilBlendColor(float3 dstCol, float3 srcCol, float3 srcA, uint blendMode)
 {
     float3 ad = dstCol + srcCol;
     float3 mu = dstCol * srcCol;
@@ -295,13 +315,9 @@ float3 lilBlendColor(float3 dstCol, float3 srcCol, float srcA, uint blendMode)
     return lerp(dstCol, outCol, srcA);
 }
 
-float lilLuminance(float3 rgb)
+float3 lilBlendColor(float3 dstCol, float3 srcCol, float srcA, uint blendMode)
 {
-    #ifdef LIL_COLORSPACE_GAMMA
-        return dot(rgb, float3(0.22, 0.707, 0.071));
-    #else
-        return dot(rgb, float3(0.0396819152, 0.458021790, 0.00609653955));
-    #endif
+    return lilBlendColor(dstCol, srcCol, float3(srcA,srcA,srcA), blendMode);
 }
 
 float lilGray(float3 rgb)
@@ -331,15 +347,50 @@ float3 lilGradationMap(float3 col, TEXTURE2D(gradationMap), float strength)
     #if !defined(LIL_COLORSPACE_GAMMA)
         col = lilLinearToSRGB(col);
     #endif
-    float R = LIL_SAMPLE_1D(gradationMap, sampler_linear_clamp, col.r).r;
-    float G = LIL_SAMPLE_1D(gradationMap, sampler_linear_clamp, col.g).g;
-    float B = LIL_SAMPLE_1D(gradationMap, sampler_linear_clamp, col.b).b;
+    float R = LIL_SAMPLE_1D(gradationMap, lil_sampler_linear_clamp, col.r).r;
+    float G = LIL_SAMPLE_1D(gradationMap, lil_sampler_linear_clamp, col.g).g;
+    float B = LIL_SAMPLE_1D(gradationMap, lil_sampler_linear_clamp, col.b).b;
     float3 outrgb = float3(R,G,B);
     #if !defined(LIL_COLORSPACE_GAMMA)
         col = lilSRGBToLinear(col);
         outrgb = lilSRGBToLinear(outrgb);
     #endif
     return lerp(col, outrgb, strength);
+}
+
+float3 lilDecodeHDR(float4 data, float4 hdr)
+{
+    float alpha = hdr.w * (data.a - 1.0) + 1.0;
+
+    #if defined(LIL_COLORSPACE_GAMMA)
+        return (hdr.x * alpha) * data.rgb;
+    #elif defined(UNITY_USE_NATIVE_HDR)
+        return hdr.x * data.rgb;
+    #else
+        return (hdr.x * pow(abs(alpha), hdr.y)) * data.rgb;
+    #endif
+}
+
+void lilCalcLUTUV(float3 col, float resX, float resY, inout float4 uv, inout float factor)
+{
+    #if !defined(UNITY_COLORSPACE_GAMMA)
+        col = lilLinearToSRGB(col);
+    #endif
+    float3 res = float3(resX, resY, resX * resY);
+    float3 resInv = float3(1.0, -1.0, 1.0) / res;
+
+    float3 col2 = (col - col * resInv.z) + 0.5 * resInv.z;
+    float4 b2 = saturate(col2.b + resInv.z * float2(-0.5, 0.5)).xxyy * res.zyzy;
+    float4 b3 = floor(b2);
+    uv = float4(0,1,0,1) + (col2.rgrg + b3) * resInv.xyxy;
+    factor = abs(b2.x - b3.x);
+}
+
+float4 lilSampleLUT(float4 uv, float factor, TEXTURE2D(lutTex))
+{
+    float4 a = LIL_SAMPLE_2D_LOD(lutTex, lil_sampler_linear_clamp, uv.xy, 0);
+    float4 b = LIL_SAMPLE_2D_LOD(lutTex, lil_sampler_linear_clamp, uv.zw, 0);
+    return lerp(a, b, factor);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -435,6 +486,31 @@ float2 lilCalcDecalUV(
     return outUV;
 }
 
+float2 lilCalcDecalUV(
+    float2 uv,
+    float4 uv_ST,
+    float4 uv_SR,
+    bool isLeftOnly,
+    bool isRightOnly,
+    bool shouldCopy,
+    bool shouldFlipMirror,
+    bool shouldFlipCopy,
+    bool isRightHand)
+{
+    float4 uv_ST2 = uv_ST + float4(0,0,uv_SR.xy) * LIL_TIME;
+    float angle2 = uv_SR.z+ uv_SR.w * LIL_TIME;
+    return lilCalcDecalUV(
+        uv,
+        uv_ST2,
+        angle2,
+        isLeftOnly,
+        isRightOnly,
+        shouldCopy,
+        shouldFlipMirror,
+        shouldFlipCopy,
+        isRightHand);
+}
+
 float2 lilCalcAtlasAnimation(float2 uv, float4 decalAnimation, float4 decalSubParam)
 {
     float2 outuv = lerp(float2(uv.x, 1.0-uv.y), 0.5, decalSubParam.z);
@@ -442,33 +518,26 @@ float2 lilCalcAtlasAnimation(float2 uv, float4 decalAnimation, float4 decalSubPa
     uint offsetX = animTime % (uint)decalAnimation.x;
     uint offsetY = animTime / (uint)decalAnimation.x;
     outuv = (outuv + float2(offsetX,offsetY)) * decalSubParam.xy / decalAnimation.xy;
-    outuv.y = -outuv.y;
+    outuv.y = 1.0-outuv.y;
     return outuv;
 }
 
 // MatCap
 float2 lilCalcMatCapUV(float2 uv1, float3 normalWS, float3 viewDirection, float3 headDirection, float4 matcap_ST, float2 matcapBlendUV1, bool zRotCancel, bool matcapPerspective, float matcapVRParallaxStrength)
 {
-    #if LIL_MATCAP_MODE == 0
-        // Simple
-        return mul((float3x3)LIL_MATRIX_V, normalWS).xy * 0.5 + 0.5;
-    #elif LIL_MATCAP_MODE == 1
-        #if defined(USING_STEREO_MATRICES)
-            float3 normalVD = lerp(headDirection, viewDirection, matcapVRParallaxStrength);
-        #else
-            float3 normalVD = viewDirection;
-        #endif
-        normalVD = matcapPerspective ? normalVD : LIL_MATRIX_V._m20_m21_m22;
-        float3 bitangentVD = zRotCancel ? float3(0,1,0) : LIL_MATRIX_V._m10_m11_m12;
-        bitangentVD = lilOrthoNormalize(bitangentVD, normalVD);
-        float3 tangentVD = cross(normalVD, bitangentVD);
-        float3x3 tbnVD = float3x3(tangentVD, bitangentVD, normalVD);
-        float2 uvMat = mul(tbnVD, normalWS).xy;
-        uvMat = lerp(uvMat, uv1*2-1, matcapBlendUV1);
-        uvMat = uvMat * matcap_ST.xy + matcap_ST.zw;
-        uvMat = uvMat * 0.5 + 0.5;
-        return uvMat;
-    #endif
+    // Simple
+    //return mul((float3x3)LIL_MATRIX_V, normalWS).xy * 0.5 + 0.5;
+    float3 normalVD = lilBlendVRParallax(headDirection, viewDirection, matcapVRParallaxStrength);
+    normalVD = lilIsPerspective() && matcapPerspective ? normalVD : lilCameraDirection();
+    float3 bitangentVD = zRotCancel ? float3(0,1,0) : LIL_MATRIX_V._m10_m11_m12;
+    bitangentVD = lilOrthoNormalize(bitangentVD, normalVD);
+    float3 tangentVD = cross(normalVD, bitangentVD);
+    float3x3 tbnVD = float3x3(tangentVD, bitangentVD, normalVD);
+    float2 uvMat = mul(tbnVD, normalWS).xy;
+    uvMat = lerp(uvMat, uv1*2-1, matcapBlendUV1);
+    uvMat = uvMat * matcap_ST.xy + matcap_ST.zw;
+    uvMat = uvMat * 0.5 + 0.5;
+    return uvMat;
 }
 
 // Panorama
@@ -480,10 +549,9 @@ float2 lilGetPanoramaUV(float3 viewDirection)
 // Parallax
 void lilParallax(inout float2 uvMain, inout float2 uv, lilBool useParallax, float2 parallaxOffset, TEXTURE2D(parallaxMap), float parallaxScale, float parallaxOffsetParam)
 {
-    LIL_BRANCH
     if(useParallax)
     {
-        float height = (LIL_SAMPLE_2D_LOD(parallaxMap,sampler_linear_repeat,uvMain,0).r - parallaxOffsetParam) * parallaxScale;
+        float height = (LIL_SAMPLE_2D_LOD(parallaxMap,lil_sampler_linear_repeat,uvMain,0).r - parallaxOffsetParam) * parallaxScale;
         uvMain += height * parallaxOffset;
         uv += height * parallaxOffset;
     }
@@ -492,7 +560,6 @@ void lilParallax(inout float2 uvMain, inout float2 uv, lilBool useParallax, floa
 void lilPOM(inout float2 uvMain, inout float2 uv, lilBool useParallax, float4 uv_st, float3 parallaxViewDirection, TEXTURE2D(parallaxMap), float parallaxScale, float parallaxOffsetParam)
 {
     #define LIL_POM_DETAIL 200
-    LIL_BRANCH
     if(useParallax)
     {
         float height;
@@ -507,7 +574,7 @@ void lilPOM(inout float2 uvMain, inout float2 uv, lilBool useParallax, float4 uv
         {
             height2 = height;
             rayPos += rayStep;
-            height = LIL_SAMPLE_2D_LOD(parallaxMap,sampler_linear_repeat,rayPos.xy,0).r;
+            height = LIL_SAMPLE_2D_LOD(parallaxMap,lil_sampler_linear_repeat,rayPos.xy,0).r;
             if(height >= rayPos.z) break;
         }
 
@@ -540,13 +607,14 @@ void lilCalcDissolve(
     float4 dissolveParams,
     float4 dissolvePos,
     TEXTURE2D(dissolveMask),
-    float4 dissolveMask_ST
+    float4 dissolveMask_ST,
+    bool dissolveMaskEnabled
     LIL_SAMP_IN_FUNC(samp))
 {
     if(dissolveParams.r)
     {
         float dissolveMaskVal = 1.0;
-        if(dissolveParams.r == 1.0)
+        if(dissolveParams.r == 1.0 && dissolveMaskEnabled)
         {
             dissolveMaskVal = LIL_SAMPLE_2D(dissolveMask, samp, lilCalcUV(uv, dissolveMask_ST)).r;
         }
@@ -580,6 +648,7 @@ void lilCalcDissolveWithNoise(
     float4 dissolvePos,
     TEXTURE2D(dissolveMask),
     float4 dissolveMask_ST,
+    bool dissolveMaskEnabled,
     TEXTURE2D(dissolveNoiseMask),
     float4 dissolveNoiseMask_ST,
     float4 dissolveNoiseMask_ScrollRotate,
@@ -590,7 +659,7 @@ void lilCalcDissolveWithNoise(
     {
         float dissolveMaskVal = 1.0;
         float dissolveNoise = 0.0;
-        if(dissolveParams.r == 1.0)
+        if(dissolveParams.r == 1.0 && dissolveMaskEnabled)
         {
             dissolveMaskVal = LIL_SAMPLE_2D(dissolveMask, samp, lilCalcUV(uv, dissolveMask_ST)).r;
         }
@@ -617,27 +686,12 @@ void lilCalcDissolveWithNoise(
     }
 }
 
-bool lilCheckAudioLink()
-{
-    #if defined(LIL_FEATURE_AUDIOLINK)
-        #if defined(LIL_LWTEX)
-            return _AudioTexture_TexelSize.z > 16;
-        #else
-            int width, height;
-            _AudioTexture.GetDimensions(width, height);
-            return width > 16;
-        #endif
-    #else
-        return false;
-    #endif
-}
-
 //------------------------------------------------------------------------------------------------------------------------------
 // Sub Texture
 float4 lilGetSubTex(
-    bool existsTex,
     TEXTURE2D(tex),
     float4 uv_ST,
+    float4 uv_SR,
     float angle,
     float2 uv,
     float nv,
@@ -654,33 +708,30 @@ float4 lilGetSubTex(
     LIL_SAMP_IN_FUNC(samp))
 {
     #if defined(LIL_FEATURE_DECAL)
-        float2 uv2 = lilCalcDecalUV(uv, uv_ST, angle, isLeftOnly, isRightOnly, shouldCopy, shouldFlipMirror, shouldFlipCopy, isRightHand);
+        float4 uv_SR2 = float4(uv_SR.xy, angle, uv_SR.w);
+        float2 uv2 = lilCalcDecalUV(uv, uv_ST, uv_SR2, isLeftOnly, isRightOnly, shouldCopy, shouldFlipMirror, shouldFlipCopy, isRightHand);
         #if defined(LIL_FEATURE_ANIMATE_DECAL)
             float2 uv2samp = lilCalcAtlasAnimation(uv2, decalAnimation, decalSubParam);
         #else
             float2 uv2samp = uv2;
         #endif
-        float4 outCol = 1.0;
-        if(existsTex) outCol = LIL_SAMPLE_2D(tex,samp,uv2samp);
-        LIL_BRANCH
+        float4 outCol = LIL_SAMPLE_2D(tex,samp,uv2samp);
         if(isMSDF) outCol = float4(1.0, 1.0, 1.0, lilMSDF(outCol.rgb));
-        LIL_BRANCH
         if(isDecal) outCol.a *= lilIsIn0to1(uv2, saturate(nv-0.05));
         return outCol;
     #else
-        float2 uv2 = lilCalcUV(uv, uv_ST, angle);
-        float4 outCol = 1.0;
-        if(existsTex) outCol = LIL_SAMPLE_2D(tex,samp,uv2);
-        LIL_BRANCH
+        float4 uv_SR2 = float4(uv_SR.xy, angle, uv_SR.w);
+        float2 uv2 = lilCalcUV(uv, uv_ST, uv_SR2);
+        float4 outCol = LIL_SAMPLE_2D(tex,samp,uv2);
         if(isMSDF) outCol = float4(1.0, 1.0, 1.0, lilMSDF(outCol.rgb));
         return outCol;
     #endif
 }
 
 float4 lilGetSubTexWithoutAnimation(
-    bool existsTex,
     TEXTURE2D(tex),
     float4 uv_ST,
+    float4 uv_SR,
     float angle,
     float2 uv,
     float nv,
@@ -696,18 +747,13 @@ float4 lilGetSubTexWithoutAnimation(
 {
     #if defined(LIL_FEATURE_DECAL)
         float2 uv2 = lilCalcDecalUV(uv, uv_ST, angle, isLeftOnly, isRightOnly, shouldCopy, shouldFlipMirror, shouldFlipCopy, isRightHand);
-        float4 outCol = 1.0;
-        if(existsTex) outCol = LIL_SAMPLE_2D(tex,samp,uv2);
-        LIL_BRANCH
+        float4 outCol = LIL_SAMPLE_2D(tex,samp,uv2);
         if(isMSDF) outCol = float4(1.0, 1.0, 1.0, lilMSDF(outCol.rgb));
-        LIL_BRANCH
         if(isDecal) outCol.a *= lilIsIn0to1(uv2, saturate(nv-0.05));
         return outCol;
     #else
         float2 uv2 = lilCalcUV(uv, uv_ST, angle);
-        float4 outCol = 1.0;
-        if(existsTex) outCol = LIL_SAMPLE_2D(tex,samp,uv2);
-        LIL_BRANCH
+        float4 outCol = LIL_SAMPLE_2D(tex,samp,uv2);
         if(isMSDF) outCol = float4(1.0, 1.0, 1.0, lilMSDF(outCol.rgb));
         return outCol;
     #endif
@@ -715,19 +761,43 @@ float4 lilGetSubTexWithoutAnimation(
 
 //------------------------------------------------------------------------------------------------------------------------------
 // Light Direction
+float3 lilGetCustomLightDirection(float4 lightDirectionOverride)
+{
+    float3 customDir = length(lightDirectionOverride.xyz) * normalize(mul((float3x3)LIL_MATRIX_M, lightDirectionOverride.xyz));
+    return lightDirectionOverride.w ? customDir : lightDirectionOverride.xyz;
+}
+
+float3 lilGetLightDirectionForSH9()
+{
+    float3 mainDir = LIL_MAINLIGHT_DIRECTION * lilLuminance(LIL_MAINLIGHT_COLOR);
+    float3 sh9Dir = unity_SHAr.xyz * 0.333333 + unity_SHAg.xyz * 0.333333 + unity_SHAb.xyz * 0.333333;
+    float3 lightDirectionForSH9 = sh9Dir + mainDir;
+    return dot(lightDirectionForSH9,lightDirectionForSH9) < 0.000001 ? 0 : normalize(lightDirectionForSH9);
+}
+
 float3 lilGetLightDirection(float4 lightDirectionOverride)
 {
-    #if LIL_LIGHT_DIRECTION_MODE == 0
-        return normalize(LIL_MAINLIGHT_DIRECTION + lightDirectionOverride.xyz);
-    #else
-        return normalize(LIL_MAINLIGHT_DIRECTION * lilLuminance(LIL_MAINLIGHT_COLOR) + 
-                        unity_SHAr.xyz * 0.333333 + unity_SHAg.xyz * 0.333333 + unity_SHAb.xyz * 0.333333 + 
-                        lightDirectionOverride.xyz);
-    #endif
+    float3 mainDir = LIL_MAINLIGHT_DIRECTION * lilLuminance(LIL_MAINLIGHT_COLOR);
+    float3 sh9Dir = unity_SHAr.xyz * 0.333333 + unity_SHAg.xyz * 0.333333 + unity_SHAb.xyz * 0.333333;
+    return normalize(mainDir + sh9Dir + lilGetCustomLightDirection(lightDirectionOverride));
 }
+
+float3 lilGetFixedLightDirection(float4 lightDirectionOverride, bool doNormalise)
+{
+    float3 mainDir = LIL_MAINLIGHT_DIRECTION * lilLuminance(LIL_MAINLIGHT_COLOR);
+    float3 sh9Dir = unity_SHAr.xyz * 0.333333 + unity_SHAg.xyz * 0.333333 + unity_SHAb.xyz * 0.333333;
+    float3 L = float3(sh9Dir.x, abs(sh9Dir.y), sh9Dir.z) + mainDir + lilGetCustomLightDirection(lightDirectionOverride);
+    return doNormalise ? normalize(L) : L;
+}
+
+float3 lilGetFixedLightDirection(float4 lightDirectionOverride)
+{
+    return lilGetFixedLightDirection(lightDirectionOverride, true);
+}
+
 float3 lilGetLightDirection()
 {
-    return lilGetLightDirection(float4(0.0,0.001,0.0,0.0));
+    return lilGetLightDirection(float4(0.001,0.002,0.001,0.0));
 }
 
 float3 lilGetLightDirection(float3 positionWS)
@@ -803,44 +873,24 @@ float3 lilShadeSH9LPPV(float3 normalWS, float3 positionWS)
     return lilShadeSH9LPPV(float4(normalWS,1.0), positionWS);
 }
 
-float3 lilGetSHToon(float4 lightDirectionOverride)
-{
-    return lilShadeSH9(lilGetLightDirection(lightDirectionOverride) * 0.666666);
-}
-
 float3 lilGetSHToon()
 {
-    return lilGetSHToon(float4(0.0,0.001,0.0,0.0));
-}
-
-float3 lilGetSHToon(float3 positionWS, float4 lightDirectionOverride)
-{
-    return lilShadeSH9LPPV(lilGetLightDirection(lightDirectionOverride) * 0.666666, positionWS);
+    return lilShadeSH9(lilGetLightDirectionForSH9() * 0.666666);
 }
 
 float3 lilGetSHToon(float3 positionWS)
 {
-    return lilGetSHToon(positionWS, float4(0.0,0.001,0.0,0.0));
-}
-
-float3 lilGetSHToonMin(float4 lightDirectionOverride)
-{
-    return lilShadeSH9(-lilGetLightDirection(lightDirectionOverride) * 0.666666);
+    return lilShadeSH9LPPV(lilGetLightDirectionForSH9() * 0.666666, positionWS);
 }
 
 float3 lilGetSHToonMin()
 {
-    return lilGetSHToonMin(float4(0.0,0.001,0.0,0.0));
-}
-
-float3 lilGetSHToonMin(float3 positionWS, float4 lightDirectionOverride)
-{
-    return lilShadeSH9LPPV(-lilGetLightDirection(lightDirectionOverride) * 0.666666, positionWS);
+    return lilShadeSH9(-lilGetLightDirectionForSH9() * 0.666666);
 }
 
 float3 lilGetSHToonMin(float3 positionWS)
 {
-    return lilGetSHToonMin(positionWS, float4(0.0,0.001,0.0,0.0));
+    return lilShadeSH9LPPV(-lilGetLightDirectionForSH9() * 0.666666, positionWS);
 }
 
 void lilGetToonSHDouble(float3 lightDirection, out float3 shMax, out float3 shMin)
@@ -929,12 +979,30 @@ float3 lilGetIndirLightColor(float3 positionWS)
     return saturate(lilGetSHToonMin(positionWS));
 }
 
-void lilGetLightColorDouble(float3 lightDirection, out float3 lightColor, out float3 indLightColor)
+void lilGetLightColorDouble(out float3 lightColor, out float3 indLightColor)
 {
     float3 shMax, shMin;
-    lilGetToonSHDouble(lightDirection, shMax, shMin);
+    lilGetToonSHDouble(lilGetLightDirectionForSH9(), shMax, shMin);
     lightColor = LIL_MAINLIGHT_COLOR + shMax;
     indLightColor = saturate(shMin);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+// Geometric Specular Antialiasing
+void GSAA(inout float roughness, float3 N, float strength)
+{
+    float3 dx = abs(ddx(N));
+    float3 dy = abs(ddy(N));
+    float dxy = max(dot(dx,dx), dot(dy,dy));
+    float roughnessGSAA = dxy / (dxy * 5 + 0.002) * strength;
+    roughness = max(roughness, roughnessGSAA);
+}
+
+void GSAAForSmoothness(inout float smoothness, float3 N, float strength)
+{
+    float roughness = 0;
+    GSAA(roughness, N, strength);
+    smoothness = min(smoothness, saturate(1-roughness));
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -959,16 +1027,18 @@ float3 lilGetAnisotropyNormalWS(float3 normalWS, float3 anisoTangentWS, float3 a
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-// Glitter
-float3 lilCalcGlitter(float2 uv, float3 normalDirection, float3 viewDirection, float3 lightDirection, float4 glitterParams1, float4 glitterParams2)
+// Reflection
+float3 lilCustomReflection(TEXTURECUBE(tex), float4 hdr, float3 viewDirection, float3 normalDirection, float perceptualRoughness)
 {
-    // glitterParams1
-    // x: Scale, y: Scale, z: Size, w: Contrast
-    // glitterParams2
-    // x: Speed, y: Angle, z: Light Direction, w: 
+    float mip = perceptualRoughness * (10.2 - 4.2 * perceptualRoughness);
+    float3 refl = reflect(-viewDirection, normalDirection);
+    return lilDecodeHDR(LIL_SAMPLE_CUBE_LOD(tex, lil_sampler_linear_repeat, refl, mip), hdr);
+}
 
-    float2 pos = abs(uv * glitterParams1.xy + glitterParams1.xy);
-
+//------------------------------------------------------------------------------------------------------------------------------
+// Glitter
+float4 lilVoronoi(float2 pos, out float2 nearoffset, float scaleRandomize)
+{
     #if defined(SHADER_API_D3D9) || defined(SHADER_API_D3D11_9X)
         #define M1 46203.4357
         #define M2 21091.5327
@@ -979,33 +1049,51 @@ float3 lilCalcGlitter(float2 uv, float3 normalDirection, float3 viewDirection, f
         float3 noise1 = frac(sin(dot(q2.zy,float2(12.9898,78.233))) * float3(M1, M2, M3));
         float3 noise2 = frac(sin(dot(q2.xw,float2(12.9898,78.233))) * float3(M1, M2, M3));
         float3 noise3 = frac(sin(dot(q2.zw,float2(12.9898,78.233))) * float3(M1, M2, M3));
+        #undef M1
+        #undef M2
+        #undef M3
     #else
-        // Hash
-        // https://www.shadertoy.com/view/MdcfDj
-        #define M1 1597334677U
-        #define M2 3812015801U
-        #define M3 2912667907U
-        uint2 q = (uint2)pos;
-        uint4 q2 = uint4(q.x, q.y, q.x+1, q.y+1) * uint4(M1, M2, M1, M2);
-        uint3 n0 = (q2.x ^ q2.y) * uint3(M1, M2, M3);
-        uint3 n1 = (q2.z ^ q2.y) * uint3(M1, M2, M3);
-        uint3 n2 = (q2.x ^ q2.w) * uint3(M1, M2, M3);
-        uint3 n3 = (q2.z ^ q2.w) * uint3(M1, M2, M3);
-        float3 noise0 = float3(n0) * (1.0/float(0xffffffffU));
-        float3 noise1 = float3(n1) * (1.0/float(0xffffffffU));
-        float3 noise2 = float3(n2) * (1.0/float(0xffffffffU));
-        float3 noise3 = float3(n3) * (1.0/float(0xffffffffU));
+        float3 noise0, noise1, noise2, noise3;
+        lilHashRGB4(pos, noise0, noise1, noise2, noise3);
     #endif
 
     // Get the nearest position
     float4 fracpos = frac(pos).xyxy + float4(0.5,0.5,-0.5,-0.5);
     float4 dist4 = float4(lilNsqDistance(fracpos.xy,noise0.xy), lilNsqDistance(fracpos.zy,noise1.xy), lilNsqDistance(fracpos.xw,noise2.xy), lilNsqDistance(fracpos.zw,noise3.xy));
+    dist4 = lerp(dist4, dist4 / max(float4(noise0.z, noise1.z, noise2.z, noise3.z), 0.001), scaleRandomize);
+
+    float3 nearoffset0 = dist4.x < dist4.y ? float3(0,0,dist4.x) : float3(1,0,dist4.y);
+    float3 nearoffset1 = dist4.z < dist4.w ? float3(0,1,dist4.z) : float3(1,1,dist4.w);
+    nearoffset = nearoffset0.z < nearoffset1.z ? nearoffset0.xy : nearoffset1.xy;
+
     float4 near0 = dist4.x < dist4.y ? float4(noise0,dist4.x) : float4(noise1,dist4.y);
     float4 near1 = dist4.z < dist4.w ? float4(noise2,dist4.z) : float4(noise3,dist4.w);
-    float4 near = near0.w < near1.w ? near0 : near1;
+    return near0.w < near1.w ? near0 : near1;
+}
+
+float3 lilCalcGlitter(float2 uv, float3 normalDirection, float3 viewDirection, float3 cameraDirection, float3 lightDirection, float4 glitterParams1, float4 glitterParams2, float glitterPostContrast, float glitterSensitivity, float glitterScaleRandomize, uint glitterAngleRandomize, bool glitterApplyShape, TEXTURE2D(glitterShapeTex), float4 glitterShapeTex_ST, float4 glitterAtras)
+{
+    // glitterParams1
+    // x: Scale, y: Scale, z: Size, w: Contrast
+    // glitterParams2
+    // x: Speed, y: Angle, z: Light Direction, w:
 
     #define GLITTER_DEBUG_MODE 0
+    #define GLITTER_MIPMAP 1
     #define GLITTER_ANTIALIAS 1
+
+    #if GLITTER_MIPMAP == 1
+        float2 pos = uv * glitterParams1.xy;
+        float2 dd = fwidth(pos);
+        float factor = frac(sin(dot(floor(pos/floor(dd + 3.0)),float2(12.9898,78.233))) * 46203.4357) + 0.5;
+        float2 factor2 = floor(dd + factor * 0.5);
+        pos = pos/max(1.0,factor2) + glitterParams1.xy * factor2;
+    #else
+        float2 pos = uv * glitterParams1.xy + glitterParams1.xy;
+    #endif
+    float2 nearoffset;
+    float4 near = lilVoronoi(pos, nearoffset, glitterScaleRandomize);
+    
 
     #if GLITTER_DEBUG_MODE == 1
         // Voronoi
@@ -1014,8 +1102,10 @@ float3 lilCalcGlitter(float2 uv, float3 normalDirection, float3 viewDirection, f
         // Glitter
         float3 glitterNormal = abs(frac(near.xyz*14.274 + _Time.x * glitterParams2.x) * 2.0 - 1.0);
         glitterNormal = normalize(glitterNormal * 2.0 - 1.0);
-        float glitter = dot(glitterNormal, viewDirection);
+        float glitter = dot(glitterNormal, cameraDirection);
+        glitter = abs(frac(glitter * glitterSensitivity + glitterSensitivity) - 0.5) * 4.0 - 1.0;
         glitter = saturate(1.0 - (glitter * glitterParams1.w + glitterParams1.w));
+        glitter = pow(glitter, glitterPostContrast);
         // Circle
         #if GLITTER_ANTIALIAS == 1
             glitter *= saturate((glitterParams1.z-near.w) / fwidth(near.w));
@@ -1028,6 +1118,31 @@ float3 lilCalcGlitter(float2 uv, float3 normalDirection, float3 viewDirection, f
         glitter = saturate(glitter * saturate(nh * glitterParams2.y + 1.0 - glitterParams2.y));
         // Random Color
         float3 glitterColor = glitter - glitter * frac(near.xyz*278.436) * glitterParams2.w;
+        // Shape
+        #if defined(LIL_FEATURE_GlitterShapeTex)
+            if(glitterApplyShape)
+            {
+                float2 maskUV = pos - floor(pos) - nearoffset + 0.5 - near.xy;
+                maskUV = maskUV / glitterParams1.z * glitterShapeTex_ST.xy + glitterShapeTex_ST.zw;
+                if(glitterAngleRandomize)
+                {
+                    float si,co;
+                    sincos(near.z * 785.238, si, co);
+                    maskUV = float2(
+                        maskUV.x * co - maskUV.y * si,
+                        maskUV.x * si + maskUV.y * co
+                    );
+                }
+                float randomScale = lerp(1.0, 1.0 / sqrt(max(near.z, 0.001)), glitterScaleRandomize);
+                maskUV = maskUV * randomScale + 0.5;
+                bool clamp = maskUV.x == saturate(maskUV.x) && maskUV.y == saturate(maskUV.y);
+                maskUV = (maskUV + floor(near.xy * glitterAtras.xy)) / glitterAtras.xy;
+                float2 mipfactor = 0.125 / glitterParams1.z * glitterAtras.xy * glitterShapeTex_ST.xy * randomScale;
+                float4 shapeTex = LIL_SAMPLE_2D_GRAD(glitterShapeTex, lil_sampler_linear_clamp, maskUV, abs(ddx(pos)) * mipfactor.x, abs(ddy(pos)) * mipfactor.y);
+                shapeTex.a = clamp ? shapeTex.a : 0;
+                glitterColor *= shapeTex.rgb * shapeTex.a;
+            }
+        #endif
         return glitterColor;
     #endif
 }
@@ -1036,8 +1151,8 @@ float3 lilCalcGlitter(float2 uv, float3 normalDirection, float3 viewDirection, f
 // Tessellation
 float lilCalcEdgeTessFactor(float3 wpos0, float3 wpos1, float edgeLen)
 {
-    float dist = distance(0.5 * (wpos0+wpos1), _WorldSpaceCameraPos);
-    return max(distance(wpos0, wpos1) * _ScreenParams.y / (edgeLen * dist), 1.0);
+    float dist = distance(0.5 * (wpos0+wpos1), _WorldSpaceCameraPos.xyz);
+    return max(distance(wpos0, wpos1) * LIL_SCREENPARAMS.y / (edgeLen * dist), 1.0);
 }
 
 #endif
